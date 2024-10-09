@@ -1,0 +1,22 @@
+{
+  "name": "jsonapi-nestjs",
+  "version": "0.0.0",
+  "description": "Full fledged JSON:API solution on nestjs",
+  "main": "src/index.ts",
+  "author": "Tin Anišić",
+  "license": "MIT",
+  "scripts": {
+    "barrel": "barrelsby --delete .src/ -l branch"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=10",
+    "@nestjs/core": ">=10",
+    "reflect-metadata": ">=0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^10.4.4",
+    "@nestjs/core": "^10.4.4",
+    "barrelsby": "^2.8.1",
+    "reflect-metadata": "^0.2.2"
+  }
+}

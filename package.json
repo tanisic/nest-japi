@@ -1,0 +1,11 @@
+{
+  "name": "@jsonapi-nestjs/workspace",
+  "version": "0.0.0",
+  "description": "Full fledged JSON:API solution on nestjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tin Anišić",
+  "license": "MIT",
+  "packageManager": "pnpm@9.12.1"
+}

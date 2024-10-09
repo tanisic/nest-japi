@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "jsonapi-nestjs": {
+      "type": "library",
+      "root": "libs/jsonapi-nestjs",
+      "entryFile": "index",
+      "sourceRoot": "libs/jsonapi-nestjs/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/jsonapi-nestjs/tsconfig.lib.json"
+      }
+    }
+  },
+  "compilerOptions": {
+    "webpack": true
+  }
+}
