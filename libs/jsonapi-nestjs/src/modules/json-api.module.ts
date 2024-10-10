@@ -2,7 +2,7 @@ import { Global, Module } from "@nestjs/common";
 import type { DynamicModule, Type, ValueProvider } from "@nestjs/common";
 import { BaseResource } from "../resource/base-resource";
 import { JsonApiResourceModule } from "./json-api-resource.module";
-import { JSONAPI_DECORATOR_OPTIONS } from "./constants";
+import { JSONAPI_DECORATOR_OPTIONS } from "../constants";
 
 export interface JsonApiModuleOptions {
   resources: Type<BaseResource>[];

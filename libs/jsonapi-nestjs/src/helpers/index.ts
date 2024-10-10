@@ -1,7 +1,8 @@
 import { Type, Controller } from "@nestjs/common";
 import { ResourceOptions } from "../decorators/resource.decorator";
-import { JSONAPI_RESOURCE_OPTIONS } from "../modules/constants";
+import { JSONAPI_RESOURCE_OPTIONS } from "../constants";
 import { BaseResource } from "../resource/base-resource";
+import { snakeCase } from "es-toolkit";
 
 export const namedClass = (
   name: string,
@@ -29,8 +30,6 @@ export function createController(resource: Type<BaseResource>) {
     ControllerClass,
   );
 
-  Controller(options?.path || ControllerClass.name.toLowerCase())(
-    ControllerClass,
-  );
+  Controller(options?.path || snakeCase(ControllerClass.name))(ControllerClass);
   return ControllerClass;
 }
