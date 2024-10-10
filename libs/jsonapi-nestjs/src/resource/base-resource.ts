@@ -1,11 +1,16 @@
-import type { Type } from "@nestjs/common";
-import type { JSONAPI_RESOURCE_TYPE } from "../module/constants";
+import { Get } from "@nestjs/common";
+import { JSONAPI_RESOURCE_TYPE } from "../modules/constants";
 
-interface Schema {}
-interface Entity {}
+export interface Schema {}
+export interface Entity {}
 
 export abstract class BaseResource {
   abstract [JSONAPI_RESOURCE_TYPE]: string;
-  abstract schema: Type<Schema>;
-  abstract entity: Type<Entity>;
+  abstract schema: Schema;
+  abstract entity: Entity;
+
+  @Get()
+  getOne() {
+    return this[JSONAPI_RESOURCE_TYPE];
+  }
 }
