@@ -1,8 +1,14 @@
 import { Global, Module } from "@nestjs/common";
-import type { DynamicModule, Type, ValueProvider } from "@nestjs/common";
+import type {
+  DynamicModule,
+  FactoryProvider,
+  Type,
+  ValueProvider,
+} from "@nestjs/common";
 import { BaseResource } from "../resource/base-resource";
 import { JsonApiResourceModule } from "./json-api-resource.module";
 import { JSONAPI_DECORATOR_OPTIONS } from "../constants";
+import { EntityManager, MikroORM } from "@mikro-orm/core";
 
 export interface JsonApiModuleOptions {
   resources: Type<BaseResource>[];
@@ -24,9 +30,15 @@ export class JsonApiModule {
       useValue: options,
     };
 
+    const entityManagerProvider: FactoryProvider<EntityManager> = {
+      provide: EntityManager,
+      useFactory: (orm: MikroORM) => orm.em.fork(),
+      inject: [MikroORM],
+    };
+
     return {
       module: JsonApiModule,
-      providers: [globalOptionsProvider],
+      providers: [globalOptionsProvider, entityManagerProvider],
       imports: [...modules],
       exports: [...modules],
     };
