@@ -19,6 +19,7 @@ import { UserResource } from './resource/UserResource';
       dbName: 'jsonapi',
       schema: 'public',
       entities: ['./dist/**/*.entity.js'],
+      entitiesTs: ['./src/**/*.entity.ts'],
       extensions: [EntityGenerator, Migrator],
     }),
     JsonApiModule.forRoot({ resources: [UserResource] }),

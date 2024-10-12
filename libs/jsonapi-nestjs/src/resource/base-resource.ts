@@ -22,10 +22,4 @@ export abstract class BaseResource<
   get schema(): ValidationSchema {
     return Reflect.getMetadata(JSONAPI_RESOURCE_SCHEMA, this.constructor);
   }
-
-  @Get()
-  getOne() {
-    // return this[JSONAPI_RESOURCE_TYPE];
-    return this.type;
-  }
 }

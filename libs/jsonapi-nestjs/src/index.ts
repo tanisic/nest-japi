@@ -10,5 +10,6 @@ export * from "./decorators/resource.decorator";
 export * from "./helpers/index";
 export * from "./modules/json-api-resource.module";
 export * from "./modules/json-api.module";
+export * from "./query/index";
 export * from "./resource/base-resource";
 export * from "./serializer/serializer.service";

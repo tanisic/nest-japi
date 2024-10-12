@@ -13,6 +13,7 @@ import {
   JSONAPI_RESOURCE_ENTITY_CLASS,
 } from "../constants";
 import { EntityManager, EntityMetadata, EntityName } from "@mikro-orm/core";
+import { SortParamService } from "../query/services/sort-param.service";
 
 export interface JsonApiResourceModuleOptions<DbEntity = unknown> {
   resource: Type<BaseResource<DbEntity>>;
@@ -52,7 +53,7 @@ export class JsonApiResourceModule {
 
     return {
       module,
-      providers: [entityProvider, entityMetadataProvider],
+      providers: [entityProvider, entityMetadataProvider, SortParamService],
       controllers: [ControllerClass],
     };
   }

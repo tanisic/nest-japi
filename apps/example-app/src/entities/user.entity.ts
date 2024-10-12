@@ -1,4 +1,11 @@
-import { Entity, PrimaryKey, Property } from '@mikro-orm/postgresql';
+import {
+  Collection,
+  Entity,
+  OneToMany,
+  PrimaryKey,
+  Property,
+} from '@mikro-orm/postgresql';
+import { Picture } from './picture.entity';
 
 @Entity({ tableName: 'users' })
 export class User {
@@ -13,6 +20,9 @@ export class User {
 
   @Property()
   password!: string;
+
+  @OneToMany(() => Picture, 'owner')
+  pictures = new Collection<Picture>(this);
 
   @Property({ type: 'text' })
   bio = '';
