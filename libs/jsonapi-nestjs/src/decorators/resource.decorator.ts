@@ -17,6 +17,7 @@ export interface ResourceOptions {
   jsonapiType?: string;
   path?: string;
   disabledMethods?: MethodName[];
+  maxPaginationSize?: number;
 }
 
 export const Resource = (options: ResourceOptions): ClassDecorator => {

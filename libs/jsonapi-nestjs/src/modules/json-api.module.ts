@@ -12,6 +12,7 @@ import { EntityManager, MikroORM } from "@mikro-orm/core";
 
 export interface JsonApiModuleOptions {
   resources: Type<BaseResource>[];
+  maxPaginationSize?: number;
 }
 
 @Global()
@@ -36,11 +37,13 @@ export class JsonApiModule {
       inject: [MikroORM],
     };
 
+    const providers = [globalOptionsProvider, entityManagerProvider];
+
     return {
       module: JsonApiModule,
-      providers: [globalOptionsProvider, entityManagerProvider],
+      providers,
       imports: [...modules],
-      exports: [...modules],
+      exports: [...modules, ...providers],
     };
   }
 }

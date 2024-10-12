@@ -8,6 +8,7 @@ export * from "./controller/controller-bindings";
 export * from "./controller/types";
 export * from "./decorators/resource.decorator";
 export * from "./helpers/index";
+export * from "./modules/json-api-options";
 export * from "./modules/json-api-resource.module";
 export * from "./modules/json-api.module";
 export * from "./query/index";

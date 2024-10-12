@@ -1,4 +1,3 @@
-import { Get } from "@nestjs/common";
 import {
   JSONAPI_RESOURCE_ENTITY_CLASS,
   JSONAPI_RESOURCE_SCHEMA,

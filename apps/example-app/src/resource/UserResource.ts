@@ -4,6 +4,7 @@ import { Get, Inject, Query } from '@nestjs/common';
 import {
   BaseResource,
   CURRENT_ENTITY_METADATA,
+  PaginatePipe,
   Resource,
   SortPipe,
 } from 'jsonapi-nestjs';
@@ -26,8 +27,11 @@ export class UserResource extends BaseResource<User, UserSchema> {
   }
 
   @Get()
-  getOne(@Query('sort', SortPipe) sort: any) {
-    console.dir(sort);
+  getOne(
+    @Query('sort', SortPipe) sort: any,
+    @Query(PaginatePipe) paginate: any,
+  ) {
+    console.dir(paginate);
     return '';
   }
 }
