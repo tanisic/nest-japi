@@ -5,6 +5,8 @@ export const JSONAPI_SCHEMA_TYPE = Symbol();
 export const JSONAPI_RESOURCE_OPTIONS = Symbol();
 export const JSONAPI_RESOURCE_SCHEMAS = Symbol();
 export const JSONAPI_SCHEMA_OPTIONS = Symbol();
+export const JSONAPI_SCHEMA_ATTRIBUTE_OPTIONS = Symbol();
+export const JSONAPI_SCHEMA_ATTRIBUTES = Symbol();
 export const CURRENT_SCHEMAS = Symbol();
 export const CURRENT_ENTITY_METADATA = Symbol();
 

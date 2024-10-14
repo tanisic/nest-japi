@@ -4,7 +4,6 @@ import { MethodName } from "./types";
 
 type RequestMethodeObject = { [k in MethodName]: (...arg: any[]) => any };
 
-@Dependencies()
 export class JsonBaseController<R extends BaseResource>
   implements RequestMethodeObject
 {
