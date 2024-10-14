@@ -1,5 +1,5 @@
-import { PipeTransform, RequestMethod, Type } from "@nestjs/common";
-import { JsonBaseController } from "./base-controller";
+import { PipeTransform, RequestMethod } from "@nestjs/common";
+import { Type } from "@nestjs/common/interfaces";
 
 export type MethodName =
   | "getAll"
@@ -28,14 +28,14 @@ export interface Binding<T extends MethodName> {
   path: string;
   method: MapNameToTypeMethod[T];
   name: T;
-  implementation: JsonBaseController<any>[T];
+  implementation: any[T];
   parameters: {
     decorator: (
       property?: string,
       ...pipes: (Type<PipeTransform> | PipeTransform)[]
     ) => ParameterDecorator;
     property?: string;
-    mixins: PipeFabric[];
+    mixins: any[];
   }[];
 }
 

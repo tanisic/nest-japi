@@ -1,22 +1,16 @@
-import { snakeCase } from "es-toolkit";
 import {
-  JSONAPI_RESOURCE_ENTITY_CLASS,
   JSONAPI_RESOURCE_OPTIONS,
-  JSONAPI_RESOURCE_SCHEMA,
-  JSONAPI_RESOURCE_TYPE,
+  JSONAPI_RESOURCE_SCHEMAS,
 } from "../constants";
-import { BaseResource } from "../resource/base-resource";
 import { MethodName } from "../controller/types";
-import { EntityName } from "@mikro-orm/core";
-import { z } from "zod";
 import { Injectable } from "@nestjs/common";
+import { Schemas } from "../schema/types";
+import { BaseResource } from "../resource/base-resource";
 
 export interface ResourceOptions {
-  dbEntity: EntityName<unknown>;
-  validationSchema: z.AnyZodObject;
-  jsonapiType?: string;
+  schemas: Schemas;
   path?: string;
-  disabledMethods?: MethodName[];
+  disabledMethods?: ReadonlyArray<MethodName>;
   maxPaginationSize?: number;
 }
 
@@ -29,23 +23,7 @@ export const Resource = (options: ResourceOptions): ClassDecorator => {
       );
     }
 
-    Reflect.defineMetadata(
-      JSONAPI_RESOURCE_TYPE,
-      options?.jsonapiType || snakeCase(target.name),
-      target,
-    );
-
-    Reflect.defineMetadata(
-      JSONAPI_RESOURCE_ENTITY_CLASS,
-      options.dbEntity,
-      target,
-    );
-
-    Reflect.defineMetadata(
-      JSONAPI_RESOURCE_SCHEMA,
-      options.validationSchema,
-      target,
-    );
+    Reflect.defineMetadata(JSONAPI_RESOURCE_SCHEMAS, options.schemas, target);
 
     if (options) {
       Reflect.defineMetadata(JSONAPI_RESOURCE_OPTIONS, options, target);

@@ -6,7 +6,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EntityGenerator } from '@mikro-orm/entity-generator';
 import { Migrator } from '@mikro-orm/migrations';
-import { UserResource } from './resource/UserResource';
+import { UserResource } from './resource/UserResource.controller';
+import { PictureResource } from './resource/PictureResource.controller';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { UserResource } from './resource/UserResource';
       entitiesTs: ['./src/**/*.entity.ts'],
       extensions: [EntityGenerator, Migrator],
     }),
-    JsonApiModule.forRoot({ resources: [UserResource] }),
+    JsonApiModule.forRoot({ resources: [UserResource, PictureResource] }),
   ],
   controllers: [AppController],
   providers: [AppService],

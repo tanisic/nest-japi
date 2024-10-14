@@ -5,53 +5,44 @@ import {
   ValueProvider,
   Logger,
 } from "@nestjs/common";
-import { createController, namedClass } from "../helpers";
+import { namedClass } from "../helpers";
 import { BaseResource } from "../resource/base-resource";
 import {
-  CURRENT_ENTITY,
-  CURRENT_ENTITY_METADATA,
   JSONAPI_DECORATOR_OPTIONS,
-  JSONAPI_RESOURCE_ENTITY_CLASS,
   JSONAPI_RESOURCE_OPTIONS,
+  JSONAPI_RESOURCE_SCHEMAS,
+  CURRENT_SCHEMAS,
 } from "../constants";
-import { EntityManager, EntityMetadata, EntityName } from "@mikro-orm/core";
-import { SortParamService } from "../query/services/sort-param.service";
-import { ResourceOptions } from "../decorators/resource.decorator";
 import { JsonApiOptions } from "./json-api-options";
 import { JsonApiModuleOptions } from "./json-api.module";
-import { PaginateParamService } from "../query/services/pagination-param.service";
+import { ResourceOptions } from "../decorators/resource.decorator";
+import { Schemas } from "../schema/types";
+import { ControllerFactory } from "../controller/controller-factory";
 
-export interface JsonApiResourceModuleOptions<DbEntity = unknown> {
-  resource: Type<BaseResource<DbEntity>>;
+export interface JsonApiResourceModuleOptions {
+  resource: Type<BaseResource>;
 }
 
 export class JsonApiResourceModule {
   static forRoot(options: JsonApiResourceModuleOptions): DynamicModule {
     const { resource } = options;
 
-    const ControllerClass = createController(resource);
+    const controllerFactory = new ControllerFactory(resource);
+    const ResourceClass = controllerFactory.createController();
 
-    const entity: EntityName<any> = Reflect.getMetadata(
-      JSONAPI_RESOURCE_ENTITY_CLASS,
-      ControllerClass,
+    const schemas: Schemas = Reflect.getMetadata(
+      JSONAPI_RESOURCE_SCHEMAS,
+      ResourceClass,
     );
 
-    const entityProvider: ValueProvider<EntityName<any>> = {
-      provide: CURRENT_ENTITY,
-      useValue: entity,
-    };
-
-    const entityMetadataProvider: FactoryProvider<EntityMetadata<any>> = {
-      provide: CURRENT_ENTITY_METADATA,
-      inject: [CURRENT_ENTITY, EntityManager],
-      useFactory: (entity: EntityName<any>, em: EntityManager) => {
-        return em.getMetadata().get(entity);
-      },
+    const schemasProvider: ValueProvider<Schemas> = {
+      provide: CURRENT_SCHEMAS,
+      useValue: schemas,
     };
 
     const resourceOptionsProvider: ValueProvider<ResourceOptions> = {
       provide: JSONAPI_RESOURCE_OPTIONS,
-      useValue: Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, ControllerClass),
+      useValue: Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, ResourceClass),
     };
 
     const allOptionsProvider: FactoryProvider<JsonApiOptions> = {
@@ -62,24 +53,23 @@ export class JsonApiResourceModule {
     };
 
     const module = namedClass(
-      `JsonApi${ControllerClass.name}Module`,
+      `JsonApi${ResourceClass.name}Module`,
       JsonApiResourceModule,
     );
 
     const logger = new Logger(module.name);
-    logger.log(`JSON:API Resource ${ControllerClass.name} initialized`);
+    logger.log(`JSON:API Resource ${ResourceClass.name} initialized`);
 
     return {
       module,
       providers: [
         resourceOptionsProvider,
         allOptionsProvider,
-        entityProvider,
-        entityMetadataProvider,
-        SortParamService,
-        PaginateParamService,
+        schemasProvider,
+        // SortParamService,
+        // PaginateParamService,
       ],
-      controllers: [ControllerClass],
+      controllers: [ResourceClass],
     };
   }
 }

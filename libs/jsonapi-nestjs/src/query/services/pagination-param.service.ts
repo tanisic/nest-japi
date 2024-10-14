@@ -15,12 +15,14 @@ const paginationSchema = z
 
 @Injectable()
 export class PaginateParamService {
-  constructor(private options: JsonApiOptions) {}
+  maximumPerPage: number;
 
-  private maximumPerPage =
-    this.options.global.maxPaginationSize ||
-    this.options.resource.maxPaginationSize ||
-    50;
+  constructor(private options: JsonApiOptions) {
+    this.maximumPerPage =
+      this.options.global.maxPaginationSize ||
+      this.options.resource.maxPaginationSize ||
+      50;
+  }
 
   transform(value: any): Pagination | null {
     if (!value) {
