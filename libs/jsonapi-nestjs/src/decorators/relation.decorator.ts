@@ -27,10 +27,12 @@ export function Relation<Entity = any>(
   options: RelationOptions<Entity>,
 ): PropertyDecorator {
   return (target, propertyKey) => {
+    const isArray = options.isArray || options.many || false;
     const opts: RelationOptions = {
-      dataKey: propertyKey as string,
-      isArray: options.isArray || options.many || false,
       ...options,
+      dataKey: propertyKey as string,
+      isArray,
+      type: () => options.schema(),
     };
     Reflect.defineMetadata(
       JSONAPI_SCHEMA_RELATION_OPTIONS,

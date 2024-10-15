@@ -22,7 +22,12 @@ export class UserResource extends BaseResource {
           {
             id: 12,
             url: 'test',
-            location: { id: 12, address: 'test street', floor: 2 },
+            location: {
+              id: 12,
+              address: 'test street',
+              floor: 2,
+              employees: 12,
+            },
           },
         ],
       },

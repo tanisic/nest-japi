@@ -19,7 +19,10 @@ export class UserSchema extends BaseSchema<User> {
   @Attribute({})
   password!: string;
 
-  @Relation({ schema: () => PictureSchema, many: true })
+  @Relation({
+    schema: () => PictureSchema,
+    many: true,
+  })
   pictures: PictureSchema[];
 
   @Attribute({})
