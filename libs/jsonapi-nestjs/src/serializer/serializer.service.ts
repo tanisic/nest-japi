@@ -16,7 +16,8 @@ export interface SerializeCustomOptions {
 
 @Injectable({ scope: Scope.REQUEST })
 export class SerializerService {
-  private options?: SerializeCustomOptions;
+  private options?: SerializeCustomOptions | undefined;
+  private serializerMap = new Map<string, Serializer>();
 
   serialize(
     data: any,
@@ -25,22 +26,20 @@ export class SerializerService {
   ) {
     this.options = options;
     const resolved = this.resolve(schema);
-    console.log(resolved);
     return resolved.serialize(data);
   }
 
   private resolve(schema: Type<BaseSchema<any>>) {
-    const serializerMap = new Map<string, Serializer>();
     const type = this.getType(schema);
     const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
     const relations = this.getRelations(schema);
-    const rootSerializer = this.findOrCreateSerializer(type, serializerMap, {
+    const rootSerializer = this.findOrCreateSerializer(type, {
       projection: visibleAttributes,
       include: this.options?.include || [],
     });
 
     for (const relation of relations) {
-      this.resolveRelation(relation, serializerMap, serializerMap.get(type));
+      this.resolveRelation(relation, this.serializerMap.get(type));
     }
 
     return rootSerializer;
@@ -48,13 +47,12 @@ export class SerializerService {
 
   private resolveRelation(
     relation: RelationAttribute,
-    serializerMap: Map<string, Serializer>,
     parentSerializer: Serializer,
   ) {
     const relSchema = relation.schema();
     const relType = this.getType(relSchema);
 
-    const serializer = this.findOrCreateSerializer(relType, serializerMap, {
+    const serializer = this.findOrCreateSerializer(relType, {
       projection: this.getVisibleAttributesOrSparse(relSchema),
     });
     const relator = new Relator((data) => data[relation.dataKey], serializer);
@@ -62,29 +60,28 @@ export class SerializerService {
       ...parentSerializer.getRelators(),
       [relType]: relator,
     });
-    serializerMap.set(relType, serializer);
+    this.serializerMap.set(relType, serializer);
 
     const relations = this.getRelations(relSchema);
     for (const rel of relations) {
       const schema = rel.schema();
       const type = this.getType(schema);
-      if (serializerMap.has(type)) continue;
-      this.resolveRelation(rel, serializerMap, serializer);
+      if (this.serializerMap.has(type)) continue;
+      this.resolveRelation(rel, serializer);
     }
   }
 
   private findOrCreateSerializer(
     type: string,
-    serializerMap: Map<string, Serializer>,
     newOptions?: Partial<SerializerOptions>,
   ) {
-    if (serializerMap.has(type)) {
-      return serializerMap.get(type);
+    if (this.serializerMap.has(type)) {
+      return this.serializerMap.get(type);
     }
 
     const newSerializer = new Serializer(type, newOptions);
-    serializerMap.set(type, newSerializer);
-    return serializerMap.get(type);
+    this.serializerMap.set(type, newSerializer);
+    return this.serializerMap.get(type);
   }
 
   private getRelations(schema: Type<BaseSchema<any>>): RelationAttribute[] {
