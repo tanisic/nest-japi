@@ -27,6 +27,9 @@ export class UserResource extends BaseResource {
         ],
       },
       UserSchema,
+      {
+        include: ['pictures.workplaces'],
+      },
     );
   }
 

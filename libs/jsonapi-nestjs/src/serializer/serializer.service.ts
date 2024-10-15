@@ -9,26 +9,34 @@ import {
 import { SchemaAttribute } from "../decorators/attribute.decorator";
 import { Relator, Serializer, SerializerOptions } from "ts-japi";
 
-@Injectable()
-export class SerializerService {
-  constructor() {}
+export interface SerializeCustomOptions {
+  include?: string[];
+  sparseFields?: Record<string, string[]>;
+}
 
-  serialize(data: any, schema: Type<BaseSchema<any>>) {
+@Injectable({ scope: Scope.REQUEST })
+export class SerializerService {
+  private options?: SerializeCustomOptions;
+
+  serialize(
+    data: any,
+    schema: Type<BaseSchema<any>>,
+    options?: SerializeCustomOptions,
+  ) {
+    this.options = options;
     const resolved = this.resolve(schema);
     console.log(resolved);
     return resolved.serialize(data);
   }
 
-  private resolve(
-    schema: Type<BaseSchema<any>>,
-    serializerMap = new Map<string, Serializer>(),
-  ) {
+  private resolve(schema: Type<BaseSchema<any>>) {
+    const serializerMap = new Map<string, Serializer>();
     const type = this.getType(schema);
-    const visibleAttributes = this.getVisibleAttributes(schema);
+    const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
     const relations = this.getRelations(schema);
     const rootSerializer = this.findOrCreateSerializer(type, serializerMap, {
       projection: visibleAttributes,
-      include: 10,
+      include: this.options?.include || [],
     });
 
     for (const relation of relations) {
@@ -47,8 +55,7 @@ export class SerializerService {
     const relType = this.getType(relSchema);
 
     const serializer = this.findOrCreateSerializer(relType, serializerMap, {
-      projection: this.getVisibleAttributes(relSchema),
-      include: 10,
+      projection: this.getVisibleAttributesOrSparse(relSchema),
     });
     const relator = new Relator((data) => data[relation.dataKey], serializer);
     parentSerializer.setRelators({
@@ -101,10 +108,23 @@ export class SerializerService {
     return type;
   }
 
-  private getVisibleAttributes(
+  private getVisibleAttributesOrSparse(
     schema: Type<BaseSchema<any>>,
   ): Record<string, 1> {
     const result = {};
+
+    const sparseFields = this.options?.sparseFields;
+
+    if (sparseFields) {
+      const type = this.getType(schema);
+      if (type in sparseFields) {
+        for (const field of sparseFields[type]) {
+          result[field] = 1;
+        }
+        return result;
+      }
+    }
+
     const attributes = this.getAttributes(schema);
     for (const attrib of attributes) {
       result[attrib.name] = 1;
