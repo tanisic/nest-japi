@@ -18,6 +18,7 @@ import { JsonApiModuleOptions } from "./json-api.module";
 import { ResourceOptions } from "../decorators/resource.decorator";
 import { Schemas } from "../schema/types";
 import { ControllerFactory } from "../controller/controller-factory";
+import { SerializerService } from "../serializer/serializer.service";
 
 export interface JsonApiResourceModuleOptions {
   resource: Type<BaseResource>;
@@ -66,6 +67,7 @@ export class JsonApiResourceModule {
         resourceOptionsProvider,
         allOptionsProvider,
         schemasProvider,
+        SerializerService,
         // SortParamService,
         // PaginateParamService,
       ],

@@ -8,6 +8,7 @@ export * from "./controller/controller-bindings";
 export * from "./controller/controller-factory";
 export * from "./controller/types";
 export * from "./decorators/attribute.decorator";
+export * from "./decorators/relation.decorator";
 export * from "./decorators/resource.decorator";
 export * from "./decorators/schema.decorator";
 export * from "./helpers/index";
