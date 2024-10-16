@@ -6,7 +6,7 @@ import { BaseSchema } from "../schema/base-schema";
 
 export interface SchemaOptions {
   entity: EntityName<unknown>;
-  jsonapiType?: string;
+  jsonapiType: string;
 }
 
 export const Schema = (options: SchemaOptions): ClassDecorator => {
@@ -18,11 +18,7 @@ export const Schema = (options: SchemaOptions): ClassDecorator => {
       );
     }
 
-    Reflect.defineMetadata(
-      JSONAPI_SCHEMA_TYPE,
-      options?.jsonapiType || snakeCase(target.name),
-      target,
-    );
+    Reflect.defineMetadata(JSONAPI_SCHEMA_TYPE, options.jsonapiType, target);
 
     Reflect.defineMetadata(JSONAPI_SCHEMA_ENTITY_CLASS, options.entity, target);
   };
