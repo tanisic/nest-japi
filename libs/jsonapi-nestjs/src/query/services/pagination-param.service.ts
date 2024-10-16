@@ -11,6 +11,7 @@ const paginationSchema = z
     number: z.coerce.number().int(),
     size: z.coerce.number().int(),
   })
+  .strict()
   .or(z.undefined());
 
 @Injectable()

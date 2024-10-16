@@ -1,7 +1,14 @@
 import { ApiResponse } from '@nestjs/swagger';
 import { BaseResource, Resource, SerializerService } from 'jsonapi-nestjs';
 import { UserSchema } from 'src/schemas/UserSchema';
-import { Linker, Paginator, Relator, Serializer } from 'ts-japi';
+import {
+  ErrorSerializer,
+  JapiError,
+  Linker,
+  Paginator,
+  Relator,
+  Serializer,
+} from 'ts-japi';
 
 @Resource({
   schemas: { schema: UserSchema },
@@ -12,6 +19,11 @@ export class UserResource extends BaseResource {
     super();
   }
   public override getAll(query: any) {
+    throw new JapiError({
+      status: '404',
+      detail: 'test detail',
+      source: { pointer: 'filter' },
+    });
     return this.serializerService.serialize(
       {
         id: 12,

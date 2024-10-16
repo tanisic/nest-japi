@@ -10,6 +10,7 @@ import {
   Param,
   Body,
   Controller,
+  UseFilters,
 } from "@nestjs/common";
 import {
   PARAMTYPES_METADATA,
@@ -27,6 +28,7 @@ import { controllerBindings } from "./controller-bindings";
 import { MethodName } from "./types";
 import { ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
+import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -210,6 +212,7 @@ export class ControllerFactory {
 
   private applyControllerDecorator(): void {
     ApiTags(snakeCase(this.controllerClass.name))(this.controllerClass);
+    UseFilters(JsonApiExceptionFilter)(this.controllerClass);
     Controller(this.options?.path || snakeCase(this.controllerClass.name))(
       this.controllerClass,
     );
