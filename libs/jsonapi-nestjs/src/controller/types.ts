@@ -1,5 +1,6 @@
 import { PipeTransform, RequestMethod } from "@nestjs/common";
 import { Type } from "@nestjs/common/interfaces";
+import { Schemas } from "../schema/types";
 
 export type MethodName =
   | "getAll"
@@ -28,6 +29,7 @@ export interface Binding<T extends MethodName> {
   path: string;
   method: MapNameToTypeMethod[T];
   name: T;
+  schema: keyof Schemas;
   implementation: any[T];
   parameters: {
     decorator: (

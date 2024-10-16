@@ -19,13 +19,14 @@ import {
 import { RouteParamtypes } from "@nestjs/common/enums/route-paramtypes.enum";
 import { snakeCase } from "es-toolkit";
 import {
+  CURRENT_METHOD_SCHEMA,
   JSONAPI_RESOURCE_OPTIONS,
   JSONAPI_RESOURCE_SCHEMAS,
 } from "../constants";
 import { ResourceOptions } from "../decorators/resource.decorator";
 import { BaseResource } from "../resource/base-resource";
 import { controllerBindings } from "./controller-bindings";
-import { MethodName } from "./types";
+import { Binding, MethodName } from "./types";
 import { ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
@@ -91,7 +92,7 @@ export class ControllerFactory {
   }
 
   private defineControllerMethod(methodName: string): void {
-    const { name, implementation } = controllerBindings[methodName];
+    const { name, implementation, schema } = controllerBindings[methodName];
 
     if (
       !Object.prototype.hasOwnProperty.call(
@@ -113,7 +114,23 @@ export class ControllerFactory {
         enumerable: true,
         configurable: true,
       });
+
+      this.bindSchemaToControllerMethod(controllerBindings[methodName]);
     }
+  }
+
+  private bindSchemaToControllerMethod(binding: Binding<any>) {
+    const schemas = Reflect.getMetadata(
+      JSONAPI_RESOURCE_SCHEMAS,
+      this.controllerClass,
+    );
+
+    Reflect.defineMetadata(
+      CURRENT_METHOD_SCHEMA,
+      schemas.schema,
+      this.controllerClass.prototype,
+      binding.name,
+    );
   }
 
   private bindRouteMethod(methodName: MethodName): void {

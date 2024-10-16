@@ -8,6 +8,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.GET,
     name: "getAll",
     path: "/",
+    schema: "schema",
     implementation: JsonBaseController.prototype.getAll,
     parameters: [
       {
@@ -20,6 +21,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.GET,
     name: "getOne",
     path: `:${PARAMS_RESOURCE_ID}`,
+    schema: "schema",
     implementation: JsonBaseController.prototype.getOne,
     parameters: [
       {
@@ -37,6 +39,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.DELETE,
     name: "deleteOne",
     path: `:${PARAMS_RESOURCE_ID}`,
+    schema: "schema",
     implementation: JsonBaseController.prototype.deleteOne,
     parameters: [
       {
@@ -50,6 +53,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.POST,
     name: "postOne",
     path: "/",
+    schema: "createSchema",
     implementation: JsonBaseController.prototype.postOne,
     parameters: [
       {
@@ -62,6 +66,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.PATCH,
     name: "patchOne",
     path: `:${PARAMS_RESOURCE_ID}`,
+    schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchOne,
     parameters: [
       {
@@ -79,6 +84,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
     name: "getRelationship",
     method: RequestMethod.GET,
+    schema: "schema",
     implementation: JsonBaseController.prototype.getRelationship,
     parameters: [
       {
@@ -97,6 +103,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
     name: "postRelationship",
     method: RequestMethod.POST,
+    schema: "createSchema",
     implementation: JsonBaseController.prototype["postRelationship"],
     parameters: [
       {
@@ -119,6 +126,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
     name: "deleteRelationship",
     method: RequestMethod.DELETE,
+    schema: "schema",
     implementation: JsonBaseController.prototype["deleteRelationship"],
     parameters: [
       {
@@ -141,6 +149,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
     name: "patchRelationship",
     method: RequestMethod.PATCH,
+    schema: "updateSchema",
     implementation: JsonBaseController.prototype["patchRelationship"],
     parameters: [
       {
