@@ -11,6 +11,8 @@ import {
   Body,
   Controller,
   UseFilters,
+  Injectable,
+  UsePipes,
 } from "@nestjs/common";
 import {
   PARAMTYPES_METADATA,
@@ -30,6 +32,7 @@ import { Binding, MethodName } from "./types";
 import { ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
+import { QueryPipe } from "../query";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -43,6 +46,7 @@ const allowedMethods: MethodName[] = [
   "deleteRelationship",
 ];
 
+@Injectable()
 export class ControllerFactory {
   private resource: Type<BaseResource>;
   private controllerClass: Type<BaseResource>;
@@ -133,6 +137,16 @@ export class ControllerFactory {
     );
   }
 
+  private getSchemaFromControllerMethod(methodName: MethodName) {
+    const binding = controllerBindings[methodName];
+    const schemas = Reflect.getMetadata(
+      JSONAPI_RESOURCE_SCHEMAS,
+      this.controllerClass,
+    ) as Schemas;
+
+    return schemas[binding.schema];
+  }
+
   private bindRouteMethod(methodName: MethodName): void {
     const { name, path, method } = controllerBindings[methodName];
     const descriptor = Reflect.getOwnPropertyDescriptor(
@@ -146,8 +160,11 @@ export class ControllerFactory {
       );
     }
 
+    const schema = this.getSchemaFromControllerMethod(methodName);
+
     switch (method) {
       case RequestMethod.GET:
+        UsePipes(QueryPipe)(this.controllerClass.prototype, name, descriptor);
         Get(path)(this.controllerClass.prototype, name, descriptor);
         break;
       case RequestMethod.DELETE:
@@ -173,20 +190,19 @@ export class ControllerFactory {
       name,
     );
 
+    const schema = this.getSchemaFromControllerMethod(methodName);
+
     for (const paramKey in parameters) {
       const parameter = parameters[paramKey];
-      const { property, decorator } = parameter;
+      const { property, decorator, mixins } = parameter;
 
-      const descriptor = Reflect.getOwnPropertyDescriptor(
-        this.controllerClass.prototype,
-        name,
-      );
+      const resolvedPipes = mixins.map((mixin) => mixin(schema));
 
       if (paramsMetadata) {
         this.injectPipesIfNeeded(paramsMetadata, decorator);
       }
 
-      decorator(property)(
+      decorator(property, ...resolvedPipes)(
         this.controllerClass.prototype,
         name,
         parseInt(paramKey, 10),

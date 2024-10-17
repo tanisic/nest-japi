@@ -1,4 +1,4 @@
-import { Global, Module } from "@nestjs/common";
+import { Global, Inject, Module } from "@nestjs/common";
 import type {
   DynamicModule,
   FactoryProvider,
@@ -13,6 +13,7 @@ import { JsonApiResourceModule } from "./json-api-resource.module";
 import { JSONAPI_DECORATOR_OPTIONS } from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
+import { BaseSchema, getSchemasFromResource, getType } from "../schema";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
@@ -28,9 +29,18 @@ export class JsonApiModule implements NestModule {
   }
 
   static forRoot(options: JsonApiModuleOptions): DynamicModule {
+    const resourceTypeMap = new Map<string, Type<BaseSchema<any>>>();
     const modules: DynamicModule[] = [];
-
     for (const resource of options.resources) {
+      const schemas = getSchemasFromResource(resource);
+      const schema = schemas.schema;
+      const type = getType(schema);
+      if (resourceTypeMap.has(type)) {
+        throw new Error(
+          `JSON:API type "${type}" already exists on schema ${resourceTypeMap.get(type).name}`,
+        );
+      }
+      resourceTypeMap.set(type, schema);
       const resourceModule = JsonApiResourceModule.forRoot({ resource });
       modules.push(resourceModule);
     }

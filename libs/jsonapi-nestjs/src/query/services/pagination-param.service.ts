@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { JsonApiOptions } from "../../modules/json-api-options";
 import { z } from "zod";
+import { JapiError } from "ts-japi";
+import { DEFAULT_PAGINATION_SIZE } from "../../constants";
 
 export type Pagination = {
-  page: number;
-  perPage: number;
+  number: number;
+  size: number;
 };
 const paginationSchema = z
   .object({
@@ -15,14 +17,14 @@ const paginationSchema = z
   .or(z.undefined());
 
 @Injectable()
-export class PaginateParamService {
+export class PaginateService {
   maximumPerPage: number;
 
   constructor(private options: JsonApiOptions) {
     this.maximumPerPage =
-      this.options.global.maxPaginationSize ||
       this.options.resource.maxPaginationSize ||
-      50;
+      this.options.global.maxPaginationSize ||
+      DEFAULT_PAGINATION_SIZE;
   }
 
   transform(value: any): Pagination | null {
@@ -30,21 +32,34 @@ export class PaginateParamService {
       return null;
     }
 
-    const parse = paginationSchema.safeParse(value?.page);
+    const parse = paginationSchema.safeParse(value);
 
     if (parse.success) {
       if (!parse.data) return null;
       if (parse.data.size > this.maximumPerPage) {
-        throw new BadRequestException(
-          `Maximum page[size] is ${this.maximumPerPage}`,
-        );
+        throw new JapiError({
+          status: "400",
+          detail: `Maxiumum page size iz ${this.maximumPerPage} items per page.`,
+          source: {
+            parameter: "page",
+          },
+        });
       }
 
+      const { number, size } = parse.data;
+
       return {
-        page: parse.data.number,
-        perPage: parse.data.size,
+        number,
+        size,
       };
     }
-    throw new BadRequestException(parse.error);
+    throw new JapiError({
+      status: "400",
+      title: parse.error.name,
+      detail: parse.error.errors[0].message,
+      source: {
+        parameter: "page",
+      },
+    });
   }
 }

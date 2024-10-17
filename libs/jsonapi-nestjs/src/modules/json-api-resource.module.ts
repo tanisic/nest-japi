@@ -19,6 +19,9 @@ import { ResourceOptions } from "../decorators/resource.decorator";
 import { Schemas } from "../schema/types";
 import { ControllerFactory } from "../controller/controller-factory";
 import { SerializerService } from "../serializer/serializer.service";
+import { PaginateService, QueryPipe } from "../query";
+import { SortService } from "../query/services/sort.service";
+import { SparseFieldsService } from "../query/services/sparse-fields.service";
 
 export interface JsonApiResourceModuleOptions {
   resource: Type<BaseResource>;
@@ -53,6 +56,21 @@ export class JsonApiResourceModule {
         new JsonApiOptions({ global, resource }),
     };
 
+    const sortServiceProvider: FactoryProvider<SortService> = {
+      provide: SortService,
+      inject: [CURRENT_SCHEMAS],
+      useFactory: (schemas: Schemas) => {
+        return new SortService(schemas.schema);
+      },
+    };
+
+    const sparseFieldsServiceProvider: FactoryProvider<SparseFieldsService> = {
+      provide: SparseFieldsService,
+      inject: [JsonApiOptions],
+      useFactory: (options: JsonApiOptions) => {
+        return new SparseFieldsService(options);
+      },
+    };
     const module = namedClass(
       `JsonApi${ResourceClass.name}Module`,
       JsonApiResourceModule,
@@ -68,8 +86,10 @@ export class JsonApiResourceModule {
         allOptionsProvider,
         schemasProvider,
         SerializerService,
-        // SortParamService,
-        // PaginateParamService,
+        sparseFieldsServiceProvider,
+        sortServiceProvider,
+        QueryPipe,
+        PaginateService,
       ],
       controllers: [ResourceClass],
     };

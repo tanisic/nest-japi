@@ -15,10 +15,6 @@ export class PictureResource extends BaseResource {
 
   public override getOne(id: string | number, query: any) {
     const target = Object.getPrototypeOf(this);
-    console.log({
-      target,
-      areSame: target === Object.getPrototypeOf(this),
-    });
 
     const keys = Reflect.getMetadataKeys(target);
     keys.forEach((key) =>

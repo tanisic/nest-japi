@@ -17,3 +17,5 @@ export const PARAMS_RESOURCE_ID = "id";
 export const PARAMS_RELATION_ID = "relId";
 export const PARAMS_RELATION_NAME = "relName";
 export const X_REQUEST_ID_NAME = "X-Request-Id";
+
+export const DEFAULT_PAGINATION_SIZE = 100;
