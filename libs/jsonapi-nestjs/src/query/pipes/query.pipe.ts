@@ -14,6 +14,7 @@ import {
   PaginateService,
   Pagination,
 } from "../services/pagination-param.service";
+import { IncludeService } from "../services/include.service";
 
 export interface QueryParams {
   sort: OrderDefinition<any> | null;
@@ -32,6 +33,9 @@ export class QueryPipe implements PipeTransform<unknown, QueryParams> {
   @Inject(PaginateService)
   private paginateService: PaginateService;
 
+  @Inject(IncludeService)
+  private includeService: IncludeService;
+
   transform(value: any, metadata: ArgumentMetadata) {
     if (metadata.type !== "query") {
       return value;
@@ -41,6 +45,7 @@ export class QueryPipe implements PipeTransform<unknown, QueryParams> {
       sort: this.sortService.transform(value.sort),
       fields: this.sparseFieldsService.transform(value.fields),
       page: this.paginateService.transform(value.page),
+      include: this.includeService.transform(value.include),
     };
   }
 }

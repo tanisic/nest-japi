@@ -3,8 +3,11 @@
  */
 
 export * from "./mixins/query.mixin";
-export * from "./pipes/paginate.pipe";
 export * from "./pipes/query.pipe";
+export * from "./providers/include.provider";
+export * from "./providers/sort.provider";
+export * from "./providers/sparse-fields.provider";
+export * from "./services/include.service";
 export * from "./services/pagination-param.service";
 export * from "./services/sort.service";
 export * from "./services/sparse-fields.service";
