@@ -17,6 +17,7 @@ export default defineConfig({
     "@nestjs/swagger",
     "reflect-metadata",
     "zod",
+    "express",
   ],
   watch: true,
 });

@@ -9,3 +9,10 @@ export const namedClass = (
       }
     },
   })[name];
+
+export function concatenatePaths(...paths: string[]): string {
+  return paths
+    .map((path) => path.trim().replace(/^\/+|\/+$/g, ""))
+    .filter(Boolean)
+    .join("/");
+}

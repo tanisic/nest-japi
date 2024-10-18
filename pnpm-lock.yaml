@@ -128,6 +128,9 @@ importers:
       es-toolkit:
         specifier: ^1.24.0
         version: 1.24.0
+      qs:
+        specifier: ^6.13.0
+        version: 6.13.0
       ts-japi:
         specifier: ^1.11.4
         version: 1.11.4
@@ -159,6 +162,9 @@ importers:
       '@types/express':
         specifier: ^4.17.17
         version: 4.17.21
+      '@types/qs':
+        specifier: ^6.9.16
+        version: 6.9.16
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0

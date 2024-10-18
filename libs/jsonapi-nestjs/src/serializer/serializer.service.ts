@@ -1,22 +1,30 @@
-import { Injectable, Scope, Type } from "@nestjs/common";
+import { Inject, Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
 import { RelationAttribute } from "../decorators/relation.decorator";
-import { Relator, Serializer, SerializerOptions } from "ts-japi";
+import { Paginator, Relator, Serializer, SerializerOptions } from "ts-japi";
 import {
   getAttributes,
   getRelations,
   getType,
 } from "../schema/helpers/schema-helper";
+import { Pagination } from "../query";
+import { Request } from "express";
+import { REQUEST } from "@nestjs/core";
+import { concatenatePaths } from "../helpers";
+import { stringify } from "qs";
 
 export interface SerializeCustomOptions {
   include?: string[];
   sparseFields?: Record<string, string[]>;
+  page?: Pagination;
 }
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class SerializerService {
   private options?: SerializeCustomOptions | undefined;
   private serializerMap = new Map<string, Serializer>();
+  @Inject(REQUEST)
+  private request: Request;
 
   serialize(
     data: any,
@@ -28,6 +36,46 @@ export class SerializerService {
     return resolved.serialize(data);
   }
 
+  private createPaginator() {
+    const paginate = this.options.page;
+    if (paginate) {
+      const req = this.request;
+      const baseUrl = `${req.protocol}://${req.get("Host")}`;
+
+      const params: Record<string, any> = { ...req.query };
+      delete params.page;
+
+      const prevParams = {
+        ...params,
+        page: { ...paginate, number: paginate.number - 1 },
+      };
+
+      const nextParams = {
+        ...params,
+        page: { ...paginate, number: paginate.number + 1 },
+      };
+      const prevUrl = concatenatePaths(
+        baseUrl,
+        req.path,
+        `?${stringify(prevParams)}`,
+      );
+      const nextUrl = concatenatePaths(
+        baseUrl,
+        req.path,
+        `?${stringify(nextParams)}`,
+      );
+      const hasPrev = paginate.number > 1;
+      return new Paginator(() => {
+        return {
+          prev: hasPrev ? prevUrl : null,
+          next: nextUrl,
+          first: null,
+          last: null,
+        };
+      });
+    }
+  }
+
   private resolve(schema: Type<BaseSchema<any>>) {
     const type = getType(schema);
     const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
@@ -35,6 +83,9 @@ export class SerializerService {
     const rootSerializer = this.findOrCreateSerializer(type, {
       projection: visibleAttributes,
       include: this.options?.include || [],
+      linkers: {
+        paginator: this.createPaginator(),
+      },
     });
 
     for (const relation of relations) {

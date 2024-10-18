@@ -12,12 +12,6 @@ export class UserResource extends BaseResource {
     super();
   }
   public override getAll(query: any) {
-    return query;
-    throw new JapiError({
-      status: '404',
-      detail: 'test detail',
-      source: { pointer: 'filter' },
-    });
     return this.serializerService.serialize(
       {
         id: 12,
@@ -39,7 +33,9 @@ export class UserResource extends BaseResource {
       },
       UserSchema,
       {
-        include: ['pictures.workplaces'],
+        include: query.include || [],
+        sparseFields: query.fields,
+        page: query.page,
       },
     );
   }

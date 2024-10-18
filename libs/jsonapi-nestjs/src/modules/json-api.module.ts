@@ -14,6 +14,7 @@ import { JSONAPI_DECORATOR_OPTIONS } from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
 import { BaseSchema, getSchemasFromResource, getType } from "../schema";
+import { NestApplication } from "@nestjs/core";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
