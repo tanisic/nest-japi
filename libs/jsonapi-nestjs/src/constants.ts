@@ -12,6 +12,7 @@ export const JSONAPI_SCHEMA_RELATIONS = Symbol();
 export const CURRENT_METHOD_SCHEMA = Symbol();
 export const CURRENT_SCHEMAS = Symbol();
 export const CURRENT_ENTITY_METADATA = Symbol();
+export const SCHEMA_REPOSITORY = Symbol();
 
 export const PARAMS_RESOURCE_ID = "id";
 export const PARAMS_RELATION_ID = "relId";

@@ -15,7 +15,7 @@ import { stringify } from "qs";
 
 export interface SerializeCustomOptions {
   include?: string[];
-  sparseFields?: Record<string, string[]>;
+  fields?: Record<string, string[]>;
   page?: Pagination;
 }
 
@@ -158,7 +158,7 @@ export class SerializerService {
   ): Record<string, 1> {
     const result = {};
 
-    const sparseFields = this.options?.sparseFields;
+    const sparseFields = this.options?.fields;
 
     if (sparseFields) {
       const type = getType(schema);

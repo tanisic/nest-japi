@@ -10,11 +10,15 @@ import type {
 } from "@nestjs/common";
 import { BaseResource } from "../resource/base-resource";
 import { JsonApiResourceModule } from "./json-api-resource.module";
-import { JSONAPI_DECORATOR_OPTIONS } from "../constants";
+import { JSONAPI_DECORATOR_OPTIONS, SCHEMA_REPOSITORY } from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
-import { BaseSchema, getSchemasFromResource, getType } from "../schema";
-import { NestApplication } from "@nestjs/core";
+import {
+  BaseSchema,
+  getRelations,
+  getSchemasFromResource,
+  getType,
+} from "../schema";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
@@ -41,10 +45,17 @@ export class JsonApiModule implements NestModule {
           `JSON:API type "${type}" already exists on schema ${resourceTypeMap.get(type).name}`,
         );
       }
-      resourceTypeMap.set(type, schema);
+      collectSchemas(schema, resourceTypeMap);
       const resourceModule = JsonApiResourceModule.forRoot({ resource });
       modules.push(resourceModule);
     }
+
+    const schemaRepositoryMapProvider: FactoryProvider<
+      Map<string, Type<BaseSchema<any>>>
+    > = {
+      provide: SCHEMA_REPOSITORY,
+      useFactory: () => new Map(resourceTypeMap),
+    };
 
     const globalOptionsProvider: ValueProvider<JsonApiModuleOptions> = {
       provide: JSONAPI_DECORATOR_OPTIONS,
@@ -60,6 +71,7 @@ export class JsonApiModule implements NestModule {
     const providers = [
       globalOptionsProvider,
       entityManagerProvider,
+      schemaRepositoryMapProvider,
       ...(options.providers ?? []),
     ];
 
@@ -73,4 +85,24 @@ export class JsonApiModule implements NestModule {
       exports,
     };
   }
+}
+
+function collectSchemas(
+  schema: Type<BaseSchema<any>>,
+  schemaMap: Map<string, Type<BaseSchema<any>>>,
+) {
+  const type = getType(schema);
+
+  schemaMap.set(type, schema);
+
+  const relations = getRelations(schema);
+
+  for (const relation of relations) {
+    const schema = relation.schema();
+    const type = getType(schema);
+    if (schemaMap.has(type)) continue;
+    collectSchemas(schema, schemaMap);
+  }
+
+  return schemaMap;
 }

@@ -1,11 +1,5 @@
-import {
-  BaseSchema,
-  getAttribute,
-  getSchemasFromResource,
-  getType,
-} from "../../schema";
+import { BaseSchema, getAttribute } from "../../schema";
 import { Type } from "@nestjs/common";
-import { JsonApiOptions } from "../../modules/json-api-options";
 import { JapiError } from "ts-japi";
 
 export interface SparseFields {
@@ -13,18 +7,7 @@ export interface SparseFields {
 }
 
 export class SparseFieldsService {
-  private globalSchemaMap: Map<string, Type<BaseSchema<any>>>;
-
-  constructor(private options: JsonApiOptions) {
-    this.globalSchemaMap = new Map();
-
-    for (const resource of this.options.global.resources) {
-      const schemas = getSchemasFromResource(resource);
-      const viewSchema = schemas.schema;
-      const type = getType(viewSchema);
-      this.globalSchemaMap.set(type, viewSchema);
-    }
-  }
+  constructor(private globalSchemaMap: Map<string, Type<BaseSchema<any>>>) {}
 
   transform(value: Record<string, string>): SparseFields {
     if (!value) {
