@@ -19,10 +19,12 @@ import { ResourceOptions } from "../decorators/resource.decorator";
 import { Schemas } from "../schema/types";
 import { ControllerFactory } from "../controller/controller-factory";
 import { SerializerService } from "../serializer/serializer.service";
-import { PaginateService, QueryPipe } from "../query";
+import { PaginateService, QueryAllPipe } from "../query";
 import { includeServiceProvider } from "../query/providers/include.provider";
 import { sortServiceProvider } from "../query/providers/sort.provider";
 import { sparseFieldsServiceProvider } from "../query/providers/sparse-fields.provider";
+import { QueryOnePipe } from "../query/pipes/query-one.pipe";
+import { getSchemasFromResource } from "../schema";
 
 export interface JsonApiResourceModuleOptions {
   resource: Type<BaseResource>;
@@ -35,10 +37,7 @@ export class JsonApiResourceModule {
     const controllerFactory = new ControllerFactory(resource);
     const ResourceClass = controllerFactory.createController();
 
-    const schemas: Schemas = Reflect.getMetadata(
-      JSONAPI_RESOURCE_SCHEMAS,
-      ResourceClass,
-    );
+    const schemas: Schemas = getSchemasFromResource(ResourceClass);
 
     const schemasProvider: ValueProvider<Schemas> = {
       provide: CURRENT_SCHEMAS,
@@ -75,7 +74,8 @@ export class JsonApiResourceModule {
         includeServiceProvider,
         sparseFieldsServiceProvider,
         sortServiceProvider,
-        QueryPipe,
+        QueryAllPipe,
+        QueryOnePipe,
         PaginateService,
       ],
       controllers: [ResourceClass],

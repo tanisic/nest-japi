@@ -32,7 +32,6 @@ import { Binding, MethodName } from "./types";
 import { ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
-import { QueryPipe } from "../query";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -148,7 +147,7 @@ export class ControllerFactory {
   }
 
   private bindRouteMethod(methodName: MethodName): void {
-    const { name, path, method } = controllerBindings[methodName];
+    const { name, path, method, pipes } = controllerBindings[methodName];
     const descriptor = Reflect.getOwnPropertyDescriptor(
       this.controllerClass.prototype,
       name,
@@ -160,11 +159,8 @@ export class ControllerFactory {
       );
     }
 
-    const schema = this.getSchemaFromControllerMethod(methodName);
-
     switch (method) {
       case RequestMethod.GET:
-        UsePipes(QueryPipe)(this.controllerClass.prototype, name, descriptor);
         Get(path)(this.controllerClass.prototype, name, descriptor);
         break;
       case RequestMethod.DELETE:
@@ -179,6 +175,10 @@ export class ControllerFactory {
         break;
       default:
         throw new Error(`Method '${method}' unsupported`);
+    }
+
+    if (pipes) {
+      UsePipes(...pipes)(this.controllerClass.prototype, name, descriptor);
     }
   }
 

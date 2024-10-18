@@ -1,40 +1,73 @@
-import { Dependencies, Inject, Injectable, Param, Query } from "@nestjs/common";
-import { BaseResource } from "../resource/base-resource";
+import { Inject } from "@nestjs/common";
 import { MethodName } from "./types";
+import { SerializerService } from "../serializer/serializer.service";
+import { EntityManager, serialize } from "@mikro-orm/core";
+import { QueryParams } from "../query";
+import type { Schemas } from "../schema/types";
+import { CURRENT_SCHEMAS } from "../constants";
+import { getEntityFromSchema } from "../schema";
 
-type RequestMethodeObject = { [k in MethodName]: (...arg: any[]) => any };
+type RequestMethodes = { [k in MethodName]: (...arg: any[]) => any };
 
-export class JsonBaseController<R extends BaseResource>
-  implements RequestMethodeObject
-{
-  getAll(query: any) {
-    return query;
+export class JsonBaseController implements RequestMethodes {
+  @Inject(SerializerService)
+  protected serializerService: SerializerService;
+
+  @Inject(EntityManager)
+  protected em: EntityManager;
+
+  @Inject(CURRENT_SCHEMAS)
+  protected currentSchemas: Schemas;
+
+  async getAll(query: QueryParams, ..._rest: any[]): Promise<any> {
+    const entity = getEntityFromSchema(this.currentSchemas.schema);
+    const [data, count] = await this.em.findAndCount(
+      entity,
+      {},
+      {
+        populate: query.include as any,
+        offset: query.page.number * query.page.size,
+        limit: query.page.size,
+        orderBy: query.sort,
+      },
+    );
+    const unwrapped = serialize(data, {
+      populate: query.include as any,
+      forceObject: true,
+    });
+
+    return this.serializerService.serialize(
+      unwrapped,
+      this.currentSchemas.schema,
+      {
+        ...(query as any),
+      },
+    );
   }
-  getOne(id: string | number, query: any) {
+  getOne(id: string | number, query: QueryParams, ...rest: any[]) {
     return { id, query };
   }
   // Get a related resource or relationship for a specific resource
-  getRelationship(...args: any[]) {
-    const [id, relationshipName] = args;
+  getRelationship(id: string | number, relationName: string, ...rest: any[]) {
     // Simulated relationship fetch based on the resource ID and relationship name
-    return { id, relationshipName, relationshipData: "Related data" };
+    return { id };
   }
 
   // Delete a single resource by ID
-  deleteOne(...args: any[]) {
-    const [id] = args;
+  deleteOne(id: string | number, ...rest: any[]) {
     // Simulated deletion of a resource
     return { id, message: `Resource with ID ${id} deleted.` };
   }
 
   // Delete a specific relationship for a resource
-  deleteRelationship(...args: any[]) {
-    const [id, relationshipName] = args;
-    // Simulated deletion of a relationship
+  deleteRelationship(
+    id: string | number,
+    relationName: string,
+    ...rest: any[]
+  ) {
     return {
       id,
-      relationshipName,
-      message: `Relationship ${relationshipName} for resource with ID ${id} deleted.`,
+      message: `Relationship  for resource with ID ${id} deleted.`,
     };
   }
 

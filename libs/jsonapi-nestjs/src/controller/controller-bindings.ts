@@ -2,7 +2,8 @@ import { RequestMethod, Query, Param, Body } from "@nestjs/common";
 import { JsonBaseController } from "./base-controller";
 import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
-import { queryMixin } from "../query/mixins/query.mixin";
+import { QueryAllPipe } from "../query";
+import { QueryOnePipe } from "../query/pipes/query-one.pipe";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -11,6 +12,7 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "schema",
     implementation: JsonBaseController.prototype.getAll,
+    pipes: [QueryAllPipe],
     parameters: [
       {
         decorator: Query,
@@ -24,6 +26,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "schema",
     implementation: JsonBaseController.prototype.getOne,
+    pipes: [QueryOnePipe],
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,

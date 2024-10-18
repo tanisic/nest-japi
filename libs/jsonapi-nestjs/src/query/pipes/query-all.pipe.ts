@@ -20,10 +20,11 @@ export interface QueryParams {
   sort: OrderDefinition<any> | null;
   fields: SparseFields;
   page: Pagination | null;
+  include: string[] | null;
 }
 
 @Injectable()
-export class QueryPipe implements PipeTransform<unknown, QueryParams> {
+export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
   @Inject(SortService)
   private sortService: SortService;
 
@@ -36,7 +37,7 @@ export class QueryPipe implements PipeTransform<unknown, QueryParams> {
   @Inject(IncludeService)
   private includeService: IncludeService;
 
-  transform(value: any, metadata: ArgumentMetadata) {
+  transform(value: any, metadata: ArgumentMetadata): QueryParams {
     if (metadata.type !== "query") {
       return value;
     }

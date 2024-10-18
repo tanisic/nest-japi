@@ -4,12 +4,14 @@ import {
   JSONAPI_SCHEMA_ATTRIBUTES,
   JSONAPI_SCHEMA_TYPE,
   JSONAPI_RESOURCE_SCHEMAS,
+  JSONAPI_SCHEMA_ENTITY_CLASS,
 } from "../../constants";
 import { SchemaAttribute } from "../../decorators/attribute.decorator";
 import { RelationAttribute } from "../../decorators/relation.decorator";
 import { BaseSchema } from "../base-schema";
 import { BaseResource } from "../../resource/base-resource";
 import { Schemas } from "../types";
+import { EntityClass } from "@mikro-orm/core";
 
 export function getRelations(
   schema: Type<BaseSchema<any>>,
@@ -51,6 +53,13 @@ export function getType(schema: Type<BaseSchema<any>>): string {
   }
 
   return type;
+}
+
+export function getEntityFromSchema(
+  schema: Type<BaseSchema<any>>,
+): EntityClass<any> {
+  const entity = Reflect.getMetadata(JSONAPI_SCHEMA_ENTITY_CLASS, schema);
+  return entity;
 }
 
 export function getSchemasFromResource(resource: Type<BaseResource>): Schemas {

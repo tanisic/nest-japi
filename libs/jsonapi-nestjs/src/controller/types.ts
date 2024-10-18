@@ -34,6 +34,7 @@ export interface Binding<T extends MethodName> {
   name: T;
   schema: keyof Schemas;
   implementation: any[T];
+  pipes?: (Type<PipeTransform> | PipeTransform)[];
   parameters: {
     decorator: (
       property?: string,

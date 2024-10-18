@@ -2,27 +2,28 @@ import {
   Entity,
   Property,
   PrimaryKey,
+  ManyToOne,
   OneToMany,
   Collection,
 } from '@mikro-orm/core';
-import { Post } from './post.entity';
+import { User } from './user.entity';
 import { Comment } from './comment.entity';
 
-@Entity({ tableName: 'users' })
-export class User {
+@Entity()
+export class Post {
   @PrimaryKey()
   id!: number;
 
-  @Property()
-  name!: string;
+  @Property({ type: 'varchar', length: 255 })
+  title!: string;
 
-  @Property()
-  email!: string;
+  @Property({ type: 'text' })
+  content!: string;
 
-  @OneToMany(() => Post, (post) => post.author)
-  posts = new Collection<Post>(this);
+  @ManyToOne(() => User)
+  author!: User;
 
-  @OneToMany(() => Comment, (comment) => comment.author)
+  @OneToMany(() => Comment, (comment) => comment.post)
   comments = new Collection<Comment>(this);
 
   @Property({ onCreate: () => new Date() })

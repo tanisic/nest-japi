@@ -1,13 +1,7 @@
 import { Inject, Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
 import { RelationAttribute } from "../decorators/relation.decorator";
-import {
-  Linker,
-  Paginator,
-  Relator,
-  Serializer,
-  SerializerOptions,
-} from "ts-japi";
+import { Paginator, Relator, Serializer, SerializerOptions } from "ts-japi";
 import {
   getAttributes,
   getRelations,
@@ -88,13 +82,26 @@ export class SerializerService {
     }
   }
 
+  private calculateMaxIncludeDepth(includes?: string[]) {
+    let maxLen = 0;
+    if (!includes) return maxLen;
+
+    for (const include of includes) {
+      const splitParts = include.split(".");
+      if (splitParts.length > maxLen) {
+        maxLen = splitParts.length;
+      }
+    }
+    return maxLen;
+  }
+
   private resolve(schema: Type<BaseSchema<any>>) {
     const type = getType(schema);
     const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
     const relations = getRelations(schema);
     const rootSerializer = this.findOrCreateSerializer(type, {
       projection: visibleAttributes,
-      include: this.options?.include || [],
+      include: this.calculateMaxIncludeDepth(this.options.include),
       linkers: {
         paginator: this.createPaginator(),
       },

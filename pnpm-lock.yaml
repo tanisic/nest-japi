@@ -10,15 +10,18 @@ importers:
 
   apps/example-app:
     dependencies:
+      '@faker-js/faker':
+        specifier: ^9.0.3
+        version: 9.0.3
       '@mikro-orm/core':
         specifier: ^6.3.13
         version: 6.3.13
       '@mikro-orm/entity-generator':
         specifier: ^6.3.13
-        version: 6.3.13(@mikro-orm/core@6.3.13)
+        version: 6.3.13(@mikro-orm/core@6.3.13)(pg@8.13.0)
       '@mikro-orm/migrations':
         specifier: ^6.3.13
-        version: 6.3.13(@mikro-orm/core@6.3.13)(@types/node@20.16.11)
+        version: 6.3.13(@mikro-orm/core@6.3.13)(@types/node@20.16.11)(pg@8.13.0)
       '@mikro-orm/nestjs':
         specifier: ^6.0.2
         version: 6.0.2(@mikro-orm/core@6.3.13)(@nestjs/common@10.4.4(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.4(@nestjs/common@10.4.4(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@10.4.4)(reflect-metadata@0.2.2)(rxjs@7.8.1))
@@ -58,7 +61,10 @@ importers:
     devDependencies:
       '@mikro-orm/cli':
         specifier: ^6.3.13
-        version: 6.3.13
+        version: 6.3.13(pg@8.13.0)
+      '@mikro-orm/seeder':
+        specifier: ^6.3.13
+        version: 6.3.13(@mikro-orm/core@6.3.13)
       '@nestjs/cli':
         specifier: ^10.0.0
         version: 10.4.5(@swc/core@1.7.35)
@@ -162,6 +168,9 @@ importers:
       '@types/express':
         specifier: ^4.17.17
         version: 4.17.21
+      '@types/node':
+        specifier: ^20.3.1
+        version: 20.16.11
       '@types/qs':
         specifier: ^6.9.16
         version: 6.9.16
@@ -547,6 +556,10 @@ packages:
     resolution: {integrity: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
+  '@faker-js/faker@9.0.3':
+    resolution: {integrity: sha512-lWrrK4QNlFSU+13PL9jMbMKLJYXDFu3tQfayBsMXX7KL/GiQeqfB1CzHkqD5UHBUtPAuPo6XwGbMFNdVMZObRA==}
+    engines: {node: '>=18.0.0', npm: '>=9.0.0'}
+
   '@fastify/ajv-compiler@3.6.0':
     resolution: {integrity: sha512-LwdXQJjmMD+GwLOkP7TVC68qa+pSSogeWWmznRJ/coyTcfe9qA05AHFSe1eZFwK6q+xVRpChnvFUkf1iYaSZsQ==}
 
@@ -750,6 +763,12 @@ packages:
 
   '@mikro-orm/postgresql@6.3.13':
     resolution: {integrity: sha512-0U2/wW4ff/DNMTNRhe3TE/SHibrI7loPuBQffjHZCWWs8KPjI46EN4oTjvY7LNNOPWzfS+UpxafNHUR+zrfuZQ==}
+    engines: {node: '>= 18.12.0'}
+    peerDependencies:
+      '@mikro-orm/core': ^6.0.0
+
+  '@mikro-orm/seeder@6.3.13':
+    resolution: {integrity: sha512-J7WQhcM/y9+rmuQMPsero20TS/1oLh/gwtb00ykiLeze0AnA82+eXuOtCYa23N+LuV963XD1EgKWRn8yDQAYpw==}
     engines: {node: '>= 18.12.0'}
     peerDependencies:
       '@mikro-orm/core': ^6.0.0
@@ -4259,6 +4278,8 @@ snapshots:
 
   '@eslint/js@8.57.1': {}
 
+  '@faker-js/faker@9.0.3': {}
+
   '@fastify/ajv-compiler@3.6.0':
     dependencies:
       ajv: 8.13.0
@@ -4532,7 +4553,7 @@ snapshots:
 
   '@microsoft/tsdoc@0.15.0': {}
 
-  '@mikro-orm/cli@6.3.13':
+  '@mikro-orm/cli@6.3.13(pg@8.13.0)':
     dependencies:
       '@jercle/yargonaut': 1.1.5
       '@mikro-orm/core': 6.3.13
@@ -4562,7 +4583,7 @@ snapshots:
       mikro-orm: 6.3.13
       reflect-metadata: 0.2.2
 
-  '@mikro-orm/entity-generator@6.3.13(@mikro-orm/core@6.3.13)':
+  '@mikro-orm/entity-generator@6.3.13(@mikro-orm/core@6.3.13)(pg@8.13.0)':
     dependencies:
       '@mikro-orm/core': 6.3.13
       '@mikro-orm/knex': 6.3.13(@mikro-orm/core@6.3.13)(pg@8.13.0)
@@ -4594,7 +4615,7 @@ snapshots:
       - supports-color
       - tedious
 
-  '@mikro-orm/migrations@6.3.13(@mikro-orm/core@6.3.13)(@types/node@20.16.11)':
+  '@mikro-orm/migrations@6.3.13(@mikro-orm/core@6.3.13)(@types/node@20.16.11)(pg@8.13.0)':
     dependencies:
       '@mikro-orm/core': 6.3.13
       '@mikro-orm/knex': 6.3.13(@mikro-orm/core@6.3.13)(pg@8.13.0)
@@ -4637,6 +4658,12 @@ snapshots:
       - sqlite3
       - supports-color
       - tedious
+
+  '@mikro-orm/seeder@6.3.13(@mikro-orm/core@6.3.13)':
+    dependencies:
+      '@mikro-orm/core': 6.3.13
+      fs-extra: 11.2.0
+      globby: 11.1.0
 
   '@nestjs/cli@10.4.5(@swc/core@1.7.35)':
     dependencies:

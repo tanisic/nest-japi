@@ -7,7 +7,6 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EntityGenerator } from '@mikro-orm/entity-generator';
 import { Migrator } from '@mikro-orm/migrations';
 import { UserResource } from './resource/UserResource.controller';
-import { PictureResource } from './resource/PictureResource.controller';
 
 @Module({
   imports: [
@@ -17,13 +16,13 @@ import { PictureResource } from './resource/PictureResource.controller';
       password: 'teambuilding12322',
       user: 'teambuilding',
       port: process.env.POSTGRES_PORT as unknown as number,
-      dbName: 'jsonapi',
+      dbName: 'example-jsonapi',
       schema: 'public',
       entities: ['./dist/**/*.entity.js'],
       entitiesTs: ['./src/**/*.entity.ts'],
       extensions: [EntityGenerator, Migrator],
     }),
-    JsonApiModule.forRoot({ resources: [UserResource, PictureResource] }),
+    JsonApiModule.forRoot({ resources: [UserResource] }),
   ],
   controllers: [AppController],
   providers: [AppService],

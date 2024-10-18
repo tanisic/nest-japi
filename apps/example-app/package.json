@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.0.3",
     "@mikro-orm/core": "^6.3.13",
     "@mikro-orm/entity-generator": "^6.3.13",
     "@mikro-orm/migrations": "^6.3.13",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@mikro-orm/cli": "^6.3.13",
+    "@mikro-orm/seeder": "^6.3.13",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
