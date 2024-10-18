@@ -246,8 +246,6 @@ export class ControllerFactory {
   private applyControllerDecorator(): void {
     ApiTags(snakeCase(this.controllerClass.name))(this.controllerClass);
     UseFilters(JsonApiExceptionFilter)(this.controllerClass);
-    Controller(this.options?.path || snakeCase(this.controllerClass.name))(
-      this.controllerClass,
-    );
+    Controller(this.options.path)(this.controllerClass);
   }
 }

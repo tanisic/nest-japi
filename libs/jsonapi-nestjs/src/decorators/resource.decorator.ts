@@ -6,6 +6,7 @@ import { MethodName } from "../controller/types";
 import { Injectable } from "@nestjs/common";
 import { Schemas } from "../schema/types";
 import { BaseResource } from "../resource/base-resource";
+import { snakeCase } from "es-toolkit";
 
 export interface ResourceOptions {
   schemas: Schemas;
@@ -23,10 +24,15 @@ export const Resource = (options: ResourceOptions): ClassDecorator => {
       );
     }
 
-    Reflect.defineMetadata(JSONAPI_RESOURCE_SCHEMAS, options.schemas, target);
+    const opts: ResourceOptions = {
+      path: snakeCase(target.name),
+      ...options,
+    };
+
+    Reflect.defineMetadata(JSONAPI_RESOURCE_SCHEMAS, opts.schemas, target);
 
     if (options) {
-      Reflect.defineMetadata(JSONAPI_RESOURCE_OPTIONS, options, target);
+      Reflect.defineMetadata(JSONAPI_RESOURCE_OPTIONS, opts, target);
     }
   };
 };

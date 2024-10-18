@@ -1,7 +1,13 @@
 import { Inject, Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
 import { RelationAttribute } from "../decorators/relation.decorator";
-import { Paginator, Relator, Serializer, SerializerOptions } from "ts-japi";
+import {
+  Linker,
+  Paginator,
+  Relator,
+  Serializer,
+  SerializerOptions,
+} from "ts-japi";
 import {
   getAttributes,
   getRelations,
@@ -23,8 +29,15 @@ export interface SerializeCustomOptions {
 export class SerializerService {
   private options?: SerializeCustomOptions | undefined;
   private serializerMap = new Map<string, Serializer>();
-  @Inject(REQUEST)
-  private request: Request;
+
+  constructor(
+    @Inject(REQUEST)
+    private request: Request,
+  ) {
+    this.baseUrl = `${request.protocol}://${request.get("Host")}`;
+  }
+
+  private baseUrl: string;
 
   serialize(
     data: any,
@@ -40,7 +53,6 @@ export class SerializerService {
     const paginate = this.options.page;
     if (paginate) {
       const req = this.request;
-      const baseUrl = `${req.protocol}://${req.get("Host")}`;
 
       const params: Record<string, any> = { ...req.query };
       delete params.page;
@@ -55,12 +67,12 @@ export class SerializerService {
         page: { ...paginate, number: paginate.number + 1 },
       };
       const prevUrl = concatenatePaths(
-        baseUrl,
+        this.baseUrl,
         req.path,
         `?${stringify(prevParams)}`,
       );
       const nextUrl = concatenatePaths(
-        baseUrl,
+        this.baseUrl,
         req.path,
         `?${stringify(nextParams)}`,
       );
