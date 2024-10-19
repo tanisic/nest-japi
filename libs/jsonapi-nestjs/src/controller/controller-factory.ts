@@ -13,6 +13,7 @@ import {
   UseFilters,
   Injectable,
   UsePipes,
+  UseInterceptors,
 } from "@nestjs/common";
 import {
   PARAMTYPES_METADATA,
@@ -32,6 +33,7 @@ import { Binding, MethodName } from "./types";
 import { ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
+import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.interceptor";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -176,6 +178,12 @@ export class ControllerFactory {
       default:
         throw new Error(`Method '${method}' unsupported`);
     }
+
+    UseInterceptors(JsonApiContentTypeInterceptor)(
+      this.controllerClass.prototype,
+      name,
+      descriptor,
+    );
 
     if (pipes) {
       UsePipes(...pipes)(this.controllerClass.prototype, name, descriptor);

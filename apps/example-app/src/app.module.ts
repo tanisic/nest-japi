@@ -21,6 +21,7 @@ import { UserResource } from './resource/UserResource.controller';
       entities: ['./dist/**/*.entity.js'],
       entitiesTs: ['./src/**/*.entity.ts'],
       extensions: [EntityGenerator, Migrator],
+      debug: true,
     }),
     JsonApiModule.forRoot({ resources: [UserResource] }),
   ],

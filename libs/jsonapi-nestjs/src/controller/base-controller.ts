@@ -1,7 +1,7 @@
 import { Inject } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityManager, serialize } from "@mikro-orm/core";
+import { EntityManager, serialize, wrap } from "@mikro-orm/core";
 import { QueryParams } from "../query";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
@@ -25,10 +25,10 @@ export class JsonBaseController implements RequestMethodes {
       entity,
       {},
       {
-        populate: query.include as any,
-        offset: query.page.number * query.page.size,
-        limit: query.page.size,
-        orderBy: query.sort,
+        populate: query.include || ([] as any),
+        // offset: query.page.number * query.page.size || 0,
+        // limit: query.page.size,
+        orderBy: query.sort || undefined,
       },
     );
     const unwrapped = serialize(data, {
