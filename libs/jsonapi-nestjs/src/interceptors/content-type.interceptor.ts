@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
 } from "@nestjs/common";
-import { Request } from "express";
+import { Request, Response } from "express";
 import { Observable } from "rxjs";
 import { JSONAPI_CONTENT_TYPE } from "../constants";
 import { JapiError } from "ts-japi";
@@ -25,6 +25,10 @@ export class JsonApiContentTypeInterceptor implements NestInterceptor {
         },
       });
     }
+
+    const response = context.switchToHttp().getResponse<Response>();
+
+    response.setHeader("content-type", JSONAPI_CONTENT_TYPE);
 
     return next.handle();
   }
