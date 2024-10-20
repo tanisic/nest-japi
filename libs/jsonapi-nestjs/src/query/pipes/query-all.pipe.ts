@@ -4,8 +4,7 @@ import {
   Injectable,
   PipeTransform,
 } from "@nestjs/common";
-import { OrderDefinition } from "@mikro-orm/core";
-import { SortService } from "../services/sort.service";
+import { SortDefinitions, SortService } from "../services/sort.service";
 import {
   SparseFields,
   SparseFieldsService,
@@ -17,7 +16,7 @@ import {
 import { Includes, IncludeService } from "../services/include.service";
 
 export interface QueryParams {
-  sort: OrderDefinition<any> | null;
+  sort: SortDefinitions;
   fields: SparseFields;
   page: Pagination | null;
   include: Includes;

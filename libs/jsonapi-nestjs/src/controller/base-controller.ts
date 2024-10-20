@@ -1,11 +1,13 @@
 import { Inject } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityManager, serialize, wrap } from "@mikro-orm/core";
+import { EntityManager, serialize } from "@mikro-orm/core";
 import { QueryParams } from "../query";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { getEntityFromSchema } from "../schema";
+import { inspect } from "util";
+import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 
 type RequestMethodes = { [k in MethodName]: (...arg: any[]) => any };
 
@@ -19,29 +21,41 @@ export class JsonBaseController implements RequestMethodes {
   @Inject(CURRENT_SCHEMAS)
   protected currentSchemas: Schemas;
 
+  @Inject(SchemaBuilderService)
+  protected schemaBuilder: SchemaBuilderService;
+
   async getAll(query: QueryParams, ..._rest: any[]): Promise<any> {
+    console.log(query);
     const entity = getEntityFromSchema(this.currentSchemas.schema);
     const [data, count] = await this.em.findAndCount(
       entity,
       {},
       {
-        populate: query.include || ([] as any),
+        populate: query.include?.dbIncludes || ([] as any),
         // offset: query.page.number * query.page.size || 0,
         // limit: query.page.size,
-        populateOrderBy: query.sort,
-        // orderBy: query.sort || undefined,
+        // populateOrderBy: query.sort.dbOrderBy,
+        orderBy: query.sort?.dbOrderBy || {},
       },
     );
+
     const unwrapped = serialize(data, {
-      populate: query.include as any,
+      populate: query.include?.dbIncludes || ([] as any),
       forceObject: true,
     });
-
-    return this.serializerService.serialize(
+    const result = this.schemaBuilder.transformFromDb(
       unwrapped,
       this.currentSchemas.schema,
+    );
+    console.log(result);
+
+    return this.serializerService.serialize(
+      result,
+      this.currentSchemas.schema,
       {
-        ...(query as any),
+        page: query.page,
+        include: query.include?.dbIncludes || [],
+        fields: query.fields,
       },
     );
   }

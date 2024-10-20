@@ -98,6 +98,7 @@ export class SerializerService {
   private resolve(schema: Type<BaseSchema<any>>) {
     const type = getType(schema);
     const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
+    console.log({ visibleAttributes });
     const relations = getRelations(schema);
     const rootSerializer = this.findOrCreateSerializer(type, {
       projection: visibleAttributes,

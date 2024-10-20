@@ -25,6 +25,7 @@ import { sortServiceProvider } from "../query/providers/sort.provider";
 import { sparseFieldsServiceProvider } from "../query/providers/sparse-fields.provider";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
 import { getSchemasFromResource } from "../schema";
+import { schemaBuilderServiceProvider } from "../schema/providers/schema-builder-provider";
 
 export interface JsonApiResourceModuleOptions {
   resource: Type<BaseResource>;
@@ -74,6 +75,7 @@ export class JsonApiResourceModule {
         includeServiceProvider,
         sparseFieldsServiceProvider,
         sortServiceProvider,
+        schemaBuilderServiceProvider,
         QueryAllPipe,
         QueryOnePipe,
         PaginateService,

@@ -5,8 +5,11 @@ import { CommentSchema } from './CommentSchema';
 
 @Schema({ jsonapiType: 'user', entity: User })
 export class UserSchema extends BaseSchema<User> {
-  @Attribute({ description: '- Main ID field\n- Allways visible' })
-  name: string;
+  @Attribute({
+    description: '- Main ID field\n- Allways visible',
+    dataKey: 'name',
+  })
+  nameReal: string;
   @Relation({ schema: () => PostSchema, many: true })
   posts: PostSchema[];
   @Relation({ schema: () => CommentSchema, many: true })

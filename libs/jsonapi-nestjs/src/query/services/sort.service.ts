@@ -7,34 +7,49 @@ import {
 } from "../../schema";
 import { Type } from "@nestjs/common";
 
+export interface SortDefinitions {
+  dbOrderBy: OrderDefinition<any>;
+  schemaOrderBy: OrderDefinition<any>;
+}
+
 export class SortService {
   constructor(private schema: Type<BaseSchema<any>>) {}
 
-  transform(value: string): OrderDefinition<any> {
+  transform(value: string): SortDefinitions {
     if (!value) {
       return null;
     }
 
     const fields: string[] = value.split(",");
-    const sortCriteria: OrderDefinition<any> = [];
+    const globalDbSortCriteria: OrderDefinition<any> = [];
+    const globalSchemaSortCriteria: OrderDefinition<any> = [];
     for (const field of fields) {
       const sortOrder = field.startsWith("-") ? "DESC" : "ASC";
       const fieldName = field.startsWith("-") ? field.substring(1) : field;
 
       const fieldParts = fieldName.split(".").map((field) => field.trim());
 
-      console.log({ fieldParts });
       if (fieldParts.length > 1) {
-        const dbInclude = this.validateRelation(fieldParts);
-        const criteria = this.createObjectChain(dbInclude, sortOrder);
-        sortCriteria.push(criteria);
+        const { schemaSortCriteria, dbSortCriteria } =
+          this.validateRelation(fieldParts);
+        const schemaObjectChain = this.createObjectChain(
+          schemaSortCriteria,
+          sortOrder,
+        );
+        const dbObjectChain = this.createObjectChain(dbSortCriteria, sortOrder);
+        globalDbSortCriteria.push(dbObjectChain);
+        globalSchemaSortCriteria.push(schemaObjectChain);
       } else {
         const attribute = this.validateField(fieldName);
-        sortCriteria.push({ [attribute.dataKey]: sortOrder });
+        globalDbSortCriteria.push({ [attribute.dataKey]: sortOrder });
+        globalSchemaSortCriteria.push({ [attribute.name]: sortOrder });
       }
     }
 
-    return sortCriteria;
+    return {
+      dbOrderBy: globalDbSortCriteria || [],
+      schemaOrderBy: globalSchemaSortCriteria || [],
+    };
   }
 
   private validateField(fieldName: string) {
@@ -52,7 +67,8 @@ export class SortService {
 
   private validateRelation(fieldParts: string[]) {
     let currentSchema = this.schema;
-    const dbInclude: string[] = [];
+    const dbSortCriteria: string[] = [];
+    const schemaSortCriteria: string[] = [];
 
     for (const [index, field] of fieldParts.entries()) {
       const relation = getRelationByName(currentSchema, field);
@@ -69,9 +85,10 @@ export class SortService {
           });
         }
 
-        dbInclude.push(attribute.dataKey);
+        dbSortCriteria.push(attribute.dataKey);
+        schemaSortCriteria.push(attribute.name);
 
-        return dbInclude;
+        return { dbSortCriteria, schemaSortCriteria };
       }
 
       if (!relation) {
@@ -82,11 +99,12 @@ export class SortService {
         });
       }
 
-      dbInclude.push(relation.dataKey);
+      dbSortCriteria.push(relation.dataKey);
+      schemaSortCriteria.push(relation.name);
 
       currentSchema = relation.schema();
     }
-    return dbInclude;
+    return { dbSortCriteria, schemaSortCriteria };
   }
 
   private createObjectChain(
