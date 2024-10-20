@@ -21,12 +21,20 @@ export function getRelations(
   return relations;
 }
 
-export function getRelation(
+export function getRelationByName(
   schema: Type<BaseSchema<any>>,
   name: string,
 ): RelationAttribute | undefined {
   const relations = getRelations(schema);
-  return relations.find((relation) => relation.dataKey === name);
+  return relations.find((relation) => relation.name === name);
+}
+
+export function getRelationByDataKey(
+  schema: Type<BaseSchema<any>>,
+  name: string,
+): RelationAttribute | undefined {
+  const relations = getRelations(schema);
+  return relations.find((relation) => relation.name === name);
 }
 
 export function getAttributes(
@@ -37,7 +45,15 @@ export function getAttributes(
   return attributes;
 }
 
-export function getAttribute(
+export function getAttributeByName(
+  schema: Type<BaseSchema<any>>,
+  name: string,
+): SchemaAttribute | undefined {
+  const attributes = getAttributes(schema);
+  return attributes.find((attribute) => attribute.name === name);
+}
+
+export function getAttributeByDataKey(
   schema: Type<BaseSchema<any>>,
   name: string,
 ): SchemaAttribute | undefined {

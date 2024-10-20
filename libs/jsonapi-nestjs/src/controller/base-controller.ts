@@ -28,7 +28,8 @@ export class JsonBaseController implements RequestMethodes {
         populate: query.include || ([] as any),
         // offset: query.page.number * query.page.size || 0,
         // limit: query.page.size,
-        orderBy: query.sort || undefined,
+        populateOrderBy: query.sort,
+        // orderBy: query.sort || undefined,
       },
     );
     const unwrapped = serialize(data, {

@@ -1,8 +1,11 @@
+import { FilterQuery } from "@mikro-orm/core";
 import { BaseSchema, getRelationByName } from "../../schema";
 import { Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 
-export class IncludeService {
+export type Filter = FilterQuery<any>;
+
+export class FilterService {
   constructor(private schema: Type<BaseSchema<any>>) {}
 
   transform(value: string): string[] {
@@ -16,11 +19,11 @@ export class IncludeService {
       const fieldParts = field.split(".").map((field) => field.trim());
 
       if (fieldParts.length > 1) {
-        const dbFields = this.validateNested(fieldParts);
-        includes.push(dbFields.join("."));
+        this.validateNested(fieldParts);
+        includes.push(field);
       } else {
-        const dbField = this.validateSingle(field);
-        includes.push(dbField);
+        this.validateSingle(field);
+        includes.push(field);
       }
     }
 
@@ -36,13 +39,11 @@ export class IncludeService {
         detail: `Relation "${field}" does not exist on ${this.schema.name} schema.`,
       });
     }
-    return relation.dataKey;
   }
 
   private validateNested(fieldParts: string[]) {
     let currentSchema = this.schema;
 
-    const dbFields: string[] = [];
     for (const part of fieldParts) {
       const exists = getRelationByName(currentSchema, part);
       if (!exists) {
@@ -52,10 +53,7 @@ export class IncludeService {
           detail: `Relation "${part}" does not exist on ${currentSchema.name} schema.`,
         });
       }
-
-      dbFields.push(exists.dataKey);
       currentSchema = exists.schema();
     }
-    return dbFields;
   }
 }

@@ -124,9 +124,7 @@ export class SerializerService {
     const serializer = this.findOrCreateSerializer(relType, {
       projection: this.getVisibleAttributesOrSparse(relSchema),
     });
-    const relator = new Relator((data) => data[relation.dataKey], serializer, {
-      relatedName: relation.name,
-    });
+    const relator = new Relator((data) => data[relation.dataKey], serializer);
     parentSerializer.setRelators({
       ...parentSerializer.getRelators(),
       [relation.name]: relator,

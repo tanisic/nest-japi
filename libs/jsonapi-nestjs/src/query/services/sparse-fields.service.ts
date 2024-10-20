@@ -1,4 +1,4 @@
-import { BaseSchema, getAttribute } from "../../schema";
+import { BaseSchema, getAttributeByName } from "../../schema";
 import { Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 
@@ -18,8 +18,8 @@ export class SparseFieldsService {
     for (const type in value) {
       // Get unique field names
       const fields = [...new Set(value[type].split(","))];
-      this.validate(type, fields);
-      result[type] = fields;
+      const dbFields = this.validate(type, fields);
+      result[type] = dbFields;
     }
 
     return result;
@@ -28,6 +28,7 @@ export class SparseFieldsService {
   validate(type: string, fields: string[]) {
     const schema = this.globalSchemaMap.get(type);
 
+    const dbTransformed: string[] = [];
     if (!schema) {
       throw new JapiError({
         status: "400",
@@ -37,7 +38,7 @@ export class SparseFieldsService {
     }
 
     for (const field of fields) {
-      const attribute = getAttribute(schema, field);
+      const attribute = getAttributeByName(schema, field);
       if (!attribute) {
         throw new JapiError({
           status: "400",
@@ -45,6 +46,8 @@ export class SparseFieldsService {
           source: { parameter: "fields" },
         });
       }
+      dbTransformed.push(attribute.dataKey);
     }
+    return dbTransformed;
   }
 }

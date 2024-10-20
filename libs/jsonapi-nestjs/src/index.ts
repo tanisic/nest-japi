@@ -13,6 +13,7 @@ export * from "./decorators/resource.decorator";
 export * from "./decorators/schema.decorator";
 export * from "./exceptions/jsonapi-error.filter";
 export * from "./helpers/index";
+export * from "./interceptors/content-type.interceptor";
 export * from "./middlewares/request-id.middleware";
 export * from "./modules/json-api-options";
 export * from "./modules/json-api-resource.module";

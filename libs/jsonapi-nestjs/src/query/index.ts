@@ -7,6 +7,7 @@ export * from "./pipes/query-one.pipe";
 export * from "./providers/include.provider";
 export * from "./providers/sort.provider";
 export * from "./providers/sparse-fields.provider";
+export * from "./services/filter.service";
 export * from "./services/include.service";
 export * from "./services/pagination-param.service";
 export * from "./services/sort.service";

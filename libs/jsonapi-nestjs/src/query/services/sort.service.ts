@@ -1,6 +1,10 @@
 import { OrderDefinition, QueryOrderMap } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
-import { BaseSchema, getAttribute, getRelation } from "../../schema";
+import {
+  BaseSchema,
+  getAttributeByName,
+  getRelationByName,
+} from "../../schema";
 import { Type } from "@nestjs/common";
 
 export class SortService {
@@ -19,13 +23,14 @@ export class SortService {
 
       const fieldParts = fieldName.split(".").map((field) => field.trim());
 
+      console.log({ fieldParts });
       if (fieldParts.length > 1) {
-        this.validateRelation(fieldParts);
-        const criteria = this.createObjectChain(fieldParts, sortOrder);
+        const dbInclude = this.validateRelation(fieldParts);
+        const criteria = this.createObjectChain(dbInclude, sortOrder);
         sortCriteria.push(criteria);
       } else {
-        this.validateField(fieldName);
-        sortCriteria.push({ [fieldName]: sortOrder });
+        const attribute = this.validateField(fieldName);
+        sortCriteria.push({ [attribute.dataKey]: sortOrder });
       }
     }
 
@@ -33,7 +38,7 @@ export class SortService {
   }
 
   private validateField(fieldName: string) {
-    const attribute = getAttribute(this.schema, fieldName);
+    const attribute = getAttributeByName(this.schema, fieldName);
 
     if (!attribute) {
       throw new JapiError({
@@ -42,18 +47,20 @@ export class SortService {
         source: { parameter: "sort" },
       });
     }
+    return attribute;
   }
 
   private validateRelation(fieldParts: string[]) {
     let currentSchema = this.schema;
+    const dbInclude: string[] = [];
 
     for (const [index, field] of fieldParts.entries()) {
-      const relation = getRelation(currentSchema, field);
+      const relation = getRelationByName(currentSchema, field);
       const isLastIndex = index === fieldParts.length - 1;
 
       // Field on last index should be attribute, not relation
       if (isLastIndex) {
-        const attribute = getAttribute(currentSchema, field);
+        const attribute = getAttributeByName(currentSchema, field);
         if (!attribute) {
           throw new JapiError({
             status: "400",
@@ -62,7 +69,9 @@ export class SortService {
           });
         }
 
-        return;
+        dbInclude.push(attribute.dataKey);
+
+        return dbInclude;
       }
 
       if (!relation) {
@@ -73,8 +82,11 @@ export class SortService {
         });
       }
 
+      dbInclude.push(relation.dataKey);
+
       currentSchema = relation.schema();
     }
+    return dbInclude;
   }
 
   private createObjectChain(
