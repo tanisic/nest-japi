@@ -14,13 +14,13 @@ import {
   PaginateService,
   Pagination,
 } from "../services/pagination-param.service";
-import { IncludeService } from "../services/include.service";
+import { Includes, IncludeService } from "../services/include.service";
 
 export interface QueryParams {
   sort: OrderDefinition<any> | null;
   fields: SparseFields;
   page: Pagination | null;
-  include: string[] | null;
+  include: Includes;
 }
 
 @Injectable()
