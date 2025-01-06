@@ -1,4 +1,10 @@
-import { RequestMethod, Query, Param, Body } from "@nestjs/common";
+import {
+  RequestMethod,
+  Query,
+  Param,
+  Body,
+  ParseIntPipe,
+} from "@nestjs/common";
 import { JsonBaseController } from "./base-controller";
 import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";

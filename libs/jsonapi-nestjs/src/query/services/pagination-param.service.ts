@@ -2,30 +2,27 @@ import { Injectable } from "@nestjs/common";
 import { JsonApiOptions } from "../../modules/json-api-options";
 import { z } from "zod";
 import { JapiError } from "ts-japi";
-import { DEFAULT_PAGINATION_SIZE } from "../../constants";
 
 export type Pagination = {
   number: number;
   size: number;
+  offset: number;
+  limit: number;
 };
 const paginationSchema = z
   .object({
-    number: z.coerce.number().int(),
-    size: z.coerce.number().int(),
+    number: z.coerce
+      .number()
+      .int()
+      .gte(1, "page[number] must be greater than 0."),
+    size: z.coerce.number().int().gte(1, "page[size] must be greater than 0."),
   })
   .strict()
   .or(z.undefined());
 
 @Injectable()
 export class PaginateService {
-  maximumPerPage: number;
-
-  constructor(private options: JsonApiOptions) {
-    this.maximumPerPage =
-      this.options.resource.maxPaginationSize ||
-      this.options.global.maxPaginationSize ||
-      DEFAULT_PAGINATION_SIZE;
-  }
+  constructor(private options: JsonApiOptions) {}
 
   transform(value: any): Pagination | null {
     if (!value) {
@@ -36,10 +33,10 @@ export class PaginateService {
 
     if (parse.success) {
       if (!parse.data) return null;
-      if (parse.data.size > this.maximumPerPage) {
+      if (parse.data.size > this.options.maxAllowedPagination) {
         throw new JapiError({
           status: "400",
-          detail: `Maxiumum page size iz ${this.maximumPerPage} items per page.`,
+          detail: `Maxiumum page size iz ${this.options.maxAllowedPagination} items per page.`,
           source: {
             parameter: "page",
           },
@@ -48,9 +45,14 @@ export class PaginateService {
 
       const { number, size } = parse.data;
 
+      const offset = (number - 1) * size;
+      const limit = size;
+
       return {
         number,
         size,
+        limit,
+        offset,
       };
     }
     throw new JapiError({

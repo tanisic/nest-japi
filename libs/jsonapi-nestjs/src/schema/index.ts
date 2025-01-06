@@ -5,3 +5,4 @@
 export * from "./base-schema";
 export * from "./types";
 export * from "./helpers/schema-helper";
+export * from "./services/schema-builder.service";

@@ -3,7 +3,8 @@ import { Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 
 export interface SparseFields {
-  [type: string]: string[];
+  schema: { [type: string]: string[] };
+  db: { [type: string]: string[] };
 }
 
 export class SparseFieldsService {
@@ -14,12 +15,13 @@ export class SparseFieldsService {
       return null;
     }
 
-    const result: SparseFields = {};
+    const result: SparseFields = { db: {}, schema: {} };
     for (const type in value) {
       // Get unique field names
       const fields = [...new Set(value[type].split(","))];
       const dbFields = this.validate(type, fields);
-      result[type] = dbFields;
+      result.db[type] = dbFields;
+      result.schema[type] = fields;
     }
 
     return result;

@@ -10,7 +10,6 @@ import { BaseResource } from "../resource/base-resource";
 import {
   JSONAPI_DECORATOR_OPTIONS,
   JSONAPI_RESOURCE_OPTIONS,
-  JSONAPI_RESOURCE_SCHEMAS,
   CURRENT_SCHEMAS,
 } from "../constants";
 import { JsonApiOptions } from "./json-api-options";
@@ -24,8 +23,8 @@ import { includeServiceProvider } from "../query/providers/include.provider";
 import { sortServiceProvider } from "../query/providers/sort.provider";
 import { sparseFieldsServiceProvider } from "../query/providers/sparse-fields.provider";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
-import { getSchemasFromResource } from "../schema";
-import { schemaBuilderServiceProvider } from "../schema/providers/schema-builder-provider";
+import { getSchemasFromResource, SchemaBuilderService } from "../schema";
+import { DataLayerService } from "../data-layer/data-layer.service";
 
 export interface JsonApiResourceModuleOptions {
   resource: Type<BaseResource>;
@@ -75,10 +74,11 @@ export class JsonApiResourceModule {
         includeServiceProvider,
         sparseFieldsServiceProvider,
         sortServiceProvider,
-        schemaBuilderServiceProvider,
         QueryAllPipe,
         QueryOnePipe,
         PaginateService,
+        DataLayerService,
+        SchemaBuilderService,
       ],
       controllers: [ResourceClass],
     };

@@ -1,6 +1,4 @@
-import { Collection } from '@mikro-orm/core';
 import { Attribute, BaseSchema, Relation, Schema } from 'jsonapi-nestjs';
-import { Comment } from 'src/entities/comment.entity';
 import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
 import { UserSchema } from './UserSchema';

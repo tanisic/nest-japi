@@ -19,7 +19,7 @@ export interface QueryParams {
   sort: SortDefinitions;
   fields: SparseFields;
   page: Pagination | null;
-  include: Includes;
+  include: Includes | null;
 }
 
 @Injectable()
@@ -42,6 +42,7 @@ export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
     }
 
     return {
+      ...value,
       sort: this.sortService.transform(value.sort),
       fields: this.sparseFieldsService.transform(value.fields),
       page: this.paginateService.transform(value.page),

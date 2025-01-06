@@ -1,7 +1,14 @@
 import { Inject, Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
 import { RelationAttribute } from "../decorators/relation.decorator";
-import { Paginator, Relator, Serializer, SerializerOptions } from "ts-japi";
+import {
+  Linker,
+  Metaizer,
+  Paginator,
+  Relator,
+  Serializer,
+  SerializerOptions,
+} from "ts-japi";
 import {
   getAttributes,
   getRelations,
@@ -10,13 +17,14 @@ import {
 import { Pagination } from "../query";
 import { Request } from "express";
 import { REQUEST } from "@nestjs/core";
-import { concatenatePaths } from "../helpers";
 import { stringify } from "qs";
+import { joinUrlPaths } from "../helpers";
 
 export interface SerializeCustomOptions {
   include?: string[];
   fields?: Record<string, string[]>;
   page?: Pagination;
+  meta?: Metaizer<any>;
 }
 
 @Injectable()
@@ -60,12 +68,12 @@ export class SerializerService {
         ...params,
         page: { ...paginate, number: paginate.number + 1 },
       };
-      const prevUrl = concatenatePaths(
+      const prevUrl = joinUrlPaths(
         this.baseUrl,
         req.path,
         `?${stringify(prevParams)}`,
       );
-      const nextUrl = concatenatePaths(
+      const nextUrl = joinUrlPaths(
         this.baseUrl,
         req.path,
         `?${stringify(nextParams)}`,
@@ -98,13 +106,15 @@ export class SerializerService {
   private resolve(schema: Type<BaseSchema<any>>) {
     const type = getType(schema);
     const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
-    console.log({ visibleAttributes });
     const relations = getRelations(schema);
     const rootSerializer = this.findOrCreateSerializer(type, {
       projection: visibleAttributes,
       include: this.calculateMaxIncludeDepth(this.options.include),
       linkers: {
         paginator: this.createPaginator(),
+      },
+      metaizers: {
+        document: this.options.meta,
       },
     });
 
@@ -125,7 +135,15 @@ export class SerializerService {
     const serializer = this.findOrCreateSerializer(relType, {
       projection: this.getVisibleAttributesOrSparse(relSchema),
     });
-    const relator = new Relator((data) => data[relation.dataKey], serializer);
+    const domain = "https://www.example.com";
+    const relLinker = new Linker((a, b) => {
+      return domain;
+    });
+    const relator = new Relator((data) => data[relation.dataKey], serializer, {
+      linkers: {
+        relationship: relLinker,
+      },
+    });
     parentSerializer.setRelators({
       ...parentSerializer.getRelators(),
       [relation.name]: relator,

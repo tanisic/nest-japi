@@ -1,17 +1,20 @@
-import { Inject } from "@nestjs/common";
+import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
 import { EntityManager, serialize } from "@mikro-orm/core";
-import { QueryParams } from "../query";
+import { QueryParams, SingleQueryParams } from "../query";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
-import { getEntityFromSchema } from "../schema";
-import { inspect } from "util";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
+import { JsonApiOptions } from "../modules/json-api-options";
+import { DataDocument, Metaizer } from "ts-japi";
+import { DataLayerService } from "../data-layer/data-layer.service";
 
 type RequestMethodes = { [k in MethodName]: (...arg: any[]) => any };
 
-export class JsonBaseController implements RequestMethodes {
+export class JsonBaseController<Id = string | number>
+  implements RequestMethodes
+{
   @Inject(SerializerService)
   protected serializerService: SerializerService;
 
@@ -24,62 +27,71 @@ export class JsonBaseController implements RequestMethodes {
   @Inject(SchemaBuilderService)
   protected schemaBuilder: SchemaBuilderService;
 
-  async getAll(query: QueryParams, ..._rest: any[]): Promise<any> {
-    console.log(query);
-    const entity = getEntityFromSchema(this.currentSchemas.schema);
-    const [data, count] = await this.em.findAndCount(
-      entity,
-      {},
-      {
-        populate: query.include?.dbIncludes || ([] as any),
-        // offset: query.page.number * query.page.size || 0,
-        // limit: query.page.size,
-        // populateOrderBy: query.sort.dbOrderBy,
-        orderBy: query.sort?.dbOrderBy || {},
-      },
-    );
+  @Inject(JsonApiOptions)
+  protected options: JsonApiOptions;
+
+  @Inject(DataLayerService)
+  protected dataLayer: DataLayerService<Id>;
+
+  async getAll(
+    query: QueryParams,
+    ..._rest: any[]
+  ): Promise<Partial<DataDocument<any>>> {
+    const schema = this.currentSchemas.schema;
+    const [data, count] = await this.dataLayer.getCollection(query);
+    const unwrapped = serialize(data, {
+      populate: query.include?.dbIncludes || ([] as any),
+      forceObject: true,
+    });
+    const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
+
+    return this.serializerService.serialize(result, schema, {
+      page: query.page,
+      include: query.include?.schemaIncludes || [],
+      fields: query.fields?.schema || {},
+      meta: new Metaizer(() => {
+        return { count };
+      }),
+    });
+  }
+
+  async getOne(
+    id: Id,
+    query: SingleQueryParams,
+    ..._rest: any[]
+  ): Promise<Partial<DataDocument<any>>> {
+    const schema = this.currentSchemas.schema;
+    const data = await this.dataLayer.getOne(id, query.include);
+
+    if (!data) {
+      throw new NotFoundException(`Object with id ${id} does not exist.`);
+    }
 
     const unwrapped = serialize(data, {
       populate: query.include?.dbIncludes || ([] as any),
       forceObject: true,
     });
-    const result = this.schemaBuilder.transformFromDb(
-      unwrapped,
-      this.currentSchemas.schema,
-    );
-    console.log(result);
+    const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
 
-    return this.serializerService.serialize(
-      result,
-      this.currentSchemas.schema,
-      {
-        page: query.page,
-        include: query.include?.dbIncludes || [],
-        fields: query.fields,
-      },
-    );
-  }
-  getOne(id: string | number, query: QueryParams, ...rest: any[]) {
-    return { id, query };
+    return this.serializerService.serialize(result, schema, {
+      include: query.include?.schemaIncludes || [],
+      fields: query.fields?.schema || {},
+    });
   }
   // Get a related resource or relationship for a specific resource
-  getRelationship(id: string | number, relationName: string, ...rest: any[]) {
+  getRelationship(id: Id, relationName: string, ...rest: any[]) {
     // Simulated relationship fetch based on the resource ID and relationship name
     return { id };
   }
 
   // Delete a single resource by ID
-  deleteOne(id: string | number, ...rest: any[]) {
+  deleteOne(id: Id, ...rest: any[]) {
     // Simulated deletion of a resource
     return { id, message: `Resource with ID ${id} deleted.` };
   }
 
   // Delete a specific relationship for a resource
-  deleteRelationship(
-    id: string | number,
-    relationName: string,
-    ...rest: any[]
-  ) {
+  deleteRelationship(id: Id, relationName: string, ...rest: any[]) {
     return {
       id,
       message: `Relationship  for resource with ID ${id} deleted.`,

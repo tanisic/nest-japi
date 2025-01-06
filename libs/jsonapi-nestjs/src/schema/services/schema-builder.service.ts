@@ -1,20 +1,10 @@
 import { Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../base-schema";
-import type { Schemas } from "../types";
 import { EntityDTO } from "@mikro-orm/core";
-import {
-  getAttributeByDataKey,
-  getAttributes,
-  getRelations,
-} from "../helpers/schema-helper";
+import { getAttributes, getRelations } from "../helpers/schema-helper";
 
 @Injectable()
 export class SchemaBuilderService {
-  constructor(
-    private globalSchemaMap: Map<string, Type<BaseSchema<any>>>,
-    private schemas: Schemas,
-  ) {}
-
   transformFromDb<Entity>(
     dbData: EntityDTO<Entity> | EntityDTO<Entity>[],
     schema: Type<BaseSchema<any>>,

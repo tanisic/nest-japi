@@ -29,6 +29,7 @@ export class QueryOnePipe implements PipeTransform<unknown, SingleQueryParams> {
     }
 
     return {
+      ...value,
       sort: this.sortService.transform(value.sort),
       fields: this.sparseFieldsService.transform(value.fields),
       include: this.includeService.transform(value.include),

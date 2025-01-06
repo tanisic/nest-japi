@@ -1,4 +1,4 @@
-import { Global, Inject, Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import type {
   DynamicModule,
   FactoryProvider,

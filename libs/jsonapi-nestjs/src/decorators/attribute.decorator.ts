@@ -4,6 +4,7 @@ import {
   JSONAPI_SCHEMA_ATTRIBUTES,
 } from "../constants";
 import { EntityKey } from "@mikro-orm/core";
+import { ZodTypeAny } from "zod";
 
 export interface AttributeOptions<Entity = any> extends ApiPropertyOptions {
   /**
@@ -13,6 +14,8 @@ export interface AttributeOptions<Entity = any> extends ApiPropertyOptions {
    *
    * */
   dataKey?: EntityKey<Entity>;
+
+  validate?: ZodTypeAny;
 }
 
 export type SchemaAttribute = AttributeOptions & { name: string };

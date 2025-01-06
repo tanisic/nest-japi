@@ -17,6 +17,8 @@ export class UserSchema extends BaseSchema<User> {
   @Attribute({})
   createdAt: Date;
   @Attribute({})
+  firstComment: string;
+  @Attribute({})
   updatedAt: Date;
   @Attribute({ description: '- Main ID field\n- Allways visible' })
   id!: number;

@@ -7,6 +7,7 @@ export * from "./controller/base-controller";
 export * from "./controller/controller-bindings";
 export * from "./controller/controller-factory";
 export * from "./controller/types";
+export * from "./data-layer/data-layer.service";
 export * from "./decorators/attribute.decorator";
 export * from "./decorators/relation.decorator";
 export * from "./decorators/resource.decorator";
