@@ -4,9 +4,11 @@ import {
   PrimaryKey,
   OneToMany,
   Collection,
+  OneToOne,
 } from '@mikro-orm/core';
 import { Post } from './post.entity';
 import { Comment } from './comment.entity';
+import { Address } from './address.entity';
 
 @Entity({ tableName: 'users' })
 export class User {
@@ -18,6 +20,9 @@ export class User {
 
   @Property()
   email!: string;
+
+  @OneToOne(() => Address, (address) => address.user)
+  address!: Address;
 
   @OneToMany(() => Post, (post) => post.author)
   posts = new Collection<Post>(this);

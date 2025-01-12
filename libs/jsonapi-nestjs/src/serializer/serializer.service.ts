@@ -52,7 +52,7 @@ export class SerializerService {
   }
 
   private createPaginator() {
-    const paginate = this.options.page;
+    const paginate = this.options?.page;
     if (paginate) {
       const req = this.request;
 
@@ -109,12 +109,12 @@ export class SerializerService {
     const relations = getRelations(schema);
     const rootSerializer = this.findOrCreateSerializer(type, {
       projection: visibleAttributes,
-      include: this.calculateMaxIncludeDepth(this.options.include),
+      include: this.calculateMaxIncludeDepth(this.options?.include ?? []),
       linkers: {
         paginator: this.createPaginator(),
       },
       metaizers: {
-        document: this.options.meta,
+        document: this.options?.meta,
       },
     });
 

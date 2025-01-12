@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Type } from "@nestjs/common";
+import { Injectable, Type } from "@nestjs/common";
 import { FilterQuery } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
 import {

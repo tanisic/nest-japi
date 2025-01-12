@@ -1,9 +1,14 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { getEntityFromSchema, type Schemas } from "../schema";
+import {
+  getEntityFromSchema,
+  getRelationByName,
+  type Schemas,
+} from "../schema";
 import { CURRENT_SCHEMAS } from "../constants";
 import { QueryParams } from "../query";
-import { EntityClass, EntityManager } from "@mikro-orm/core";
+import { Collection, EntityClass, EntityManager } from "@mikro-orm/core";
 import { JsonApiOptions } from "../modules/json-api-options";
+import { JapiError } from "ts-japi";
 
 @Injectable()
 export class DataLayerService<Id = string | number> {
@@ -36,5 +41,24 @@ export class DataLayerService<Id = string | number> {
       { id },
       { populate: include?.dbIncludes ?? ([] as any[]) },
     );
+  }
+
+  async getRelationship(id: Id, relationName: string) {
+    const relation = getRelationByName(this.schemas.schema, relationName);
+    const parentData = await this.em.findOne(
+      this.entity,
+      { id },
+      { populate: [relation.dataKey] as any },
+    );
+    if (!parentData) {
+      throw new JapiError({
+        status: 404,
+        detail: `Item with id ${id} does not exists.`,
+      });
+    }
+    const relationData = parentData[relation.dataKey];
+    return relationData instanceof Collection
+      ? relationData.getItems()
+      : relationData;
   }
 }

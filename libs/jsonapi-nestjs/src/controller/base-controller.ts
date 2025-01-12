@@ -7,8 +7,9 @@ import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
-import { DataDocument, Metaizer } from "ts-japi";
+import { DataDocument, JapiError, Metaizer } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
+import { getEntityFromSchema, getRelationByName } from "../schema";
 
 type RequestMethodes = { [k in MethodName]: (...arg: any[]) => any };
 
@@ -78,10 +79,32 @@ export class JsonBaseController<Id = string | number>
       fields: query.fields?.schema || {},
     });
   }
-  // Get a related resource or relationship for a specific resource
-  getRelationship(id: Id, relationName: string, ...rest: any[]) {
-    // Simulated relationship fetch based on the resource ID and relationship name
-    return { id };
+
+  async getRelationship(id: Id, relationName: string, ...rest: any[]) {
+    const schema = this.currentSchemas.schema;
+    const relation = getRelationByName(
+      this.currentSchemas.schema,
+      relationName,
+    );
+    if (!relation) {
+      throw new JapiError({
+        status: 400,
+        detail: `Relationship ${relationName} does not exist on schema "${schema.name}".`,
+      });
+    }
+
+    const relationSchema = relation.schema();
+
+    const data = await this.dataLayer.getRelationship(id, relationName);
+
+    const unwrapped = serialize(data, { forceObject: true });
+
+    const result = this.schemaBuilder.transformFromDb(
+      unwrapped,
+      relationSchema,
+    );
+
+    return this.serializerService.serialize(result, relationSchema);
   }
 
   // Delete a single resource by ID

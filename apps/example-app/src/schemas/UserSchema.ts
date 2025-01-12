@@ -2,6 +2,7 @@ import { Attribute, BaseSchema, Relation, Schema } from 'jsonapi-nestjs';
 import { User } from 'src/entities/user.entity';
 import { PostSchema } from './PostSchema';
 import { CommentSchema } from './CommentSchema';
+import { AddressSchema } from './AddressSchema';
 
 @Schema({ jsonapiType: 'user', entity: User })
 export class UserSchema extends BaseSchema<User> {
@@ -14,6 +15,8 @@ export class UserSchema extends BaseSchema<User> {
   posts: PostSchema[];
   @Relation({ schema: () => CommentSchema, many: true })
   comments: CommentSchema[];
+  @Relation({ schema: () => AddressSchema })
+  address: AddressSchema;
   @Attribute({})
   createdAt: Date;
   @Attribute({})
