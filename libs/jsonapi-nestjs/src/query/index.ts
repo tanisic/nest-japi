@@ -4,6 +4,7 @@
 
 export * from "./pipes/query-all.pipe";
 export * from "./pipes/query-one.pipe";
+export * from "./providers/filter.provider";
 export * from "./providers/include.provider";
 export * from "./providers/sort.provider";
 export * from "./providers/sparse-fields.provider";

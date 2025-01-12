@@ -25,6 +25,7 @@ import { sparseFieldsServiceProvider } from "../query/providers/sparse-fields.pr
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
 import { getSchemasFromResource, SchemaBuilderService } from "../schema";
 import { DataLayerService } from "../data-layer/data-layer.service";
+import { filterServiceProvider } from "../query/providers/filter.provider";
 
 export interface JsonApiResourceModuleOptions {
   resource: Type<BaseResource>;
@@ -72,6 +73,7 @@ export class JsonApiResourceModule {
         schemasProvider,
         SerializerService,
         includeServiceProvider,
+        filterServiceProvider,
         sparseFieldsServiceProvider,
         sortServiceProvider,
         QueryAllPipe,

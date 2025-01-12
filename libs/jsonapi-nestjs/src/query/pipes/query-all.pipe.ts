@@ -14,12 +14,16 @@ import {
   Pagination,
 } from "../services/pagination-param.service";
 import { Includes, IncludeService } from "../services/include.service";
+import { FilterService } from "../services/filter.service";
+import { FilterQuery } from "@mikro-orm/core";
+import { JapiError } from "ts-japi";
 
 export interface QueryParams {
   sort: SortDefinitions;
   fields: SparseFields;
   page: Pagination | null;
   include: Includes | null;
+  filter: FilterQuery<any> | null;
 }
 
 @Injectable()
@@ -36,9 +40,26 @@ export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
   @Inject(IncludeService)
   private includeService: IncludeService;
 
+  @Inject(FilterService)
+  private filterService: FilterService;
+
   transform(value: any, metadata: ArgumentMetadata): QueryParams {
     if (metadata.type !== "query") {
       return value;
+    }
+
+    let filter: FilterQuery<any> | null = null;
+    if (value.filter) {
+      try {
+        const filterJson = JSON.parse(value.filter);
+        filter = this.filterService.transform(filterJson);
+      } catch (err) {
+        throw new JapiError({
+          status: "400",
+          source: { parameter: "filter" },
+          detail: "Filter must be a valid object.",
+        });
+      }
     }
 
     return {
@@ -47,6 +68,7 @@ export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
       fields: this.sparseFieldsService.transform(value.fields),
       page: this.paginateService.transform(value.page),
       include: this.includeService.transform(value.include),
+      filter,
     };
   }
 }

@@ -20,7 +20,7 @@ export class DataLayerService<Id = string | number> {
   getCollection(query: QueryParams) {
     return this.em.findAndCount(
       this.entity,
-      {},
+      query.filter ? { ...query.filter } : {},
       {
         populate: query.include?.dbIncludes || ([] as any),
         offset: query.page?.offset ?? 0,
