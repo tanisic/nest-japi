@@ -30,9 +30,6 @@ export const Resource = (options: ResourceOptions): ClassDecorator => {
     };
 
     Reflect.defineMetadata(JSONAPI_RESOURCE_SCHEMAS, opts.schemas, target);
-
-    if (options) {
-      Reflect.defineMetadata(JSONAPI_RESOURCE_OPTIONS, opts, target);
-    }
+    Reflect.defineMetadata(JSONAPI_RESOURCE_OPTIONS, opts, target);
   };
 };

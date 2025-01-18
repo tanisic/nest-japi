@@ -5,6 +5,7 @@ import {
   JSONAPI_SCHEMA_TYPE,
   JSONAPI_RESOURCE_SCHEMAS,
   JSONAPI_SCHEMA_ENTITY_CLASS,
+  JSONAPI_RESOURCE_OPTIONS,
 } from "../../constants";
 import { SchemaAttribute } from "../../decorators/attribute.decorator";
 import { RelationAttribute } from "../../decorators/relation.decorator";
@@ -12,6 +13,7 @@ import { BaseSchema } from "../base-schema";
 import { BaseResource } from "../../resource/base-resource";
 import { Schemas } from "../types";
 import { EntityClass } from "@mikro-orm/core";
+import { ResourceOptions } from "../../decorators/resource.decorator";
 
 export function getRelations(
   schema: Type<BaseSchema<any>>,
@@ -80,5 +82,11 @@ export function getEntityFromSchema(
 
 export function getSchemasFromResource(resource: Type<BaseResource>): Schemas {
   const schemas = Reflect.getMetadata(JSONAPI_RESOURCE_SCHEMAS, resource);
+  return schemas;
+}
+export function getResourceOptions(
+  resource: Type<BaseResource>,
+): ResourceOptions {
+  const schemas = Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, resource);
   return schemas;
 }

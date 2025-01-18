@@ -241,14 +241,14 @@ export class ControllerFactory {
     }
 
     // TODO: finish
-    const pipes = Object.entries(paramsMetadata)
-      .filter(([k]) => k.split(":").at(0) === typeDecorator.toString())
-      .reduce(
-        (accum, [, v]) => (accum.push(...(v as any).pipes), accum),
-        [] as any[],
-      );
-
-    // resultMixin.push(...pipes); // Assuming this was a TODO for future logic.
+    //   const pipes = Object.entries(paramsMetadata)
+    //     .filter(([k]) => k.split(":").at(0) === typeDecorator.toString())
+    //     .reduce(
+    //       (accum, [, v]) => (accum.push(...(v as any).pipes), accum),
+    //       [] as any[],
+    //     );
+    //
+    //   // resultMixin.push(...pipes); // Assuming this was a TODO for future logic.
   }
 
   private applyControllerDecorator(): void {

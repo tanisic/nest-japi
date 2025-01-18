@@ -2,14 +2,17 @@ import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
 import { EntityManager, serialize } from "@mikro-orm/core";
-import { QueryParams, SingleQueryParams } from "../query";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
-import { DataDocument, JapiError, Metaizer } from "ts-japi";
+import { DataDocument, JapiError, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
-import { getEntityFromSchema, getRelationByName } from "../schema";
+import { getRelationByName } from "../schema";
+import { Request } from "express";
+import type { QueryParams, SingleQueryParams } from "../query";
+import { joinUrlPaths } from "../helpers";
+import qs, { ParsedQs } from "qs";
 
 type RequestMethodes = { [k in MethodName]: (...arg: any[]) => any };
 
@@ -34,8 +37,62 @@ export class JsonBaseController<Id = string | number>
   @Inject(DataLayerService)
   protected dataLayer: DataLayerService<Id>;
 
+  get baseUrl() {
+    return this.options.global.baseUrl;
+  }
+
+  private generatePagination(
+    request: Request,
+    totalCount: number,
+  ): Paginator<unknown> {
+    return new Paginator((data) => {
+      const params = request.query;
+      if (!params?.page) return;
+
+      const totalPages = Math.ceil(
+        totalCount / Number((params.page as ParsedQs).size),
+      );
+      const currentPage = Number((params.page as ParsedQs).number);
+      const baseUrl = joinUrlPaths(this.baseUrl, request.path);
+
+      // Helper to generate URL with updated query parameters
+      const generateUrl = (pageNumber: number, params: ParsedQs) => {
+        const p = {
+          ...params,
+          page: {
+            ...(params.page as ParsedQs),
+            number: pageNumber,
+          },
+        };
+        const queryString = qs.stringify(p, {
+          encode: false,
+          skipNulls: true,
+        });
+        return `${baseUrl}?${queryString}`;
+      };
+
+      // Build pagination links
+      const first = generateUrl(1, params);
+      const last = generateUrl(totalPages, params);
+      const next =
+        currentPage < totalPages ? generateUrl(currentPage + 1, params) : null;
+      const prev =
+        currentPage > 1 ? generateUrl(currentPage - 1, params) : null;
+
+      return Array.isArray(data)
+        ? {
+            first,
+            last,
+            next,
+            prev,
+          }
+        : undefined;
+    });
+  }
+
   async getAll(
     query: QueryParams,
+    request: Request,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
     const schema = this.currentSchemas.schema;
@@ -46,13 +103,17 @@ export class JsonBaseController<Id = string | number>
     });
     const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
 
+    const pagination = this.generatePagination(request, count);
     return this.serializerService.serialize(result, schema, {
       page: query.page,
       include: query.include?.schemaIncludes || [],
       fields: query.fields?.schema || {},
-      meta: new Metaizer(() => {
-        return { count };
-      }),
+      linkers: {
+        paginator: pagination,
+      },
+      metaizers: {
+        document: new Metaizer(() => ({ count })),
+      },
     });
   }
 
@@ -93,18 +154,23 @@ export class JsonBaseController<Id = string | number>
       });
     }
 
-    const relationSchema = relation.schema();
+    const data = await this.dataLayer.getOne(id, {
+      dbIncludes: [relation.dataKey],
+      schemaIncludes: [],
+    });
 
-    const data = await this.dataLayer.getRelationship(id, relationName);
+    const unwrapped = serialize(data, {
+      forceObject: true,
+      populate: [relation.dataKey as any],
+    });
 
-    const unwrapped = serialize(data, { forceObject: true });
+    const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
 
-    const result = this.schemaBuilder.transformFromDb(
-      unwrapped,
-      relationSchema,
-    );
-
-    return this.serializerService.serialize(result, relationSchema);
+    // return this.serializerService.serializeRelation(
+    //   result,
+    //   this.currentSchemas.schema,
+    //   relationName,
+    // );
   }
 
   // Delete a single resource by ID

@@ -10,20 +10,29 @@ import type {
 } from "@nestjs/common";
 import { BaseResource } from "../resource/base-resource";
 import { JsonApiResourceModule } from "./json-api-resource.module";
-import { JSONAPI_DECORATOR_OPTIONS, SCHEMA_REPOSITORY } from "../constants";
+import {
+  JSONAPI_GLOBAL_OPTIONS,
+  JSONAPI_RESOURCE_OPTIONS,
+  SCHEMA_REPOSITORY,
+} from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
 import {
   BaseSchema,
+  getAttributes,
   getRelations,
+  getResourceOptions,
   getSchemasFromResource,
   getType,
 } from "../schema";
+import { ResourceOptions } from "../decorators/resource.decorator";
+import { Serializer } from "ts-japi";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
   resources: Type<BaseResource>[];
   maxPaginationSize?: number;
+  baseUrl: string;
 }
 
 @Global()
@@ -38,18 +47,14 @@ export class JsonApiModule implements NestModule {
     const modules: DynamicModule[] = [];
     for (const resource of options.resources) {
       const schemas = getSchemasFromResource(resource);
-      const schema = schemas.schema;
+      const { schema } = schemas;
       const type = getType(schema);
-      if (resourceTypeMap.has(type)) {
-        throw new Error(
-          `JSON:API type "${type}" already exists on schema ${resourceTypeMap.get(type).name}`,
-        );
+      if (!resourceTypeMap.has(type)) {
+        collectSchemas(schema, resourceTypeMap);
       }
-      collectSchemas(schema, resourceTypeMap);
       const resourceModule = JsonApiResourceModule.forRoot({ resource });
       modules.push(resourceModule);
     }
-
     const schemaRepositoryMapProvider: FactoryProvider<
       Map<string, Type<BaseSchema<any>>>
     > = {
@@ -58,7 +63,7 @@ export class JsonApiModule implements NestModule {
     };
 
     const globalOptionsProvider: ValueProvider<JsonApiModuleOptions> = {
-      provide: JSONAPI_DECORATOR_OPTIONS,
+      provide: JSONAPI_GLOBAL_OPTIONS,
       useValue: options,
     };
 

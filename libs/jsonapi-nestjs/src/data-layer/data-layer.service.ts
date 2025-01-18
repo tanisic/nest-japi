@@ -35,7 +35,10 @@ export class DataLayerService<Id = string | number> {
     );
   }
 
-  getOne(id: Id, include: QueryParams["include"]) {
+  getOne(
+    id: Id,
+    include: QueryParams["include"] = { dbIncludes: [], schemaIncludes: [] },
+  ) {
     return this.em.findOne(
       this.entity,
       { id },

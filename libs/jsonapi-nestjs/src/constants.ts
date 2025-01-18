@@ -1,6 +1,6 @@
 export const JSONAPI_SCHEMA_ENTITY_CLASS = Symbol();
 export const JSONAPI_RESOURCES = Symbol();
-export const JSONAPI_DECORATOR_OPTIONS = Symbol();
+export const JSONAPI_GLOBAL_OPTIONS = Symbol();
 export const JSONAPI_SCHEMA_TYPE = Symbol();
 export const JSONAPI_RESOURCE_OPTIONS = Symbol();
 export const JSONAPI_RESOURCE_SCHEMAS = Symbol();

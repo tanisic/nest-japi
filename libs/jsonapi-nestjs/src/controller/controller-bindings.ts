@@ -1,4 +1,4 @@
-import { RequestMethod, Query, Param, Body } from "@nestjs/common";
+import { RequestMethod, Query, Param, Body, Req } from "@nestjs/common";
 import { JsonBaseController } from "./base-controller";
 import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
@@ -16,6 +16,10 @@ export const controllerBindings: BindingsConfig = {
     parameters: [
       {
         decorator: Query,
+        mixins: [],
+      },
+      {
+        decorator: Req,
         mixins: [],
       },
     ],

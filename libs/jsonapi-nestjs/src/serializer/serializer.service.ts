@@ -1,183 +1,160 @@
-import { Inject, Injectable, Type } from "@nestjs/common";
+import { Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
-import { RelationAttribute } from "../decorators/relation.decorator";
-import {
-  Linker,
-  Metaizer,
-  Paginator,
-  Relator,
-  Serializer,
-  SerializerOptions,
-} from "ts-japi";
+import { Linker, Relator, Serializer, SerializerOptions } from "ts-japi";
 import {
   getAttributes,
   getRelations,
+  getResourceOptions,
+  getSchemasFromResource,
   getType,
 } from "../schema/helpers/schema-helper";
 import { Pagination } from "../query";
-import { Request } from "express";
-import { REQUEST } from "@nestjs/core";
-import { stringify } from "qs";
 import { joinUrlPaths } from "../helpers";
+import { JsonApiOptions } from "../modules/json-api-options";
+import { BaseResource } from "../resource/base-resource";
 
 export interface SerializeCustomOptions {
   include?: string[];
   fields?: Record<string, string[]>;
   page?: Pagination;
-  meta?: Metaizer<any>;
 }
+
+type JsonApiTypeString = string;
+type RelatorKey = `${JsonApiTypeString}__${JsonApiTypeString}`;
 
 @Injectable()
 export class SerializerService {
-  private options?: SerializeCustomOptions | undefined;
-  private serializerMap = new Map<string, Serializer>();
+  private resources: Type<BaseResource<any>>[];
+  private serializerMap = new Map<JsonApiTypeString, Serializer<unknown>>();
+  private relatorsMap = new Map<RelatorKey, Relator<unknown, unknown>>();
 
-  constructor(
-    @Inject(REQUEST)
-    private request: Request,
-  ) {
-    this.baseUrl = `${request.protocol}://${request.get("Host")}`;
+  constructor(private globalOptions: JsonApiOptions) {
+    this.baseUrl = this.globalOptions.global.baseUrl;
+    this.resources = this.globalOptions.global.resources ?? [];
+    this.generateSerializers();
+    this.generateRelators();
+    this.connectSerializersAndRelators();
   }
 
   private baseUrl: string;
 
+  private getResourceBySchema(schema: Type<BaseSchema<any>>) {
+    return this.resources.find(
+      (resource) => getResourceOptions(resource).schemas.schema === schema,
+    );
+  }
+
+  protected resourceUrl(resource: Type<BaseResource<any>>) {
+    const options = getResourceOptions(resource);
+    return joinUrlPaths(this.baseUrl, options.path!);
+  }
+
+  private generateSerializers() {
+    for (const resource of this.resources) {
+      const schemas = getSchemasFromResource(resource);
+      const { schema } = schemas;
+      const type = getType(schema);
+      let projection = {};
+      for (const attribute of getAttributes(schema)) {
+        projection = { ...projection, [attribute.name]: 1 };
+      }
+      const resourceLinker = new Linker((parent) => {
+        return joinUrlPaths(this.resourceUrl(resource), String(parent.id));
+      });
+      const serializer = new Serializer(type, {
+        projection,
+        linkers: { resource: resourceLinker },
+      });
+      this.serializerMap.set(type, serializer);
+    }
+  }
+
+  private generateRelators() {
+    for (const resource of this.resources) {
+      const schemas = getSchemasFromResource(resource);
+      const { schema } = schemas;
+      const type = getType(schema);
+      for (const relation of getRelations(schema)) {
+        const relationSchema = relation.schema();
+        const relationType = getType(relationSchema);
+        const relationSerializer = this.serializerMap.get(relationType);
+        const relationLinker = new Linker((parentData, relationData) => {
+          return Array.isArray(relationData)
+            ? joinUrlPaths(
+                this.resourceUrl(resource),
+                `relationships/${relation.name}`,
+              )
+            : joinUrlPaths(
+                this.resourceUrl(resource),
+                `/${parentData.id}/relationships/${relation.name}`,
+              );
+        });
+        const relatedLinker = new Linker((parentData, relationData) => {
+          return Array.isArray(relationData)
+            ? joinUrlPaths(this.resourceUrl(resource), `/${relation.name}`)
+            : joinUrlPaths(
+                this.resourceUrl(resource),
+                `/${parentData.id}/${relation.name}`,
+              );
+        });
+        const relator = new Relator(
+          (data) => data[relation.name],
+          relationSerializer,
+          {
+            linkers: { relationship: relationLinker, related: relatedLinker },
+            relatedName: relation.name,
+          },
+        );
+        this.relatorsMap.set(`${type}__${relationType}`, relator);
+      }
+    }
+  }
+
+  private connectSerializersAndRelators() {
+    for (const [type, serializer] of Array.from(this.serializerMap.entries())) {
+      const relators = this.getTypeRelators(type);
+      serializer.setRelators(relators);
+      this.serializerMap.set(type, serializer);
+    }
+  }
+
   serialize(
     data: any,
     schema: Type<BaseSchema<any>>,
-    options?: SerializeCustomOptions,
+    options?: SerializeCustomOptions & Partial<SerializerOptions<unknown>>,
   ) {
-    this.options = options;
-    const resolved = this.resolve(schema);
-    return resolved.serialize(data);
-  }
-
-  private createPaginator() {
-    const paginate = this.options?.page;
-    if (paginate) {
-      const req = this.request;
-
-      const params: Record<string, any> = { ...req.query };
-      delete params.page;
-
-      const prevParams = {
-        ...params,
-        page: { ...paginate, number: paginate.number - 1 },
-      };
-
-      const nextParams = {
-        ...params,
-        page: { ...paginate, number: paginate.number + 1 },
-      };
-      const prevUrl = joinUrlPaths(
-        this.baseUrl,
-        req.path,
-        `?${stringify(prevParams)}`,
-      );
-      const nextUrl = joinUrlPaths(
-        this.baseUrl,
-        req.path,
-        `?${stringify(nextParams)}`,
-      );
-      const hasPrev = paginate.number > 1;
-      return new Paginator(() => {
-        return {
-          prev: hasPrev ? prevUrl : null,
-          next: nextUrl,
-          first: null,
-          last: null,
-        };
-      });
-    }
-  }
-
-  private calculateMaxIncludeDepth(includes?: string[]) {
-    let maxLen = 0;
-    if (!includes) return maxLen;
-
-    for (const include of includes) {
-      const splitParts = include.split(".");
-      if (splitParts.length > maxLen) {
-        maxLen = splitParts.length;
-      }
-    }
-    return maxLen;
-  }
-
-  private resolve(schema: Type<BaseSchema<any>>) {
     const type = getType(schema);
-    const visibleAttributes = this.getVisibleAttributesOrSparse(schema);
-    const relations = getRelations(schema);
-    const rootSerializer = this.findOrCreateSerializer(type, {
-      projection: visibleAttributes,
-      include: this.calculateMaxIncludeDepth(this.options?.include ?? []),
+    const serializer = this.serializerMap.get(type);
+    const resource = this.getResourceBySchema(schema);
+    const resourcePath = this.resourceUrl(resource);
+    return serializer.serialize(data, {
+      ...options,
+      projection: this.getVisibleAttributesOrSparse(schema, options?.fields),
+      include: options?.include ?? 0,
       linkers: {
-        paginator: this.createPaginator(),
-      },
-      metaizers: {
-        document: this.options?.meta,
+        ...options?.linkers,
       },
     });
-
-    for (const relation of relations) {
-      this.resolveRelation(relation, this.serializerMap.get(type));
-    }
-
-    return rootSerializer;
   }
 
-  private resolveRelation(
-    relation: RelationAttribute,
-    parentSerializer: Serializer,
-  ) {
-    const relSchema = relation.schema();
-    const relType = getType(relSchema);
-
-    const serializer = this.findOrCreateSerializer(relType, {
-      projection: this.getVisibleAttributesOrSparse(relSchema),
-    });
-    const domain = "https://www.example.com";
-    const relLinker = new Linker((a, b) => {
-      return domain;
-    });
-    const relator = new Relator((data) => data[relation.dataKey], serializer, {
-      linkers: {
-        relationship: relLinker,
-      },
-    });
-    parentSerializer.setRelators({
-      ...parentSerializer.getRelators(),
-      [relation.name]: relator,
-    });
-    this.serializerMap.set(relType, serializer);
-
-    const relations = getRelations(relSchema);
-    for (const rel of relations) {
-      const schema = rel.schema();
-      const type = getType(schema);
-      if (this.serializerMap.has(type)) continue;
-      this.resolveRelation(rel, serializer);
+  private getTypeRelators(
+    type: JsonApiTypeString,
+  ): Relator<unknown, unknown>[] {
+    const validRelatorKeys = Array.from(this.relatorsMap.keys()).filter((key) =>
+      key.startsWith(type),
+    );
+    const result = [];
+    for (const key of validRelatorKeys) {
+      result.push(this.relatorsMap.get(key));
     }
-  }
-
-  private findOrCreateSerializer(
-    type: string,
-    newOptions?: Partial<SerializerOptions>,
-  ) {
-    if (this.serializerMap.has(type)) {
-      return this.serializerMap.get(type);
-    }
-
-    const newSerializer = new Serializer(type, newOptions);
-    this.serializerMap.set(type, newSerializer);
-    return this.serializerMap.get(type);
+    return result;
   }
 
   private getVisibleAttributesOrSparse(
     schema: Type<BaseSchema<any>>,
+    sparseFields?: Record<string, string[]>,
   ): Record<string, 1> {
     const result = {};
-
-    const sparseFields = this.options?.fields;
 
     if (sparseFields) {
       const type = getType(schema);

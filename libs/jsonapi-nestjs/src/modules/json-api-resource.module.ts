@@ -8,7 +8,7 @@ import {
 import { namedClass } from "../helpers";
 import { BaseResource } from "../resource/base-resource";
 import {
-  JSONAPI_DECORATOR_OPTIONS,
+  JSONAPI_GLOBAL_OPTIONS,
   JSONAPI_RESOURCE_OPTIONS,
   CURRENT_SCHEMAS,
 } from "../constants";
@@ -52,7 +52,7 @@ export class JsonApiResourceModule {
 
     const allOptionsProvider: FactoryProvider<JsonApiOptions> = {
       provide: JsonApiOptions,
-      inject: [JSONAPI_DECORATOR_OPTIONS, JSONAPI_RESOURCE_OPTIONS],
+      inject: [JSONAPI_GLOBAL_OPTIONS, JSONAPI_RESOURCE_OPTIONS],
       useFactory: (global: JsonApiModuleOptions, resource: ResourceOptions) =>
         new JsonApiOptions({ global, resource }),
     };
