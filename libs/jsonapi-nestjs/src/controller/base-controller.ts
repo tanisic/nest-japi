@@ -55,7 +55,6 @@ export class JsonBaseController<Id = string | number>
       const currentPage = Number((params.page as ParsedQs).number);
       const baseUrl = joinUrlPaths(this.baseUrl, request.path);
 
-      // Helper to generate URL with updated query parameters
       const generateUrl = (pageNumber: number, params: ParsedQs) => {
         const p = {
           ...params,
@@ -71,7 +70,6 @@ export class JsonBaseController<Id = string | number>
         return `${baseUrl}?${queryString}`;
       };
 
-      // Build pagination links
       const first = generateUrl(1, params);
       const last = generateUrl(totalPages, params);
       const next =
@@ -159,18 +157,26 @@ export class JsonBaseController<Id = string | number>
       schemaIncludes: [],
     });
 
+    if (!data) {
+      throw new JapiError({ status: 404, detail: "Root data does not exist." });
+    }
+
     const unwrapped = serialize(data, {
       forceObject: true,
       populate: [relation.dataKey as any],
+      skipNull: true,
     });
 
     const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
 
-    // return this.serializerService.serializeRelation(
-    //   result,
-    //   this.currentSchemas.schema,
-    //   relationName,
-    // );
+    return this.serializerService.serialize(
+      result,
+      this.currentSchemas.schema,
+      {
+        onlyIdentifier: true,
+        onlyRelationship: relationName,
+      },
+    );
   }
 
   // Delete a single resource by ID
