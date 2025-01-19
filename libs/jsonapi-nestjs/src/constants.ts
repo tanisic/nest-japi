@@ -20,4 +20,4 @@ export const PARAMS_RELATION_NAME = "relName";
 export const X_REQUEST_ID_NAME = "X-Request-Id";
 export const JSONAPI_CONTENT_TYPE = "application/vnd.api+json";
 
-export const DEFAULT_PAGINATION_SIZE = 100;
+export const DEFAULT_PAGINATION_SIZE = 5000;
