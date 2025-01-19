@@ -1,6 +1,13 @@
 import { Injectable, Type } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
-import { Linker, Relator, Serializer, SerializerOptions } from "ts-japi";
+import {
+  DataDocument,
+  Linker,
+  PrimaryData,
+  Relator,
+  Serializer,
+  SerializerOptions,
+} from "ts-japi";
 import {
   getAttributes,
   getRelations,
@@ -8,10 +15,11 @@ import {
   getSchemasFromResource,
   getType,
 } from "../schema/helpers/schema-helper";
-import { Pagination } from "../query";
+import { Pagination, SparseFields } from "../query";
 import { joinUrlPaths } from "../helpers";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { BaseResource } from "../resource/base-resource";
+import Resource from "ts-japi/lib/models/resource.model";
 
 export interface SerializeCustomOptions {
   include?: string[];
@@ -20,7 +28,8 @@ export interface SerializeCustomOptions {
 }
 
 type JsonApiTypeString = string;
-type RelatorKey = `${JsonApiTypeString}__${JsonApiTypeString}`;
+type CollectionName = string;
+type RelatorKey = `${JsonApiTypeString}__${CollectionName}`;
 
 @Injectable()
 export class SerializerService {
@@ -37,12 +46,6 @@ export class SerializerService {
   }
 
   private baseUrl: string;
-
-  private getResourceBySchema(schema: Type<BaseSchema<any>>) {
-    return this.resources.find(
-      (resource) => getResourceOptions(resource).schemas.schema === schema,
-    );
-  }
 
   protected resourceUrl(resource: Type<BaseResource<any>>) {
     const options = getResourceOptions(resource);
@@ -76,13 +79,14 @@ export class SerializerService {
       const type = getType(schema);
       for (const relation of getRelations(schema)) {
         const relationSchema = relation.schema();
+        const relationName = relation.name;
         const relationType = getType(relationSchema);
         const relationSerializer = this.serializerMap.get(relationType);
         const relationLinker = new Linker((parentData, relationData) => {
           return Array.isArray(relationData)
             ? joinUrlPaths(
                 this.resourceUrl(resource),
-                `relationships/${relation.name}`,
+                `relationships/${relationName}`,
               )
             : joinUrlPaths(
                 this.resourceUrl(resource),
@@ -91,21 +95,21 @@ export class SerializerService {
         });
         const relatedLinker = new Linker((parentData, relationData) => {
           return Array.isArray(relationData)
-            ? joinUrlPaths(this.resourceUrl(resource), `/${relation.name}`)
+            ? joinUrlPaths(this.resourceUrl(resource), `/${relationName}`)
             : joinUrlPaths(
                 this.resourceUrl(resource),
-                `/${parentData.id}/${relation.name}`,
+                `/${parentData.id}/${relationName}`,
               );
         });
         const relator = new Relator(
-          (data) => data[relation.name],
+          (data) => data[relationName],
           relationSerializer,
           {
             linkers: { relationship: relationLinker, related: relatedLinker },
-            relatedName: relation.name,
+            relatedName: relationName,
           },
         );
-        this.relatorsMap.set(`${type}__${relationType}`, relator);
+        this.relatorsMap.set(`${type}__${relationName}`, relator);
       }
     }
   }
@@ -118,23 +122,72 @@ export class SerializerService {
     }
   }
 
-  serialize(
+  async serialize(
     data: any,
     schema: Type<BaseSchema<any>>,
     options?: SerializeCustomOptions & Partial<SerializerOptions<unknown>>,
   ) {
     const type = getType(schema);
     const serializer = this.serializerMap.get(type);
-    const resource = this.getResourceBySchema(schema);
-    const resourcePath = this.resourceUrl(resource);
-    return serializer.serialize(data, {
+    const projection = this.getVisibleAttributesOrSparse(
+      schema,
+      options?.fields,
+    );
+    const document = await serializer.serialize(data, {
       ...options,
-      projection: this.getVisibleAttributesOrSparse(schema, options?.fields),
-      include: options?.include ?? 0,
+      projection,
+      include: options?.include ?? [],
       linkers: {
         ...options?.linkers,
       },
     });
+    return this.transformSparseFields(document, options.fields);
+  }
+
+  private transformSparseFields(
+    document: Partial<DataDocument<unknown>>,
+    sparseFields?: SparseFields["schema"],
+  ): Partial<DataDocument<unknown>> {
+    if (!sparseFields) return document;
+
+    const filterFields = (
+      resource: Resource<unknown>,
+      allowedFields: string[],
+    ) => {
+      if (resource.attributes) {
+        resource.attributes = Object.fromEntries(
+          Object.entries(resource.attributes).filter(([key]) =>
+            allowedFields.includes(key),
+          ),
+        );
+      }
+      return resource;
+    };
+
+    // Process `data`
+    if (Array.isArray(document.data)) {
+      document.data = document.data.map((resource) =>
+        sparseFields[resource.type]
+          ? filterFields(resource, sparseFields[resource.type])
+          : resource,
+      );
+    } else if (document.data && sparseFields[document.data.type]) {
+      document.data = filterFields(
+        document.data,
+        sparseFields[document.data.type],
+      );
+    }
+
+    // Process `included`
+    if (document.included) {
+      document.included = document.included.map((resource) =>
+        sparseFields[resource.type]
+          ? filterFields(resource, sparseFields[resource.type])
+          : resource,
+      );
+    }
+
+    return document;
   }
 
   private getTypeRelators(
