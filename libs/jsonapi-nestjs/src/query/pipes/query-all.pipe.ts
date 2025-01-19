@@ -49,17 +49,10 @@ export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
     }
 
     let filter: FilterQuery<any> | null = null;
+
     if (value.filter) {
-      try {
-        const filterJson = JSON.parse(value.filter);
-        filter = this.filterService.transform(filterJson);
-      } catch (err) {
-        throw new JapiError({
-          status: "400",
-          source: { parameter: "filter" },
-          detail: "Filter must be a valid object.",
-        });
-      }
+      const filterJson = this.parseFilter(value.filter);
+      filter = this.filterService.transform(filterJson);
     }
 
     return {
@@ -70,5 +63,17 @@ export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
       include: this.includeService.transform(value.include),
       filter,
     };
+  }
+
+  parseFilter(filter: any): FilterQuery<unknown> {
+    try {
+      return JSON.parse(filter);
+    } catch (err) {
+      throw new JapiError({
+        status: "400",
+        source: { parameter: "filter" },
+        detail: "Filter is not valid JSON object.",
+      });
+    }
   }
 }

@@ -6,37 +6,87 @@ import {
   getAttributeByName,
   getRelationByName,
 } from "../../schema";
+import { RelationOptions } from "../../decorators/relation.decorator";
 
 @Injectable()
 export class FilterService {
   constructor(private readonly schema: Type<BaseSchema<any>>) {}
 
-  transform<T>(filters: Record<string, any>): FilterQuery<T> {
-    if (!filters || typeof filters !== "object") {
-      throw new JapiError({
-        status: "400",
-        source: { parameter: "filter" },
-        detail: "Filters must be a valid object.",
-      });
-    }
+  logicalOperatorKeys = ["$and", "$or", "$not"];
+  collectionOperatorKeys = ["$some", "$none", "$every"];
 
+  filterKeys = [
+    "$eq",
+    "$gt",
+    "$gte",
+    "$in",
+    "$lt",
+    "$lte",
+    "$ne",
+    "$nin",
+    "$like",
+    "$re",
+    "$fulltext",
+    "$ilike",
+    "$overlap",
+    "$contains",
+    "$contained",
+    "$hasKey",
+    "$hasSomeKeys",
+    "$hasKeys",
+  ];
+
+  transform<T>(
+    filters: Record<string, any>,
+    currentSchema = this.schema,
+  ): FilterQuery<T> {
     const transformedFilters: FilterQuery<T> = {};
 
     for (const key of Object.keys(filters)) {
       const value = filters[key];
+      const relation = getRelationByName(currentSchema, key);
+      const attribute = getAttributeByName(currentSchema, key);
 
-      if (key.startsWith("$")) {
+      if (this.logicalOperatorKeys.includes(key)) {
         transformedFilters[key] = this.handleLogicalOperator(value);
-      } else if (key.includes(".")) {
-        this.applyNestedFilter(transformedFilters, key, value);
+      } else if (this.filterKeys.includes(key)) {
+        transformedFilters[key] = this.handleOperator(key, value);
+      } else if (relation) {
+        transformedFilters[relation.dataKey] = this.handleRelation(
+          relation,
+          value,
+        );
+      } else if (attribute) {
+        transformedFilters[attribute.dataKey] = value;
+      } else if (
+        typeof value === "string" ||
+        typeof value === "number" ||
+        typeof value === "boolean"
+      ) {
+        transformedFilters[key] = value;
       } else {
-        this.validateSingle(key);
-        const field = getAttributeByName(this.schema, key);
-        transformedFilters[field.dataKey] = value;
+        throw new JapiError({
+          status: "400",
+          source: { parameter: "filter" },
+          detail: `${key} not attribute or relation in ${currentSchema.name}`,
+        });
       }
     }
 
     return transformedFilters;
+  }
+  private handleOperator(
+    operator: string,
+    value: FilterQuery<unknown>,
+  ): FilterQuery<unknown> {
+    return this.transform(value);
+  }
+
+  private handleRelation(
+    relation: RelationOptions,
+    value: FilterQuery<unknown>,
+  ): FilterQuery<unknown> {
+    return this.transform(value);
   }
 
   private handleLogicalOperator(value: any): any {
@@ -58,61 +108,5 @@ export class FilterService {
       }
       return this.transform(condition);
     });
-  }
-
-  private applyNestedFilter<T>(
-    transformedFilters: FilterQuery<T>,
-    key: string,
-    value: any,
-  ) {
-    const fields = key.split(".");
-    let current = transformedFilters;
-    let currentSchema = this.schema;
-
-    for (let i = 0; i < fields.length; i++) {
-      const part = fields[i];
-      const isLastField = i === fields.length - 1;
-
-      // Validate the part as a relation or attribute
-      const relation = getRelationByName(currentSchema, part);
-
-      if (relation) {
-        // If it's a relation, navigate deeper
-        if (!current[relation.dataKey]) {
-          current[relation.dataKey] = isLastField ? value : {};
-        }
-        current = current[relation.dataKey] as FilterQuery<T>;
-        currentSchema = relation.schema();
-      } else if (isLastField) {
-        // If it's not a relation, validate it as an attribute
-        const attribute = getAttributeByName(currentSchema, part);
-        if (!attribute) {
-          throw new JapiError({
-            status: "400",
-            source: { parameter: "filter" },
-            detail: `"${part}" is not a valid attribute or relation in ${currentSchema.name} schema.`,
-          });
-        }
-        current[attribute.dataKey] = value;
-      } else {
-        // If it's neither a relation nor a valid path, throw an error
-        throw new JapiError({
-          status: "400",
-          source: { parameter: "filter" },
-          detail: `Invalid nested path "${part}" in ${currentSchema.name} schema.`,
-        });
-      }
-    }
-  }
-
-  private validateSingle(field: string) {
-    const attribute = getAttributeByName(this.schema, field);
-    if (!attribute) {
-      throw new JapiError({
-        status: "400",
-        source: { parameter: "filter" },
-        detail: `Relation "${field}" does not exist on ${this.schema.name} schema.`,
-      });
-    }
   }
 }
