@@ -146,10 +146,9 @@ export class JsonBaseController<Id = string | number>
       relationName,
     );
     if (!relation) {
-      throw new JapiError({
-        status: 400,
-        detail: `Relationship ${relationName} does not exist on schema "${schema.name}".`,
-      });
+      throw new NotFoundException(
+        `Relationship ${relationName} does not exist on schema "${schema.name}".`,
+      );
     }
 
     const data = await this.dataLayer.getOne(id, {
@@ -158,7 +157,7 @@ export class JsonBaseController<Id = string | number>
     });
 
     if (!data) {
-      throw new JapiError({ status: 404, detail: "Root data does not exist." });
+      throw new NotFoundException("Root data does not exist.");
     }
 
     const unwrapped = serialize(data, {

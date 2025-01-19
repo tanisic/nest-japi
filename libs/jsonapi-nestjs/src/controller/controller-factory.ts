@@ -34,6 +34,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
 import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.interceptor";
+import { HttpExceptionFilter } from "../exceptions/http-error.filter";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -253,7 +254,10 @@ export class ControllerFactory {
 
   private applyControllerDecorator(): void {
     ApiTags(snakeCase(this.controllerClass.name))(this.controllerClass);
-    UseFilters(JsonApiExceptionFilter)(this.controllerClass);
+    UseFilters(
+      JsonApiExceptionFilter,
+      HttpExceptionFilter,
+    )(this.controllerClass);
     Controller(this.options.path)(this.controllerClass);
   }
 }
