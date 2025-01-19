@@ -15,26 +15,28 @@ export class FilterService {
   logicalOperatorKeys = ["$and", "$or", "$not"];
   collectionOperatorKeys = ["$some", "$none", "$every"];
 
-  filterKeys = [
+  singleFilterKeys = [
     "$eq",
     "$gt",
     "$gte",
-    "$in",
     "$lt",
     "$lte",
     "$ne",
-    "$nin",
     "$like",
     "$re",
     "$fulltext",
     "$ilike",
-    "$overlap",
     "$contains",
     "$contained",
     "$hasKey",
     "$hasSomeKeys",
     "$hasKeys",
+    "$overlap",
   ];
+
+  arrayFilterKeys = ["$nin", "$in"];
+
+  filterKeys = [...this.singleFilterKeys, ...this.arrayFilterKeys];
 
   transform<T>(
     filters: Record<string, any>,
@@ -42,8 +44,7 @@ export class FilterService {
   ): FilterQuery<T> {
     const transformedFilters: FilterQuery<T> = {};
 
-    for (const key of Object.keys(filters)) {
-      const value = filters[key];
+    for (const [key, value] of Object.entries(filters)) {
       const relation = getRelationByName(currentSchema, key);
       const attribute = getAttributeByName(currentSchema, key);
 
@@ -57,13 +58,10 @@ export class FilterService {
           value,
         );
       } else if (attribute) {
-        transformedFilters[attribute.dataKey] = value;
-      } else if (
-        typeof value === "string" ||
-        typeof value === "number" ||
-        typeof value === "boolean"
-      ) {
-        transformedFilters[key] = value;
+        transformedFilters[attribute.dataKey] = this.transform(
+          value,
+          currentSchema,
+        );
       } else {
         throw new JapiError({
           status: "400",
@@ -79,14 +77,29 @@ export class FilterService {
     operator: string,
     value: FilterQuery<unknown>,
   ): FilterQuery<unknown> {
-    return this.transform(value);
+    if (this.arrayFilterKeys.includes(operator) && !Array.isArray(value)) {
+      throw new JapiError({
+        status: "400",
+        source: { parameter: "filter" },
+        detail: `Operator ${operator} must have value as array.`,
+      });
+    }
+    if (this.singleFilterKeys.includes(operator) && Array.isArray(value)) {
+      throw new JapiError({
+        status: "400",
+        source: { parameter: "filter" },
+        detail: `Operator ${operator} cannot have value as array.`,
+      });
+    }
+    return value;
   }
 
   private handleRelation(
     relation: RelationOptions,
     value: FilterQuery<unknown>,
   ): FilterQuery<unknown> {
-    return this.transform(value);
+    const relationSchema = relation.schema();
+    return this.transform(value, relationSchema);
   }
 
   private handleLogicalOperator(value: any): any {

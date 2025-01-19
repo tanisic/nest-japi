@@ -10,23 +10,15 @@ import type {
 } from "@nestjs/common";
 import { BaseResource } from "../resource/base-resource";
 import { JsonApiResourceModule } from "./json-api-resource.module";
-import {
-  JSONAPI_GLOBAL_OPTIONS,
-  JSONAPI_RESOURCE_OPTIONS,
-  SCHEMA_REPOSITORY,
-} from "../constants";
+import { JSONAPI_GLOBAL_OPTIONS, SCHEMA_REPOSITORY } from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
 import {
   BaseSchema,
-  getAttributes,
   getRelations,
-  getResourceOptions,
   getSchemasFromResource,
   getType,
 } from "../schema";
-import { ResourceOptions } from "../decorators/resource.decorator";
-import { Serializer } from "ts-japi";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
