@@ -141,7 +141,7 @@ export class SerializerService {
         ...options?.linkers,
       },
     });
-    return this.transformSparseFields(document, options.fields);
+    return this.transformSparseFields(document, options?.fields);
   }
 
   private transformSparseFields(

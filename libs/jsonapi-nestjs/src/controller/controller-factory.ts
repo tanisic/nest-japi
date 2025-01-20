@@ -168,7 +168,6 @@ export class ControllerFactory {
         Get(path)(this.controllerClass.prototype, name, descriptor);
         break;
       case RequestMethod.DELETE:
-        HttpCode(204)(this.controllerClass.prototype, name, descriptor);
         Delete(path)(this.controllerClass.prototype, name, descriptor);
         break;
       case RequestMethod.POST:

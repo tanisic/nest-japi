@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import {
   getEntityFromSchema,
   getRelationByName,
@@ -6,7 +6,13 @@ import {
 } from "../schema";
 import { CURRENT_SCHEMAS } from "../constants";
 import { QueryParams } from "../query";
-import { Collection, EntityClass, EntityManager } from "@mikro-orm/core";
+import {
+  Collection,
+  EntityClass,
+  EntityManager,
+  serialize,
+} from "@mikro-orm/core";
+import type { EntityManager as EM } from "@mikro-orm/postgresql";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { JapiError } from "ts-japi";
 
@@ -17,7 +23,8 @@ export class DataLayerService<Id = string | number> {
   constructor(
     private options: JsonApiOptions,
     @Inject(CURRENT_SCHEMAS) private schemas: Schemas,
-    private em: EntityManager,
+    @Inject(EntityManager)
+    private em: EM,
   ) {
     this.entity = getEntityFromSchema(this.schemas.schema);
   }
@@ -46,22 +53,12 @@ export class DataLayerService<Id = string | number> {
     );
   }
 
-  async getRelationship(id: Id, relationName: string) {
-    const relation = getRelationByName(this.schemas.schema, relationName);
-    const parentData = await this.em.findOne(
-      this.entity,
-      { id },
-      { populate: [relation.dataKey] as any },
-    );
-    if (!parentData) {
-      throw new JapiError({
-        status: 404,
-        detail: `Item with id ${id} does not exists.`,
-      });
+  async deleteOne(id: Id) {
+    const found = await this.em.findOne(this.entity, { id });
+    if (!found) {
+      throw new NotFoundException(`Object with id ${id} does not exists.`);
     }
-    const relationData = parentData[relation.dataKey];
-    return relationData instanceof Collection
-      ? relationData.getItems()
-      : relationData;
+    await this.em.nativeDelete(this.entity, { id });
+    return serialize(found, { forceObject: true });
   }
 }

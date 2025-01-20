@@ -1,14 +1,18 @@
 import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityManager, serialize } from "@mikro-orm/core";
+import {
+  EntityManager,
+  serialize,
+  TableNotFoundException,
+} from "@mikro-orm/core";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
-import { DataDocument, JapiError, Metaizer, Paginator } from "ts-japi";
+import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
-import { getRelationByName } from "../schema";
+import { getEntityFromSchema, getRelationByName } from "../schema";
 import { Request } from "express";
 import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
@@ -179,9 +183,10 @@ export class JsonBaseController<Id = string | number>
   }
 
   // Delete a single resource by ID
-  deleteOne(id: Id, ...rest: any[]) {
-    // Simulated deletion of a resource
-    return { id, message: `Resource with ID ${id} deleted.` };
+  async deleteOne(id: Id, ...rest: any[]) {
+    const data = await this.dataLayer.deleteOne(id);
+    console.log(data);
+    return this.serializerService.serialize(data, this.currentSchemas.schema);
   }
 
   // Delete a specific relationship for a resource
