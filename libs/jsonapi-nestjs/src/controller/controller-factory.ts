@@ -35,6 +35,7 @@ import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
 import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.interceptor";
 import { HttpExceptionFilter } from "../exceptions/http-error.filter";
+import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -257,6 +258,7 @@ export class ControllerFactory {
     UseFilters(
       JsonApiExceptionFilter,
       HttpExceptionFilter,
+      MikroOrmExceptionFilter,
     )(this.controllerClass);
     Controller(this.options.path)(this.controllerClass);
   }
