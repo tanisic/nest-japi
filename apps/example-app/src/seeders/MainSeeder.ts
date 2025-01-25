@@ -4,12 +4,14 @@ import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
 import { Comment } from 'src/entities/comment.entity';
 import { faker } from '@faker-js/faker';
+import { Address } from 'src/entities/address.entity';
 
 export class MainSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
     const users: User[] = [];
     const posts: Post[] = [];
     const comments: Comment[] = [];
+    const addresses: Address[] = [];
 
     // Generate 50 users
     for (let i = 0; i < 20; i++) {
@@ -18,6 +20,14 @@ export class MainSeeder extends Seeder {
         email: faker.internet.email(),
       });
       users.push(user);
+      const address = em.create(Address, {
+        user: user,
+        city: faker.location.city(),
+        street: faker.location.street(),
+        country: faker.location.county(),
+        streetNumber: faker.location.buildingNumber(),
+      });
+      addresses.push(address);
     }
 
     // Generate 100 posts
@@ -44,6 +54,6 @@ export class MainSeeder extends Seeder {
     }
 
     // Persist all data to the database
-    await em.persistAndFlush([...users, ...posts, ...comments]);
+    await em.persistAndFlush([...users, ...addresses, ...posts, ...comments]);
   }
 }

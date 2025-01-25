@@ -182,10 +182,8 @@ export class JsonBaseController<Id = string | number>
     );
   }
 
-  // Delete a single resource by ID
   async deleteOne(id: Id, ...rest: any[]) {
     const data = await this.dataLayer.deleteOne(id);
-    console.log(data);
     return this.serializerService.serialize(data, this.currentSchemas.schema);
   }
 
