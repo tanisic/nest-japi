@@ -187,14 +187,6 @@ export class JsonBaseController<Id = string | number>
     return this.serializerService.serialize(data, this.currentSchemas.schema);
   }
 
-  // Delete a specific relationship for a resource
-  deleteRelationship(id: Id, relationName: string, ...rest: any[]) {
-    return {
-      id,
-      message: `Relationship  for resource with ID ${id} deleted.`,
-    };
-  }
-
   // Create a new resource
   postOne(...args: any[]) {
     const [resourceData] = args;

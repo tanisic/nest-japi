@@ -8,7 +8,6 @@ export type MethodName =
   | "getOne"
   | "getRelationship"
   | "deleteOne"
-  | "deleteRelationship"
   | "postOne"
   | "postRelationship"
   | "patchOne"
@@ -22,7 +21,6 @@ type MapNameToTypeMethod = {
   postOne: RequestMethod.POST;
   postRelationship: RequestMethod.POST;
   deleteOne: RequestMethod.DELETE;
-  deleteRelationship: RequestMethod.DELETE;
   getRelationship: RequestMethod.GET;
 };
 

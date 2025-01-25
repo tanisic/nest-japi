@@ -46,7 +46,6 @@ const allowedMethods: MethodName[] = [
   "postRelationship",
   "deleteOne",
   "getRelationship",
-  "deleteRelationship",
 ];
 
 @Injectable()
