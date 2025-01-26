@@ -15,6 +15,7 @@ export * from "./decorators/schema.decorator";
 export * from "./exceptions/http-error.filter";
 export * from "./exceptions/jsonapi-error.filter";
 export * from "./exceptions/mikro-orm-error.filter";
+export * from "./exceptions/zod-issues.filter";
 export * from "./helpers/index";
 export * from "./interceptors/content-type.interceptor";
 export * from "./middlewares/request-id.middleware";

@@ -4,6 +4,7 @@ import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
+import { JsonApiInputPostPipe } from "../schema";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -63,6 +64,7 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "createSchema",
     implementation: JsonBaseController.prototype.postOne,
+    pipes: [JsonApiInputPostPipe],
     parameters: [
       {
         decorator: Body,

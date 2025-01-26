@@ -2,9 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { RedocModule, RedocOptions } from 'nest-redoc';
+import * as bodyparser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(
+    bodyparser.json({
+      type: 'application/vnd.api+json',
+    }),
+  );
   const config = new DocumentBuilder()
     .setTitle('Cats example')
     .setDescription('The cats API description')

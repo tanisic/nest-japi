@@ -1,18 +1,14 @@
 import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import {
-  EntityManager,
-  serialize,
-  TableNotFoundException,
-} from "@mikro-orm/core";
+import { EntityManager, serialize } from "@mikro-orm/core";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
-import { getEntityFromSchema, getRelationByName } from "../schema";
+import { getRelationByName } from "../schema";
 import { Request } from "express";
 import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
@@ -187,11 +183,14 @@ export class JsonBaseController<Id = string | number>
     return this.serializerService.serialize(data, this.currentSchemas.schema);
   }
 
-  // Create a new resource
-  postOne(...args: any[]) {
-    const [resourceData] = args;
-    // Simulated resource creation
-    return { message: "Resource created.", resourceData };
+  async postOne(body: unknown, ...args: any[]) {
+    const data = await this.dataLayer.postOne(body as any);
+    const serialized = serialize(data, { forceObject: true });
+    const result = this.schemaBuilder.transformFromDb(
+      serialized,
+      this.currentSchemas.schema,
+    );
+    return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
   // Create a new relationship for a resource

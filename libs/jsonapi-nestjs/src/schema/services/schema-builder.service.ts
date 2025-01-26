@@ -41,4 +41,18 @@ export class SchemaBuilderService {
     }
     return result;
   }
+
+  transformToDb(
+    schemaData: Record<string, unknown>,
+    schema: Type<BaseSchema<any>>,
+  ): Record<string, unknown> {
+    const attributes = getAttributes(schema);
+
+    return attributes.reduce((result, attribute) => {
+      if (attribute.name in schemaData) {
+        result[attribute.dataKey] = schemaData[attribute.name];
+      }
+      return result;
+    }, {});
+  }
 }

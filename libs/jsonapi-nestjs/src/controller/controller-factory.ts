@@ -36,6 +36,7 @@ import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
 import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.interceptor";
 import { HttpExceptionFilter } from "../exceptions/http-error.filter";
 import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
+import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -257,6 +258,7 @@ export class ControllerFactory {
       JsonApiExceptionFilter,
       HttpExceptionFilter,
       MikroOrmExceptionFilter,
+      ZodIssuesExceptionFilter,
     )(this.controllerClass);
     Controller(this.options.path)(this.controllerClass);
   }
