@@ -109,29 +109,6 @@ export const controllerBindings: BindingsConfig = {
       },
     ],
   },
-  postRelationship: {
-    path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
-    name: "postRelationship",
-    method: RequestMethod.POST,
-    schema: "createSchema",
-    implementation: JsonBaseController.prototype["postRelationship"],
-    parameters: [
-      {
-        property: PARAMS_RESOURCE_ID,
-        decorator: Param,
-        mixins: [],
-      },
-      {
-        property: PARAMS_RELATION_NAME,
-        decorator: Param,
-        mixins: [],
-      },
-      {
-        decorator: Body,
-        mixins: [],
-      },
-    ],
-  },
   patchRelationship: {
     path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
     name: "patchRelationship",

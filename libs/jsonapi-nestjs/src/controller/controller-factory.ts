@@ -44,7 +44,6 @@ const allowedMethods: MethodName[] = [
   "getOne",
   "patchOne",
   "patchRelationship",
-  "postRelationship",
   "deleteOne",
   "getRelationship",
 ];

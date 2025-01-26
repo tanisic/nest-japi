@@ -193,17 +193,6 @@ export class JsonBaseController<Id = string | number>
     return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
-  // Create a new relationship for a resource
-  postRelationship(...args: any[]) {
-    const [id, relationshipData] = args;
-    // Simulated relationship creation
-    return {
-      id,
-      message: `Relationship created for resource with ID ${id}.`,
-      relationshipData,
-    };
-  }
-
   // Update a specific resource (patch)
   patchOne(...args: any[]) {
     const [id, updateData] = args;
