@@ -13,7 +13,7 @@ export class JsonApiInputPatchPipe implements PipeTransform {
     if (!this.schemas.updateSchema) {
       throw new JapiError({
         status: 500,
-        detail: `${this.schemas.schema.name}: Missing updateSchema definition.`,
+        detail: `${this.schemas.updateSchema.name}: Missing updateSchema definition.`,
       });
     }
 

@@ -28,7 +28,7 @@ import {
 import { ResourceOptions } from "../decorators/resource.decorator";
 import { controllerBindings } from "./controller-bindings";
 import { Binding, MethodName } from "./types";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiExtraModels, ApiTags } from "@nestjs/swagger";
 import { Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
 import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.interceptor";
@@ -36,6 +36,8 @@ import { HttpExceptionFilter } from "../exceptions/http-error.filter";
 import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 import { JsonBaseController } from "./base-controller";
+import { SwaggerMethodProps } from "../swagger";
+import { FilterOperatorsSwagger } from "../swagger/filter-operators";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -79,6 +81,7 @@ export class ControllerFactory {
 
   public createController() {
     this.bindMethods();
+    ApiExtraModels(FilterOperatorsSwagger)(this.controllerClass.prototype);
     this.applyControllerDecorator();
     return this.controllerClass;
   }
@@ -138,18 +141,23 @@ export class ControllerFactory {
     );
   }
 
-  private getSchemaFromControllerMethod(methodName: MethodName) {
-    const binding = controllerBindings[methodName];
+  private getControllerSchemas(): Schemas {
     const schemas = Reflect.getMetadata(
       JSONAPI_RESOURCE_SCHEMAS,
       this.controllerClass,
     ) as Schemas;
+    return schemas;
+  }
 
+  private getSchemaFromControllerMethod(methodName: MethodName) {
+    const binding = controllerBindings[methodName];
+    const schemas = this.getControllerSchemas();
     return schemas[binding.schema];
   }
 
   private bindRouteMethod(methodName: MethodName): void {
-    const { name, path, method, pipes } = controllerBindings[methodName];
+    const { name, path, method, pipes, swaggerImplementation } =
+      controllerBindings[methodName];
     const descriptor = Reflect.getOwnPropertyDescriptor(
       this.controllerClass.prototype,
       name,
@@ -159,6 +167,15 @@ export class ControllerFactory {
       throw new Error(
         `Descriptor for "${this.controllerClass.name}[${name}]" is undefined`,
       );
+    }
+
+    if (swaggerImplementation) {
+      const schemas = this.getControllerSchemas();
+      swaggerImplementation({
+        resource: this.controllerClass.prototype,
+        descriptor,
+        schemas,
+      });
     }
 
     switch (method) {
@@ -251,7 +268,6 @@ export class ControllerFactory {
   }
 
   private applyControllerDecorator(): void {
-    ApiTags(snakeCase(this.controllerClass.name))(this.controllerClass);
     UseFilters(
       JsonApiExceptionFilter,
       HttpExceptionFilter,

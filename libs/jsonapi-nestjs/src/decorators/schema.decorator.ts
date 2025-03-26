@@ -1,11 +1,10 @@
-import { snakeCase } from "es-toolkit";
 import { JSONAPI_SCHEMA_ENTITY_CLASS, JSONAPI_SCHEMA_TYPE } from "../constants";
-import { EntityName } from "@mikro-orm/core";
+import { EntityClass } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { BaseSchema } from "../schema/base-schema";
 
 export interface SchemaOptions {
-  entity: EntityName<unknown>;
+  entity: EntityClass<unknown>;
   jsonapiType: string;
 }
 
@@ -19,7 +18,6 @@ export const Schema = (options: SchemaOptions): ClassDecorator => {
     }
 
     Reflect.defineMetadata(JSONAPI_SCHEMA_TYPE, options.jsonapiType, target);
-
     Reflect.defineMetadata(JSONAPI_SCHEMA_ENTITY_CLASS, options.entity, target);
   };
 };

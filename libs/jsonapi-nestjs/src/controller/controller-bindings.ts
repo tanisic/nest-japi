@@ -6,6 +6,8 @@ import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
 import { JsonApiInputPostPipe } from "../schema";
 import { JsonApiInputPatchPipe } from "../schema/pipes/input-patch.pipe";
+import { getAll } from "../swagger";
+import { getOne } from "../swagger/methods/get-one";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -14,6 +16,7 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "schema",
     implementation: JsonBaseController.prototype.getAll,
+    swaggerImplementation: getAll,
     pipes: [QueryAllPipe],
     parameters: [
       {
@@ -32,6 +35,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "schema",
     implementation: JsonBaseController.prototype.getOne,
+    swaggerImplementation: getOne,
     pipes: [QueryOnePipe],
     parameters: [
       {

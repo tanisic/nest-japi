@@ -25,3 +25,4 @@ export * from "./modules/json-api.module";
 export * from "./query/index";
 export * from "./schema/index";
 export * from "./serializer/serializer.service";
+export * from "./swagger/index";
