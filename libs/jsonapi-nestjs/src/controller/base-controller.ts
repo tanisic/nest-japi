@@ -1,29 +1,39 @@
 import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityManager, serialize } from "@mikro-orm/core";
+import { EntityDTO, EntityManager, serialize } from "@mikro-orm/core";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
-import { getRelationByName } from "../schema";
+import { BaseSchema, getRelationByName } from "../schema";
 import { Request } from "express";
 import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
 import qs, { ParsedQs } from "qs";
 
-type RequestMethodes = { [k in MethodName]: (...arg: any[]) => any };
+type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
 
-export class JsonBaseController<Id = string | number>
-  implements RequestMethodes
+type InferEntity<T> = T extends BaseSchema<infer U> ? U : never;
+
+export class JsonBaseController<
+  Id = string | number,
+  TEntityManager extends EntityManager = EntityManager,
+  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+  ViewEntity = InferEntity<ViewSchema>,
+  CreateEntity = InferEntity<CreateSchema>,
+  UpdateEntity = InferEntity<UpdateSchema>,
+> implements ControllerMethods
 {
   @Inject(SerializerService)
   protected serializerService: SerializerService;
 
   @Inject(EntityManager)
-  protected em: EntityManager;
+  protected em: TEntityManager;
 
   @Inject(CURRENT_SCHEMAS)
   protected currentSchemas: Schemas;
@@ -35,57 +45,16 @@ export class JsonBaseController<Id = string | number>
   protected options: JsonApiOptions;
 
   @Inject(DataLayerService)
-  protected dataLayer: DataLayerService<Id>;
+  protected dataLayer: DataLayerService<
+    Id,
+    TEntityManager,
+    ViewEntity,
+    CreateEntity,
+    UpdateEntity
+  >;
 
   get baseUrl() {
     return this.options.global.baseUrl;
-  }
-
-  private generatePagination(
-    request: Request,
-    totalCount: number,
-  ): Paginator<unknown> {
-    return new Paginator((data) => {
-      const params = request.query;
-      if (!params?.page) return;
-
-      const totalPages = Math.ceil(
-        totalCount / Number((params.page as ParsedQs).size),
-      );
-      const currentPage = Number((params.page as ParsedQs).number);
-      const baseUrl = joinUrlPaths(this.baseUrl, request.path);
-
-      const generateUrl = (pageNumber: number, params: ParsedQs) => {
-        const p = {
-          ...params,
-          page: {
-            ...(params.page as ParsedQs),
-            number: pageNumber,
-          },
-        };
-        const queryString = qs.stringify(p, {
-          encode: false,
-          skipNulls: true,
-        });
-        return `${baseUrl}?${queryString}`;
-      };
-
-      const first = generateUrl(1, params);
-      const last = generateUrl(totalPages, params);
-      const next =
-        currentPage < totalPages ? generateUrl(currentPage + 1, params) : null;
-      const prev =
-        currentPage > 1 ? generateUrl(currentPage - 1, params) : null;
-
-      return Array.isArray(data)
-        ? {
-            first,
-            last,
-            next,
-            prev,
-          }
-        : undefined;
-    });
   }
 
   async getAll(
@@ -94,12 +63,15 @@ export class JsonBaseController<Id = string | number>
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
     const schema = this.currentSchemas.schema;
-    const [data, count] = await this.dataLayer.getCollection(query);
+    const [data, count] = await this.dataLayer.getAllAndCount(query);
     const unwrapped = serialize(data, {
       populate: query.include?.dbIncludes || ([] as any),
       forceObject: true,
     });
-    const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
+    const result = this.schemaBuilder.transformFromDb(
+      unwrapped as EntityDTO<ViewEntity>,
+      schema,
+    );
 
     const pagination = this.generatePagination(request, count);
     return this.serializerService.serialize(result, schema, {
@@ -214,5 +186,52 @@ export class JsonBaseController<Id = string | number>
       message: `Relationship ${relationshipName} for resource with ID ${id} updated.`,
       updateData,
     };
+  }
+
+  private generatePagination(
+    request: Request,
+    totalCount: number,
+  ): Paginator<unknown> {
+    return new Paginator((data) => {
+      const params = request.query;
+      if (!params?.page) return;
+
+      const totalPages = Math.ceil(
+        totalCount / Number((params.page as ParsedQs).size),
+      );
+      const currentPage = Number((params.page as ParsedQs).number);
+      const baseUrl = joinUrlPaths(this.baseUrl, request.path);
+
+      const generateUrl = (pageNumber: number, params: ParsedQs) => {
+        const p = {
+          ...params,
+          page: {
+            ...(params.page as ParsedQs),
+            number: pageNumber,
+          },
+        };
+        const queryString = qs.stringify(p, {
+          encode: false,
+          skipNulls: true,
+        });
+        return `${baseUrl}?${queryString}`;
+      };
+
+      const first = generateUrl(1, params);
+      const last = generateUrl(totalPages, params);
+      const next =
+        currentPage < totalPages ? generateUrl(currentPage + 1, params) : null;
+      const prev =
+        currentPage > 1 ? generateUrl(currentPage - 1, params) : null;
+
+      return Array.isArray(data)
+        ? {
+            first,
+            last,
+            next,
+            prev,
+          }
+        : undefined;
+    });
   }
 }

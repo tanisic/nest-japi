@@ -6,7 +6,7 @@ import {
 import { EntityKey } from "@mikro-orm/core";
 import { ZodTypeAny } from "zod";
 
-export interface AttributeOptions<Entity = any> extends ApiPropertyOptions {
+export type AttributeOptions<Entity = any> = {
   /**
    * Map this property to another entity attribute.
    *
@@ -16,7 +16,7 @@ export interface AttributeOptions<Entity = any> extends ApiPropertyOptions {
   dataKey?: EntityKey<Entity>;
 
   validate?: ZodTypeAny;
-}
+} & Partial<ApiPropertyOptions>;
 
 export type SchemaAttribute = AttributeOptions & { name: string };
 

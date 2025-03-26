@@ -10,10 +10,10 @@ import {
 import { SchemaAttribute } from "../../decorators/attribute.decorator";
 import { RelationAttribute } from "../../decorators/relation.decorator";
 import { BaseSchema } from "../base-schema";
-import { BaseResource } from "../../resource/base-resource";
 import { Schemas } from "../types";
 import { EntityClass } from "@mikro-orm/core";
 import { ResourceOptions } from "../../decorators/resource.decorator";
+import { JsonBaseController } from "../../controller/base-controller";
 
 export function getRelations(
   schema: Type<BaseSchema<any>>,
@@ -80,12 +80,14 @@ export function getEntityFromSchema(
   return entity;
 }
 
-export function getSchemasFromResource(resource: Type<BaseResource>): Schemas {
+export function getSchemasFromResource(
+  resource: Type<JsonBaseController>,
+): Schemas {
   const schemas = Reflect.getMetadata(JSONAPI_RESOURCE_SCHEMAS, resource);
   return schemas;
 }
 export function getResourceOptions(
-  resource: Type<BaseResource>,
+  resource: Type<JsonBaseController>,
 ): ResourceOptions {
   const schemas = Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, resource);
   return schemas;

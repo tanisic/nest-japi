@@ -6,16 +6,17 @@ import {
   Logger,
 } from "@nestjs/common";
 import { namedClass } from "../helpers";
-import { BaseResource } from "../resource/base-resource";
 import {
   JSONAPI_GLOBAL_OPTIONS,
   JSONAPI_RESOURCE_OPTIONS,
   CURRENT_SCHEMAS,
+  CURRENT_MODELS,
+  JSONAPI_SCHEMA_ENTITY_CLASS,
 } from "../constants";
 import { JsonApiOptions } from "./json-api-options";
 import { JsonApiModuleOptions } from "./json-api.module";
 import { ResourceOptions } from "../decorators/resource.decorator";
-import { Schemas } from "../schema/types";
+import { Entities, Schemas } from "../schema/types";
 import { ControllerFactory } from "../controller/controller-factory";
 import { SerializerService } from "../serializer/serializer.service";
 import { PaginateService, QueryAllPipe } from "../query";
@@ -26,9 +27,10 @@ import { QueryOnePipe } from "../query/pipes/query-one.pipe";
 import { getSchemasFromResource, SchemaBuilderService } from "../schema";
 import { DataLayerService } from "../data-layer/data-layer.service";
 import { filterServiceProvider } from "../query/providers/filter.provider";
+import { JsonBaseController } from "../controller/base-controller";
 
 export interface JsonApiResourceModuleOptions {
-  resource: Type<BaseResource>;
+  resource: Type<JsonBaseController>;
 }
 
 export class JsonApiResourceModule {
@@ -43,6 +45,30 @@ export class JsonApiResourceModule {
     const schemasProvider: ValueProvider<Schemas> = {
       provide: CURRENT_SCHEMAS,
       useValue: schemas,
+    };
+
+    const modelsProvider: FactoryProvider<Entities> = {
+      provide: CURRENT_MODELS,
+      inject: [CURRENT_SCHEMAS],
+      useFactory: (schemas: Schemas) => {
+        const viewEntity = Reflect.getMetadata(
+          JSONAPI_SCHEMA_ENTITY_CLASS,
+          schemas.schema,
+        );
+        const createEntity = schemas.createSchema
+          ? Reflect.getMetadata(
+              JSONAPI_SCHEMA_ENTITY_CLASS,
+              schemas.createSchema,
+            )
+          : viewEntity;
+        const updateEntity = schemas.updateSchema
+          ? Reflect.getMetadata(
+              JSONAPI_SCHEMA_ENTITY_CLASS,
+              schemas.updateSchema,
+            )
+          : viewEntity;
+        return { viewEntity, updateEntity, createEntity };
+      },
     };
 
     const resourceOptionsProvider: ValueProvider<ResourceOptions> = {
@@ -71,6 +97,7 @@ export class JsonApiResourceModule {
         resourceOptionsProvider,
         allOptionsProvider,
         schemasProvider,
+        modelsProvider,
         SerializerService,
         includeServiceProvider,
         filterServiceProvider,

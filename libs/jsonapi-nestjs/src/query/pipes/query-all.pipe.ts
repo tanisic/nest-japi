@@ -27,7 +27,9 @@ export interface QueryParams {
 }
 
 @Injectable()
-export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
+export class QueryAllPipe
+  implements PipeTransform<Record<string, any>, QueryParams>
+{
   @Inject(SortService)
   private sortService: SortService;
 
@@ -43,9 +45,12 @@ export class QueryAllPipe implements PipeTransform<unknown, QueryParams> {
   @Inject(FilterService)
   private filterService: FilterService;
 
-  transform(value: any, metadata: ArgumentMetadata): QueryParams {
+  transform(
+    value: Record<string, any>,
+    metadata: ArgumentMetadata,
+  ): QueryParams {
     if (metadata.type !== "query") {
-      return value;
+      return value as unknown as QueryParams;
     }
 
     let filter: FilterQuery<any> | null = null;

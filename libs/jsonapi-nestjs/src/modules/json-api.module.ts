@@ -8,7 +8,6 @@ import type {
   Type,
   ValueProvider,
 } from "@nestjs/common";
-import { BaseResource } from "../resource/base-resource";
 import { JsonApiResourceModule } from "./json-api-resource.module";
 import { JSONAPI_GLOBAL_OPTIONS, SCHEMA_REPOSITORY } from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
@@ -19,10 +18,11 @@ import {
   getSchemasFromResource,
   getType,
 } from "../schema";
+import { JsonBaseController } from "../controller/base-controller";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
-  resources: Type<BaseResource>[];
+  resources: Type<JsonBaseController>[];
   maxPaginationSize?: number;
   baseUrl: string;
 }

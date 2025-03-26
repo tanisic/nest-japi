@@ -2,7 +2,6 @@ import {
   Type,
   RequestMethod,
   Get,
-  HttpCode,
   Delete,
   Post,
   Patch,
@@ -27,7 +26,6 @@ import {
   JSONAPI_RESOURCE_SCHEMAS,
 } from "../constants";
 import { ResourceOptions } from "../decorators/resource.decorator";
-import { BaseResource } from "../resource/base-resource";
 import { controllerBindings } from "./controller-bindings";
 import { Binding, MethodName } from "./types";
 import { ApiTags } from "@nestjs/swagger";
@@ -37,6 +35,7 @@ import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.inte
 import { HttpExceptionFilter } from "../exceptions/http-error.filter";
 import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
+import { JsonBaseController } from "./base-controller";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -50,12 +49,12 @@ const allowedMethods: MethodName[] = [
 
 @Injectable()
 export class ControllerFactory {
-  private resource: Type<BaseResource>;
-  private controllerClass: Type<BaseResource>;
+  private resource: Type<JsonBaseController>;
+  private controllerClass: Type<JsonBaseController>;
   private options: ResourceOptions | undefined;
   private schemas: Schemas;
 
-  constructor(resource: Type<BaseResource>) {
+  constructor(resource: Type<JsonBaseController>) {
     this.validateResource(resource);
     this.resource = resource;
     this.controllerClass = resource;
@@ -66,10 +65,10 @@ export class ControllerFactory {
     );
   }
 
-  private validateResource(resource: Type<BaseResource>): void {
-    if (!Object.prototype.isPrototypeOf.call(BaseResource, resource)) {
+  private validateResource(resource: Type<JsonBaseController>): void {
+    if (!Object.prototype.isPrototypeOf.call(JsonBaseController, resource)) {
       throw new Error(
-        `${resource.name}: Must extend ${BaseResource.name} class to be a valid resource.`,
+        `${resource.name}: Must extend ${JsonBaseController.name} class to be a valid resource.`,
       );
     }
   }

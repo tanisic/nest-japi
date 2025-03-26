@@ -23,6 +23,5 @@ export * from "./modules/json-api-options";
 export * from "./modules/json-api-resource.module";
 export * from "./modules/json-api.module";
 export * from "./query/index";
-export * from "./resource/base-resource";
 export * from "./schema/index";
 export * from "./serializer/serializer.service";

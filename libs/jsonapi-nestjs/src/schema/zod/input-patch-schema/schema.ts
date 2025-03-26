@@ -1,4 +1,4 @@
-import { z, ZodRawShape, ZodTypeAny } from "zod";
+import { z, ZodRawShape } from "zod";
 
 import { BaseSchema } from "../../base-schema";
 import { Type } from "@nestjs/common";
@@ -9,7 +9,6 @@ import {
   getRelations,
   getType,
 } from "../../helpers/schema-helper";
-import { BaseDocument } from "ts-japi";
 
 const zodDataSchema = (schema: Type<BaseSchema<any>>) => {
   const idField = getAttributeByName(schema, "id");
@@ -62,17 +61,21 @@ const zodAttributesSchema = (schema: Type<BaseSchema<any>>) => {
   return z.object(shape).strict();
 };
 
-export const jsonApiPostInputSchema = (schema: Type<BaseSchema<any>>) => {
+export const jsonApiPatchInputSchema = (schema: Type<BaseSchema<any>>) => {
   const type = getType(schema);
   return z
     .object({
       data: z
         .object({
+          id: z.number().or(z.string()),
           type: z.literal(type),
-          attributes: zodAttributesSchema(schema),
+          attributes: zodAttributesSchema(schema).optional(),
+          relationships: zodRelationsSchema(schema).optional(),
         })
-        .strict(),
-      relationships: zodRelationsSchema(schema),
+        .strict()
+        .refine((obj) => obj.relationships || obj.attributes, {
+          message: "At least one relationship or attribute should be present.",
+        }),
     })
     .strict();
 };
@@ -82,14 +85,14 @@ type RelationshipLinkage<IdType> = { type: string; id: IdType };
 type RelationshipData<IdType = string | number> = {
   data: RelationshipLinkage<IdType>[] | RelationshipLinkage<IdType> | null;
 };
-export type PostBody<
+export type PatchBody<
   IdType,
   TType extends string,
   TAttributes extends Record<string, unknown>,
 > = {
   data: {
     type: TType;
-    attributes: TAttributes;
+    attributes?: TAttributes;
+    relationships?: Record<string, RelationshipData<IdType>>;
   };
-  relationships?: Record<string, RelationshipData<IdType>>;
 };

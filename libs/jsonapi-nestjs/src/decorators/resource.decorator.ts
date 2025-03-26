@@ -5,8 +5,8 @@ import {
 import { MethodName } from "../controller/types";
 import { Injectable } from "@nestjs/common";
 import { Schemas } from "../schema/types";
-import { BaseResource } from "../resource/base-resource";
 import { snakeCase } from "es-toolkit";
+import { JsonBaseController } from "../controller/base-controller";
 
 export interface ResourceOptions {
   schemas: Schemas;
@@ -18,9 +18,9 @@ export interface ResourceOptions {
 export const Resource = (options: ResourceOptions): ClassDecorator => {
   return (target: Function) => {
     Injectable()(target);
-    if (!Object.prototype.isPrototypeOf.call(BaseResource, target)) {
+    if (!Object.prototype.isPrototypeOf.call(JsonBaseController, target)) {
       throw new Error(
-        `${target.name}: Must extend ${BaseResource.name} class to be valid resource.`,
+        `${target.name}: Must extend ${JsonBaseController.name} class to be valid resource.`,
       );
     }
 

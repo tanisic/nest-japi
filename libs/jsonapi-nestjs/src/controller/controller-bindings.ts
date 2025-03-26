@@ -5,6 +5,7 @@ import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
 import { JsonApiInputPostPipe } from "../schema";
+import { JsonApiInputPatchPipe } from "../schema/pipes/input-patch.pipe";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -78,6 +79,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchOne,
+    pipes: [JsonApiInputPatchPipe],
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,

@@ -3,7 +3,6 @@ import { BaseSchema } from "../schema/base-schema";
 import {
   DataDocument,
   Linker,
-  PrimaryData,
   Relator,
   Serializer,
   SerializerOptions,
@@ -18,8 +17,8 @@ import {
 import { Pagination, SparseFields } from "../query";
 import { joinUrlPaths } from "../helpers";
 import { JsonApiOptions } from "../modules/json-api-options";
-import { BaseResource } from "../resource/base-resource";
 import Resource from "ts-japi/lib/models/resource.model";
+import { JsonBaseController } from "../controller/base-controller";
 
 export interface SerializeCustomOptions {
   include?: string[];
@@ -33,7 +32,7 @@ type RelatorKey = `${JsonApiTypeString}__${CollectionName}`;
 
 @Injectable()
 export class SerializerService {
-  private resources: Type<BaseResource<any>>[];
+  private resources: Type<JsonBaseController>[];
   private serializerMap = new Map<JsonApiTypeString, Serializer<unknown>>();
   private relatorsMap = new Map<RelatorKey, Relator<unknown, unknown>>();
 
@@ -47,7 +46,7 @@ export class SerializerService {
 
   private baseUrl: string;
 
-  protected resourceUrl(resource: Type<BaseResource<any>>) {
+  protected resourceUrl(resource: Type<JsonBaseController>) {
     const options = getResourceOptions(resource);
     return joinUrlPaths(this.baseUrl, options.path!);
   }

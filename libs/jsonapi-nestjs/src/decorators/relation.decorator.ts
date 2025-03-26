@@ -7,7 +7,7 @@ import { EntityKey } from "@mikro-orm/core";
 import { BaseSchema } from "../schema/base-schema";
 import { Type } from "@nestjs/common";
 
-export interface RelationOptions<Entity = any> extends ApiPropertyOptions {
+export type RelationOptions<Entity = any> = {
   /**
    * Map this property to another entity relation.
    *
@@ -19,7 +19,7 @@ export interface RelationOptions<Entity = any> extends ApiPropertyOptions {
   schema: () => Type<BaseSchema<Entity>>;
 
   many?: boolean;
-}
+} & Partial<ApiPropertyOptions>;
 
 export type RelationAttribute = RelationOptions & { name: string };
 

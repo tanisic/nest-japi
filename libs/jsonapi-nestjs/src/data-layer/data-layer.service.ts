@@ -8,36 +8,60 @@ import {
 } from "../schema";
 import { CURRENT_SCHEMAS } from "../constants";
 import { QueryParams } from "../query";
-import {
-  EntityClass,
-  EntityManager,
-  ref,
-  Reference,
-  serialize,
-  wrap,
-} from "@mikro-orm/core";
-import type { EntityManager as EM } from "@mikro-orm/postgresql";
+import { EntityClass, EntityManager, serialize } from "@mikro-orm/core";
 import { JsonApiOptions } from "../modules/json-api-options";
-import Relationship from "ts-japi/lib/models/relationship.model";
 import { EntityName } from "@mikro-orm/nestjs";
 
 @Injectable()
-export class DataLayerService<Id = string | number> {
-  protected entity: EntityClass<any>;
+export class DataLayerService<
+  Id = string | number,
+  TEntityManager extends EntityManager = EntityManager,
+  ViewEntity = EntityClass<unknown>,
+  CreateEntity = ViewEntity,
+  UpdateEntity = ViewEntity,
+> {
+  protected viewEntity: ViewEntity;
+  protected createEntity?: CreateEntity;
+  protected updateEntity?: UpdateEntity;
 
   constructor(
     private options: JsonApiOptions,
     @Inject(CURRENT_SCHEMAS) private schemas: Schemas,
     @Inject(EntityManager)
-    private em: EM,
+    private em: TEntityManager,
     private schemaBuilder: SchemaBuilderService,
   ) {
-    this.entity = getEntityFromSchema(this.schemas.schema);
+    this.viewEntity = getEntityFromSchema(this.schemas.schema) as ViewEntity;
+    this.createEntity =
+      this.schemas.createSchema &&
+      (getEntityFromSchema(this.schemas.createSchema) as CreateEntity);
+    this.createEntity =
+      this.schemas.updateSchema &&
+      (getEntityFromSchema(this.schemas.updateSchema) as CreateEntity);
   }
 
-  getCollection(query: QueryParams) {
+  getAllAndCount(
+    query: QueryParams,
+    entity: ViewEntity = this.viewEntity,
+  ): Promise<[(typeof this.viewEntity)[], number]> {
     return this.em.findAndCount(
-      this.entity,
+      entity as EntityClass<ViewEntity>,
+      query.filter ? { ...query.filter } : {},
+      {
+        populate: query.include?.dbIncludes || ([] as any),
+        offset: query.page?.offset ?? 0,
+        limit: query.page?.limit ?? this.options.maxAllowedPagination,
+        orderBy: query.sort?.dbOrderBy || {},
+      },
+    );
+  }
+
+  getAll(
+    query: QueryParams,
+    entity: ViewEntity = this.viewEntity,
+  ): Promise<(typeof entity)[]> {
+    return this.em.find(
+      entity as EntityClass<ViewEntity>,
       query.filter ? { ...query.filter } : {},
       {
         populate: query.include?.dbIncludes || ([] as any),
@@ -51,25 +75,38 @@ export class DataLayerService<Id = string | number> {
   getOne(
     id: Id,
     include: QueryParams["include"] = { dbIncludes: [], schemaIncludes: [] },
+    entity: ViewEntity = this.viewEntity,
   ) {
     return this.em.findOne(
-      this.entity,
+      entity as EntityClass<ViewEntity>,
       { id },
       { populate: include?.dbIncludes ?? ([] as any[]) },
     );
   }
 
-  async deleteOne(id: Id) {
-    const found = await this.em.findOne(this.entity, { id });
+  async deleteOne(
+    id: Id,
+    entity: ViewEntity | CreateEntity | UpdateEntity = this.viewEntity,
+  ) {
+    const found = await this.em.findOne(
+      entity as EntityClass<ViewEntity | CreateEntity | UpdateEntity>,
+      {
+        id,
+      },
+    );
     if (!found) {
       throw new NotFoundException(`Object with id ${id} does not exists.`);
     }
-    await this.em.nativeDelete(this.entity, { id });
-    return serialize(found, { forceObject: true });
+    await this.em.nativeDelete(
+      entity as EntityClass<ViewEntity | CreateEntity | UpdateEntity>,
+      { id },
+    );
+    return serialize(found, { forceObject: true }) as any;
   }
 
   async postOne<TAttributes extends Record<string, unknown>>(
     body: PostBody<Id, string, TAttributes>,
+    entity: CreateEntity = this.createEntity,
   ) {
     const result = {
       ...this.schemaBuilder.transformToDb(
@@ -107,9 +144,11 @@ export class DataLayerService<Id = string | number> {
       }
     }
 
-    const data = this.em.create(this.entity, result);
+    const data = this.em.create(entity as EntityClass<CreateEntity>, result);
     await this.em.persistAndFlush(data);
-    return this.em.findOne(this.entity, { id: data.id });
+    return this.em.findOne(entity as EntityClass<CreateEntity>, {
+      id: (data as any).id,
+    });
   }
 
   async findObjectsByIds(ids: Id[], entity: EntityName<any>) {
