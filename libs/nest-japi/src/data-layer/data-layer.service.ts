@@ -97,10 +97,7 @@ export class DataLayerService<
     if (!found) {
       throw new NotFoundException(`Object with id ${id} does not exists.`);
     }
-    await this.em.nativeDelete(
-      entity as EntityClass<ViewEntity | CreateEntity | UpdateEntity>,
-      { id },
-    );
+    await this.em.removeAndFlush(found);
     return serialize(found, { forceObject: true }) as any;
   }
 
@@ -115,14 +112,17 @@ export class DataLayerService<
       ),
     };
 
-    if (body.relationships) {
+    if (body.data.relationships) {
       const relations = getRelations(this.schemas.createSchema);
 
       for (const relation of relations) {
-        if (body.relationships && relation.name in body.relationships) {
+        if (
+          body.data.relationships &&
+          relation.name in body.data.relationships
+        ) {
           const relationSchema = relation.schema();
           const entity = getEntityFromSchema(relationSchema);
-          const relationData = body.relationships[relation.name].data;
+          const relationData = body.data.relationships[relation.name].data;
           if (Array.isArray(relationData)) {
             const relationIds = relationData.map(
               (relationLink) => relationLink.id,

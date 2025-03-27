@@ -29,6 +29,6 @@ export type PostBody<
   data: {
     type: TType;
     attributes: TAttributes;
+    relationships?: Record<string, RelationshipData<IdType>>;
   };
-  relationships?: Record<string, RelationshipData<IdType>>;
 };
