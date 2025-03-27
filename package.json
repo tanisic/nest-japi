@@ -1,5 +1,5 @@
 {
-  "name": "@jsonapi-nestjs/workspace",
+  "name": "@nest-japi/workspace",
   "version": "0.0.0",
   "description": "Full fledged JSON:API solution on nestjs",
   "scripts": {

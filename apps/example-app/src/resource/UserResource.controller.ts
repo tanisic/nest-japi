@@ -1,27 +1,42 @@
-import { Query } from '@nestjs/common';
-import { Request } from 'express';
-import { BaseResource, QueryParams, Resource } from 'jsonapi-nestjs';
+import { QueryParams, Resource } from 'nest-japi';
 import { CreateUserSchema } from 'src/schemas/CreateUserSchema';
+import { UpdateUserSchema } from 'src/schemas/UpdateUserSchema';
 import { UserSchema } from 'src/schemas/UserSchema';
+import { BaseResource } from './BaseResource';
+import { Request } from 'express';
 import { DataDocument } from 'ts-japi';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Resource({
-  schemas: { schema: UserSchema, createSchema: CreateUserSchema },
+  schemas: {
+    schema: UserSchema,
+    createSchema: CreateUserSchema,
+    updateSchema: UpdateUserSchema,
+  },
   path: 'v1/users',
 })
-export class UserResource extends BaseResource {
-  public getAll(
+export class UserResource extends BaseResource<
+  string,
+  UserSchema,
+  CreateUserSchema,
+  UpdateUserSchema
+> {
+  override getAll(
     query: QueryParams,
     request: Request,
-    @Query() myQuery: any,
-  ): any {
+    ..._rest: any[]
+  ): Promise<Partial<DataDocument<any>>> {
     return super.getAll(query, request);
   }
 
-  postOne(
-    body: unknown,
-    ...args: any[]
-  ): Promise<Partial<DataDocument<unknown>>> {
-    return super.postOne(body);
+  @ApiOperation({
+    description: 'test123',
+  })
+  override patchOne(...args: any[]): {
+    id: any;
+    message: string;
+    updateData: any;
+  } {
+    return super.patchOne(...args);
   }
 }

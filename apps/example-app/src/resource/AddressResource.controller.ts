@@ -1,9 +1,6 @@
-import { Query } from '@nestjs/common';
-import { BaseResource, QueryParams, Resource } from 'jsonapi-nestjs';
+import { Resource } from 'nest-japi';
 import { AddressSchema } from 'src/schemas/AddressSchema';
-import { CommentSchema } from 'src/schemas/CommentSchema';
-import { PostSchema } from 'src/schemas/PostSchema';
-import { UserSchema } from 'src/schemas/UserSchema';
+import { BaseResource } from './BaseResource';
 
 @Resource({
   schemas: { schema: AddressSchema },

@@ -4,6 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { RedocModule, RedocOptions } from 'nest-redoc';
 import * as bodyparser from 'body-parser';
 
+import { extendZodWithOpenApi } from '@anatine/zod-openapi';
+import { z } from 'zod';
+extendZodWithOpenApi(z);
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(
@@ -19,12 +23,6 @@ async function bootstrap() {
     .build();
   const redocOptions: Partial<RedocOptions> = {
     title: 'Hello Nest',
-    logo: {
-      href: 'https://redocly.github.io/redoc/petstore-logo.png',
-      url: 'https://redocly.github.io/redoc/petstore-logo.png',
-      backgroundColor: '#F0F0F0',
-      altText: 'PetStore logo',
-    },
     sortPropsAlphabetically: true,
     hideDownloadButton: false,
     hideHostname: false,

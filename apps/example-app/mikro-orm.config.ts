@@ -7,10 +7,10 @@ import { SeedManager } from '@mikro-orm/seeder';
 export default defineConfig({
   driver: PostgreSqlDriver,
   host: process.env.POSTGRES_HOST,
-  password: 'teambuilding12322',
-  user: 'teambuilding',
-  port: process.env.POSTGRES_PORT as unknown as number,
-  dbName: 'example-jsonapi',
+  password: 'postgres',
+  user: 'postgres',
+  port: 5444,
+  dbName: 'json_api_db',
   schema: 'public',
   entities: ['./dist/**/*.entity.js'],
   seeder: {

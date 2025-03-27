@@ -1,24 +1,25 @@
-import { Attribute, BaseSchema, Relation, Schema } from 'jsonapi-nestjs';
+import { Attribute, BaseSchema, Relation, Schema } from 'nest-japi';
 import { User } from 'src/entities/user.entity';
 import { Address } from 'src/entities/address.entity';
 import { UserSchema } from './UserSchema';
+import { z } from 'zod';
 
 @Schema({ jsonapiType: 'address', entity: Address })
 export class AddressSchema extends BaseSchema<User> {
-  @Attribute({ description: '- Main ID field\n- Allways visible' })
+  @Attribute({ validate: z.number() })
   id!: number;
-  @Attribute({})
+  @Attribute({ validate: z.string().optional() })
   city?: string;
-  @Attribute({})
+  @Attribute({ validate: z.string().optional() })
   street?: string;
-  @Attribute({})
+  @Attribute({ validate: z.string().optional() })
   streetNumber?: string;
-  @Attribute({})
+  @Attribute({ validate: z.string().optional() })
   country?: string;
   @Relation({ schema: () => UserSchema })
   user: UserSchema;
-  @Attribute({})
+  @Attribute({ validate: z.date().optional() })
   createdAt: Date;
-  @Attribute({})
+  @Attribute({ validate: z.date().optional() })
   updatedAt: Date;
 }

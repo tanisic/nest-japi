@@ -1,4 +1,4 @@
-import { Attribute, BaseSchema, Relation, Schema } from 'jsonapi-nestjs';
+import { Attribute, BaseSchema, Relation, Schema } from 'nest-japi';
 import { User } from 'src/entities/user.entity';
 import { PostSchema } from './PostSchema';
 import { CommentSchema } from './CommentSchema';
@@ -8,7 +8,10 @@ import { z } from 'zod';
 @Schema({ jsonapiType: 'user', entity: User })
 export class CreateUserSchema extends BaseSchema<User> {
   @Attribute({
-    description: '- Main ID field\n- Allways visible',
+    validate: z.number(),
+  })
+  id!: number;
+  @Attribute({
     dataKey: 'name',
     validate: z.string(),
   })
@@ -21,9 +24,4 @@ export class CreateUserSchema extends BaseSchema<User> {
   comments: CommentSchema[];
   @Relation({ schema: () => AddressSchema })
   address: AddressSchema;
-  @Attribute({
-    description: '- Main ID field\n- Allways visible',
-    validate: z.number(),
-  })
-  id!: number;
 }

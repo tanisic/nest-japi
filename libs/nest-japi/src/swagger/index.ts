@@ -8,3 +8,4 @@ export * from "./types";
 export * from "./methods/get-all";
 export * from "./methods/get-one";
 export * from "./methods/patch-one";
+export * from "./methods/post-one";

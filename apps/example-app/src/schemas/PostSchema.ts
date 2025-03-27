@@ -1,22 +1,23 @@
-import { Attribute, BaseSchema, Relation, Schema } from 'jsonapi-nestjs';
+import { Attribute, BaseSchema, Relation, Schema } from 'nest-japi';
 import { Post } from 'src/entities/post.entity';
 import { User } from 'src/entities/user.entity';
 import { UserSchema } from './UserSchema';
 import { CommentSchema } from './CommentSchema';
+import { z } from 'zod';
 
 @Schema({ jsonapiType: 'post', entity: Post })
 export class PostSchema extends BaseSchema<Post> {
-  @Attribute({})
+  @Attribute({ validate: z.number() })
   id: number;
   @Relation({ schema: () => CommentSchema, many: true })
   comments: CommentSchema[];
-  @Attribute({})
+  @Attribute({ validate: z.date() })
   createdAt: Date;
-  @Attribute({})
+  @Attribute({ validate: z.date() })
   updatedAt: Date;
-  @Attribute({})
+  @Attribute({ validate: z.string() })
   title: string;
-  @Attribute({})
+  @Attribute({ validate: z.string() })
   content: string;
   @Relation({ schema: () => UserSchema })
   author: User;

@@ -1,10 +1,9 @@
-import { Query } from '@nestjs/common';
-import { BaseResource, QueryParams, Resource } from 'jsonapi-nestjs';
+import { Resource } from 'nest-japi';
 import { PostSchema } from 'src/schemas/PostSchema';
-import { UserSchema } from 'src/schemas/UserSchema';
+import { BaseResource } from './BaseResource';
 
 @Resource({
   schemas: { schema: PostSchema },
   path: 'v1/posts',
 })
-export class PostResource extends BaseResource {}
+export class PostResource extends BaseResource<string, PostSchema> {}

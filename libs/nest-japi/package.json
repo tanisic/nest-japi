@@ -1,5 +1,5 @@
 {
-  "name": "jsonapi-nestjs",
+  "name": "nest-japi",
   "version": "0.0.0",
   "description": "Full fledged JSON:API solution on nestjs",
   "main": "dist/index.js",
@@ -10,7 +10,6 @@
     "barrel": "barrelsby --delete .src/ -l branch"
   },
   "peerDependencies": {
-    "@anatine/zod-nestjs": "^2",
     "@anatine/zod-openapi": "^2",
     "@mikro-orm/core": "^6",
     "@mikro-orm/nestjs": "^6",

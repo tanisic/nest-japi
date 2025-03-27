@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { JsonApiModule } from 'jsonapi-nestjs';
+import { JsonApiModule } from 'nest-japi';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EntityGenerator } from '@mikro-orm/entity-generator';
@@ -16,15 +16,14 @@ import { AddressResource } from './resource/AddressResource.controller';
     MikroOrmModule.forRoot({
       driver: PostgreSqlDriver,
       host: process.env.POSTGRES_HOST,
-      password: 'teambuilding12322',
-      user: 'teambuilding',
-      port: process.env.POSTGRES_PORT as unknown as number,
-      dbName: 'example-jsonapi',
+      password: 'postgres',
+      user: 'postgres',
+      port: 5444,
+      dbName: 'json_api_db',
       schema: 'public',
       entities: ['./dist/**/*.entity.js'],
       entitiesTs: ['./src/**/*.entity.ts'],
       extensions: [EntityGenerator, Migrator],
-      debug: true,
     }),
     JsonApiModule.forRoot({
       resources: [UserResource, PostResource, CommentResource, AddressResource],
