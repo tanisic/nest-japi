@@ -1,15 +1,19 @@
 import { SwaggerMethodProps } from "../types";
 import {
+  errorJsonApiSwaggerSchema,
   swaggerIncludesQueryParams,
   swaggerSparseFieldsQueryParams,
 } from "../common";
-import { ApiQuery, getSchemaPath } from "@nestjs/swagger";
+import { ApiQuery, ApiResponse, getSchemaPath } from "@nestjs/swagger";
 import { getAttributes, getRelations } from "../../schema";
 import {
   FilterOperators,
   FilterOperatorsSwagger,
   LogicalOperators,
 } from "../filter-operators";
+import { generateSchema } from "@anatine/zod-openapi";
+import { fullJsonApiResponseSchema } from "../../schema/zod/common";
+import { JSONAPI_CONTENT_TYPE } from "../../constants";
 
 export function getAll({ resource, descriptor, schemas }: SwaggerMethodProps) {
   const schema = schemas.schema;
@@ -165,5 +169,25 @@ export function getAll({ resource, descriptor, schemas }: SwaggerMethodProps) {
       getRelationByConditional,
     },
     description: `Object of filter for select items from "${schema.name}" resource`,
+  })(resource, "getAll", descriptor);
+  ApiResponse({
+    status: 400,
+    description: "Wrong query parameters",
+    schema: errorJsonApiSwaggerSchema,
+  })(resource, "getAll", descriptor);
+
+  ApiResponse({
+    status: 200,
+    content: {
+      [JSONAPI_CONTENT_TYPE]: {
+        // @ts-expect-error imported SchemaObject type mismatch with openapi ts types
+        schema: generateSchema(
+          fullJsonApiResponseSchema(schema, {
+            hasIncludes: true,
+            withPagination: true,
+          }),
+        ),
+      },
+    },
   })(resource, "getAll", descriptor);
 }

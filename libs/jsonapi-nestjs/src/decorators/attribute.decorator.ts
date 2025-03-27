@@ -1,4 +1,3 @@
-import { ApiProperty, ApiPropertyOptions } from "@nestjs/swagger";
 import {
   JSONAPI_SCHEMA_ATTRIBUTE_OPTIONS,
   JSONAPI_SCHEMA_ATTRIBUTES,
@@ -14,9 +13,8 @@ export type AttributeOptions<Entity = any> = {
    *
    * */
   dataKey?: EntityKey<Entity>;
-
-  validate?: ZodTypeAny;
-} & Partial<ApiPropertyOptions>;
+  validate: ZodTypeAny;
+};
 
 export type SchemaAttribute = AttributeOptions & { name: string };
 
@@ -43,7 +41,5 @@ export function Attribute<Entity = any>(
       [...restAttributes, { name: propertyKey, ...opts }] as SchemaAttribute[],
       target,
     );
-
-    ApiProperty(opts)(target, propertyKey);
   };
 }

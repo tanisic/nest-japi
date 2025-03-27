@@ -99,3 +99,42 @@ export function swaggerIncludesQueryParams({
     },
   })(resource, methodName, descriptor);
 }
+
+export const errorJsonApiSwaggerSchema = {
+  type: "object",
+  properties: {
+    statusCode: {
+      type: "number",
+    },
+    error: {
+      type: "string",
+    },
+    message: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          code: {
+            type: "string",
+          },
+          message: {
+            type: "string",
+          },
+          path: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          keys: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+        required: ["code", "message", "path"],
+      },
+    },
+  },
+};

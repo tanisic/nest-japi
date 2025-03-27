@@ -8,6 +8,7 @@ import { JsonApiInputPostPipe } from "../schema";
 import { JsonApiInputPatchPipe } from "../schema/pipes/input-patch.pipe";
 import { getAll } from "../swagger";
 import { getOne } from "../swagger/methods/get-one";
+import { patchOne } from "../swagger/methods/patch-one";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -83,6 +84,7 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchOne,
+    swaggerImplementation: patchOne,
     pipes: [JsonApiInputPatchPipe],
     parameters: [
       {
