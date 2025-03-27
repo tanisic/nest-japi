@@ -39,6 +39,12 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
       .strict()
       .optional();
 
+    if (relation.openapi) {
+      shape[relation.name] = shape[relation.name].openapi({
+        ...relation.openapi,
+      });
+    }
+
     return shape;
   }, {} as ZodRawShape);
 
@@ -64,6 +70,12 @@ export const zodRelationsSchemaWithLinksAndData = (
       .strict()
       .optional();
 
+    if (relation.openapi) {
+      shape[relation.name] = shape[relation.name].openapi({
+        ...relation.openapi,
+      });
+    }
+
     return shape;
   }, {} as ZodRawShape);
 
@@ -82,6 +94,12 @@ export const zodAttributesSchema = (schema: Type<BaseSchema<any>>) => {
       );
 
     shape = { ...shape, [attribute.name]: attribute.validate };
+
+    if (attribute.openapi) {
+      shape[attribute.name] = shape[attribute.name].openapi({
+        ...attribute.openapi,
+      });
+    }
   }
 
   return z.object(shape).strict();

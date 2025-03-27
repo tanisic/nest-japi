@@ -3,6 +3,7 @@ import {
   JSONAPI_SCHEMA_ATTRIBUTES,
 } from "../constants";
 import { EntityKey } from "@mikro-orm/core";
+import { type SchemaObject } from "openapi3-ts/oas31";
 import { ZodTypeAny } from "zod";
 
 export type AttributeOptions<Entity = any> = {
@@ -13,6 +14,7 @@ export type AttributeOptions<Entity = any> = {
    *
    * */
   dataKey?: EntityKey<Entity>;
+  openapi?: Partial<SchemaObject>;
   validate: ZodTypeAny;
 };
 

@@ -1,4 +1,3 @@
-import { ApiProperty, ApiPropertyOptions } from "@nestjs/swagger";
 import {
   JSONAPI_SCHEMA_RELATION_OPTIONS,
   JSONAPI_SCHEMA_RELATIONS,
@@ -6,6 +5,7 @@ import {
 import { EntityKey } from "@mikro-orm/core";
 import { BaseSchema } from "../schema/base-schema";
 import { Type } from "@nestjs/common";
+import { type SchemaObject } from "openapi3-ts/oas31";
 
 export type RelationOptions<Entity = any> = {
   /**
@@ -19,7 +19,8 @@ export type RelationOptions<Entity = any> = {
   schema: () => Type<BaseSchema<Entity>>;
 
   many?: boolean;
-} & Partial<ApiPropertyOptions>;
+  openapi?: Partial<SchemaObject>;
+};
 
 export type RelationAttribute = RelationOptions & { name: string };
 
@@ -27,12 +28,9 @@ export function Relation<Entity = any>(
   options: RelationOptions<Entity>,
 ): PropertyDecorator {
   return (target, propertyKey) => {
-    const isArray = options.isArray || options.many || false;
     const opts: RelationOptions = {
       ...options,
       dataKey: propertyKey as string,
-      isArray,
-      type: () => options.schema(),
     };
     Reflect.defineMetadata(
       JSONAPI_SCHEMA_RELATION_OPTIONS,
@@ -52,7 +50,5 @@ export function Relation<Entity = any>(
       ] as RelationAttribute[],
       target,
     );
-
-    ApiProperty(opts)(target, propertyKey);
   };
 }

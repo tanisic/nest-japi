@@ -11,7 +11,8 @@ export class UserSchema extends BaseSchema<User> {
   id: number;
   @Attribute({
     dataKey: 'name',
-    validate: z.string().openapi({ description: '123' }),
+    validate: z.string(),
+    openapi: { description: 'Real name of user' },
   })
   nameReal: string;
   @Attribute({ validate: z.string().email() })
@@ -20,6 +21,9 @@ export class UserSchema extends BaseSchema<User> {
   posts: PostSchema[];
   @Relation({ schema: () => CommentSchema, many: true })
   comments: CommentSchema[];
-  @Relation({ schema: () => AddressSchema })
+  @Relation({
+    schema: () => AddressSchema,
+    openapi: { description: 'Address of user' },
+  })
   address: AddressSchema;
 }
