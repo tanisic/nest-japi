@@ -30,8 +30,7 @@ export class MainSeeder extends Seeder {
       addresses.push(address);
     }
 
-    // Generate 100 posts
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       const randomUser = faker.helpers.arrayElement(users); // Assign a random user to each post
       const post = em.create(Post, {
         title: faker.lorem.sentence(),
@@ -41,8 +40,7 @@ export class MainSeeder extends Seeder {
       posts.push(post);
     }
 
-    // Generate 200 comments
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 200; i++) {
       const randomUser = faker.helpers.arrayElement(users); // Assign a random user to each comment
       const randomPost = faker.helpers.arrayElement(posts); // Assign a random post to each comment
       const comment = em.create(Comment, {
