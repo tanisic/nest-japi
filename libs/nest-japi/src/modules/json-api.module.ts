@@ -1,4 +1,4 @@
-import { Global, Module } from "@nestjs/common";
+import { Global, Inject, Module } from "@nestjs/common";
 import type {
   DynamicModule,
   FactoryProvider,
@@ -19,6 +19,8 @@ import {
   getType,
 } from "../schema";
 import { JsonBaseController } from "../controller/base-controller";
+import { ModuleExplorerService } from "./services/module-exporer.service";
+import { JsonApiBodyParserMiddleware } from "../middlewares/bodyparser.middleware";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
@@ -30,8 +32,15 @@ export interface JsonApiModuleOptions
 @Global()
 @Module({})
 export class JsonApiModule implements NestModule {
+  @Inject(ModuleExplorerService) private moduleExplorer: ModuleExplorerService;
+
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestIdMiddleware).forRoutes("*");
+    const controllers = this.moduleExplorer.getControllersFromModule(
+      JsonApiModule.name,
+    );
+    consumer
+      .apply(RequestIdMiddleware, JsonApiBodyParserMiddleware)
+      .forRoutes(...controllers);
   }
 
   static forRoot(options: JsonApiModuleOptions): DynamicModule {
@@ -66,6 +75,7 @@ export class JsonApiModule implements NestModule {
     };
 
     const providers = [
+      ModuleExplorerService,
       globalOptionsProvider,
       entityManagerProvider,
       schemaRepositoryMapProvider,
