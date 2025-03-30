@@ -5,5 +5,6 @@
 export * from "./common";
 export * from "./type";
 export * from "./zod-issue.exception";
+export * from "./input-patch-relation-schema/schema";
 export * from "./input-patch-schema/schema";
 export * from "./input-post-schema/schema";

@@ -19,6 +19,8 @@ export * from "./exceptions/zod-issues.filter";
 export * from "./helpers/index";
 export * from "./interceptors/content-type.interceptor";
 export * from "./middlewares/request-id.middleware";
+export * from "./mixins/input-patch-body.mixin";
+export * from "./mixins/input-post-body.mixin";
 export * from "./modules/json-api-options";
 export * from "./modules/json-api-resource.module";
 export * from "./modules/json-api.module";

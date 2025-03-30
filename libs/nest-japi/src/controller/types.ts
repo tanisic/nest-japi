@@ -23,7 +23,11 @@ type MapNameToTypeMethod = {
   getRelationship: RequestMethod.GET;
 };
 
-export type PipeMixin = (schema: Type<BaseSchema<any>>) => PipeTransform;
+export interface PipeMixinParams {
+  schema: Type<BaseSchema<any>>;
+}
+
+export type PipeMixin = (params: PipeMixinParams) => PipeTransform;
 
 export interface Binding<T extends MethodName> {
   path: string;
@@ -39,7 +43,7 @@ export interface Binding<T extends MethodName> {
       ...pipes: (Type<PipeTransform> | PipeTransform)[]
     ) => ParameterDecorator;
     property?: string;
-    mixins: PipeMixin[];
+    mixins?: PipeMixin[];
   }[];
 }
 

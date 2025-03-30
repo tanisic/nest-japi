@@ -8,11 +8,17 @@ import { SchemaBuilderService } from "../schema/services/schema-builder.service"
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
-import { BaseSchema, getRelationByName } from "../schema";
+import {
+  BaseSchema,
+  getRelationByName,
+  PatchBody,
+  PatchRelationshipBody,
+} from "../schema";
 import { Request } from "express";
 import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
 import qs, { ParsedQs } from "qs";
+import { RelationAttribute } from "../decorators/relation.decorator";
 
 type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
 
@@ -135,10 +141,22 @@ export class JsonBaseController<
     const unwrapped = serialize(data, {
       forceObject: true,
       populate: [relation.dataKey as any],
-      skipNull: true,
     });
 
     const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
+
+    const shouldDisplayNull = (
+      relation: RelationAttribute,
+      rootData: EntityDTO<object>,
+    ) => {
+      const relationData = rootData[relation.dataKey];
+      if (relation.many || Array.isArray(relationData)) return false;
+      if (!relationData || !Object.keys(relationData).length) {
+        return true;
+      }
+
+      return false;
+    };
 
     return this.serializerService.serialize(
       result,
@@ -146,6 +164,7 @@ export class JsonBaseController<
       {
         onlyIdentifier: true,
         onlyRelationship: relationName,
+        nullData: shouldDisplayNull(relation, unwrapped),
       },
     );
   }
@@ -165,27 +184,36 @@ export class JsonBaseController<
     return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
-  // Update a specific resource (patch)
-  patchOne(...args: any[]) {
-    const [id, updateData] = args;
-    // Simulated resource update
-    return {
-      id,
-      message: `Resource with ID ${id} updated.`,
-      updateData,
-    };
+  async patchOne(id: Id, body: PatchBody<Id, string, any>) {
+    const data = await this.dataLayer.patchOne(body as any);
+    const serialized = serialize(data, { forceObject: true });
+    const result = this.schemaBuilder.transformFromDb(
+      serialized,
+      this.currentSchemas.schema,
+    );
+    return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
-  // Update a relationship for a specific resource
-  patchRelationship(...args: any[]) {
-    const [id, relationshipName, updateData] = args;
-    // Simulated relationship update
-    return {
+  async patchRelationship(
+    id: Id,
+    relationshipName: string,
+    body: PatchRelationshipBody<Id, string, boolean>,
+  ) {
+    const schema =
+      this.currentSchemas.updateSchema || this.currentSchemas.schema;
+    const data = await this.dataLayer.patchRelationship(
       id,
+      body,
       relationshipName,
-      message: `Relationship ${relationshipName} for resource with ID ${id} updated.`,
-      updateData,
-    };
+    );
+    const relation = getRelationByName(schema, relationshipName);
+    const relationSchema = relation.schema();
+    const serialized = serialize(data, { forceObject: true });
+    const result = this.schemaBuilder.transformFromDb(
+      serialized,
+      relationSchema,
+    );
+    return this.serializerService.serialize(result, relationSchema);
   }
 
   private generatePagination(

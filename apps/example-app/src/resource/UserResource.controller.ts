@@ -32,11 +32,7 @@ export class UserResource extends BaseResource<
   @ApiOperation({
     description: 'test123',
   })
-  override patchOne(...args: any[]): {
-    id: any;
-    message: string;
-    updateData: any;
-  } {
-    return super.patchOne(...args);
+  override patchOne(id, body) {
+    return super.patchOne(id, body);
   }
 }

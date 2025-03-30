@@ -1,19 +1,22 @@
-import { ArgumentMetadata, Inject, PipeTransform } from "@nestjs/common";
-import { CURRENT_SCHEMAS } from "../../constants";
-import { type Schemas } from "../types";
+import { ArgumentMetadata, PipeTransform, Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 import { jsonApiPatchInputSchema } from "../zod";
 import { errorMap } from "zod-validation-error";
 import { ZodIssuesExeption } from "../zod/zod-issue.exception";
+import { BaseSchema } from "../base-schema";
+import { PipeMixinParams } from "../../controller/types";
 
 export class JsonApiInputPatchPipe implements PipeTransform {
-  @Inject(CURRENT_SCHEMAS) schemas: Schemas;
+  schema: Type<BaseSchema<any>>;
+  constructor(mixinParams: PipeMixinParams) {
+    this.schema = mixinParams.schema;
+  }
 
   async transform(value: any, metadata: ArgumentMetadata) {
-    if (!this.schemas.updateSchema) {
+    if (!this.schema) {
       throw new JapiError({
         status: 500,
-        detail: `${this.schemas.updateSchema.name}: Missing updateSchema definition.`,
+        detail: `${this.schema.name}: Missing schema or updateSchema definition.`,
       });
     }
 
@@ -21,9 +24,10 @@ export class JsonApiInputPatchPipe implements PipeTransform {
       return value;
     }
 
-    const result = await jsonApiPatchInputSchema(
-      this.schemas.updateSchema,
-    ).safeParseAsync(value, { errorMap: errorMap });
+    const result = await jsonApiPatchInputSchema(this.schema).safeParseAsync(
+      value,
+      { errorMap: errorMap },
+    );
 
     if (result.success) {
       return result.data;

@@ -152,7 +152,7 @@ export class ControllerFactory {
   private getSchemaFromControllerMethod(methodName: MethodName) {
     const binding = controllerBindings[methodName];
     const schemas = this.getControllerSchemas();
-    return schemas[binding.schema];
+    return schemas[binding.schema] || schemas["schema"];
   }
 
   private bindRouteMethod(methodName: MethodName): void {
@@ -218,9 +218,9 @@ export class ControllerFactory {
 
     for (const paramKey in parameters) {
       const parameter = parameters[paramKey];
-      const { property, decorator, mixins } = parameter;
+      const { property, decorator, mixins = [] } = parameter;
 
-      const resolvedPipes = mixins.map((mixin) => mixin(schema));
+      const resolvedPipes = mixins.map((mixin) => mixin({ schema }));
 
       if (paramsMetadata) {
         this.injectPipesIfNeeded(paramsMetadata, decorator);

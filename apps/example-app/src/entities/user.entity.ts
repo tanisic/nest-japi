@@ -5,12 +5,14 @@ import {
   OneToMany,
   Collection,
   OneToOne,
+  Unique,
 } from '@mikro-orm/core';
 import { Post } from './post.entity';
 import { Comment } from './comment.entity';
 import { Address } from './address.entity';
 
 @Entity({ tableName: 'users' })
+@Unique({ name: 'ux_idx_users_email', properties: ['email'] })
 export class User {
   @PrimaryKey()
   id!: number;

@@ -35,8 +35,27 @@ export type PatchBody<
   TAttributes extends Record<string, unknown>,
 > = {
   data: {
+    id: IdType;
     type: TType;
     attributes?: TAttributes;
     relationships?: Record<string, RelationshipData<IdType>>;
   };
 };
+
+export type PatchRelationshipBody<
+  IdType,
+  TType extends string,
+  IsMany extends boolean = false,
+> = IsMany extends true
+  ? {
+      data: {
+        id: IdType;
+        type: TType;
+      }[];
+    }
+  : {
+      data: {
+        id: IdType;
+        type: TType;
+      } | null;
+    };

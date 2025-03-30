@@ -4,11 +4,12 @@ import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
-import { JsonApiInputPostPipe } from "../schema";
-import { JsonApiInputPatchPipe } from "../schema/pipes/input-patch.pipe";
-import { getAll } from "../swagger";
+import { getAll, postOne } from "../swagger";
 import { getOne } from "../swagger/methods/get-one";
 import { patchOne } from "../swagger/methods/patch-one";
+import { inputPatchBodyMixin } from "../mixins/input-patch-body.mixin";
+import { inputPostBodyMixin } from "../mixins/input-post-body.mixin";
+import { inputRelationNameMixin } from "../mixins/input-relation-name.mixin";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -70,11 +71,12 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "createSchema",
     implementation: JsonBaseController.prototype.postOne,
-    pipes: [JsonApiInputPostPipe],
+    swaggerImplementation: postOne,
+    pipes: [],
     parameters: [
       {
         decorator: Body,
-        mixins: [],
+        mixins: [inputPostBodyMixin],
       },
     ],
   },
@@ -85,7 +87,7 @@ export const controllerBindings: BindingsConfig = {
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchOne,
     swaggerImplementation: patchOne,
-    pipes: [JsonApiInputPatchPipe],
+    pipes: [],
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,
@@ -94,7 +96,7 @@ export const controllerBindings: BindingsConfig = {
       },
       {
         decorator: Body,
-        mixins: [],
+        mixins: [inputPatchBodyMixin],
       },
     ],
   },
@@ -113,7 +115,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RELATION_NAME,
         decorator: Param,
-        mixins: [],
+        mixins: [inputRelationNameMixin],
       },
     ],
   },
@@ -122,7 +124,7 @@ export const controllerBindings: BindingsConfig = {
     name: "patchRelationship",
     method: RequestMethod.PATCH,
     schema: "updateSchema",
-    implementation: JsonBaseController.prototype["patchRelationship"],
+    implementation: JsonBaseController.prototype.patchRelationship,
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,
@@ -132,7 +134,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RELATION_NAME,
         decorator: Param,
-        mixins: [],
+        mixins: [inputRelationNameMixin],
       },
       {
         decorator: Body,
