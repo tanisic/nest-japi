@@ -11,13 +11,9 @@ import { extendZodWithOpenApi } from "@anatine/zod-openapi";
 extendZodWithOpenApi(z);
 
 export const zodDataSchema = (schema: Type<BaseSchema<any>>) => {
-  const idField = getAttributeByName(schema, "id");
-  if (!idField) {
-    throw new Error(`Id field does not exist on ${schema.name}.`);
-  }
   return z
     .object({
-      id: idField.validate,
+      id: z.coerce.string(),
       type: zodTypeSchema(schema),
     })
     .strict();
@@ -25,6 +21,10 @@ export const zodDataSchema = (schema: Type<BaseSchema<any>>) => {
 
 export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
   const relations = getRelations(schema);
+
+  const hasRequiredRelations = relations.some(
+    (relation) => !!relation.required,
+  );
 
   const shape = relations.reduce((shape, relation) => {
     const relationSchema = relation.schema();
@@ -36,8 +36,13 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
           ? dataSchema.strict().array()
           : dataSchema.strict().nullable(),
       })
-      .strict()
-      .optional();
+      .strict();
+
+    if (relation.required) {
+      shape[relation.name] = (
+        shape[relation.name] as z.ZodObject<any>
+      ).required();
+    }
 
     if (relation.openapi) {
       shape[relation.name] = shape[relation.name].openapi({
@@ -48,7 +53,13 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
     return shape;
   }, {} as ZodRawShape);
 
-  return z.object(shape).strict().optional();
+  const base = z.object(shape).strict().optional();
+
+  if (hasRequiredRelations) {
+    return z.object(shape).strict().required();
+  }
+
+  return base;
 };
 
 export const zodRelationsSchemaWithLinksAndData = (
@@ -151,7 +162,7 @@ export const fullJsonApiResponseSchema = (
     .merge(zodDataSchema(schema));
 
   const includedDataObjectSchema = z.object({
-    id: z.string().or(z.number()),
+    id: z.coerce.string(),
     type: z.string(),
     attributes: z.object({}).optional(),
     relationships: z.object({}).optional(),

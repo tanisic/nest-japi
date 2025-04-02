@@ -81,24 +81,17 @@ export class SerializerService {
         const relationName = relation.name;
         const relationType = getType(relationSchema);
         const relationSerializer = this.serializerMap.get(relationType);
-        const relationLinker = new Linker((parentData, relationData) => {
-          return Array.isArray(relationData)
-            ? joinUrlPaths(
-                this.resourceUrl(resource),
-                `relationships/${relationName}`,
-              )
-            : joinUrlPaths(
-                this.resourceUrl(resource),
-                `/${parentData.id}/relationships/${relation.name}`,
-              );
+        const relationLinker = new Linker((parentData) => {
+          return joinUrlPaths(
+            this.resourceUrl(resource),
+            `/${parentData.id}/relationships/${relation.name}`,
+          );
         });
-        const relatedLinker = new Linker((parentData, relationData) => {
-          return Array.isArray(relationData)
-            ? joinUrlPaths(this.resourceUrl(resource), `/${relationName}`)
-            : joinUrlPaths(
-                this.resourceUrl(resource),
-                `/${parentData.id}/${relationName}`,
-              );
+        const relatedLinker = new Linker((parentData) => {
+          return joinUrlPaths(
+            this.resourceUrl(resource),
+            `/${parentData.id}/${relationName}`,
+          );
         });
         const relator = new Relator(
           (data) => data[relationName],
@@ -153,6 +146,9 @@ export class SerializerService {
       resource: Resource<unknown>,
       allowedFields: string[],
     ) => {
+      if (resource.id) {
+        resource.id = String(resource.id);
+      }
       if (resource.attributes) {
         resource.attributes = Object.fromEntries(
           Object.entries(resource.attributes).filter(([key]) =>

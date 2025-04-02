@@ -2,21 +2,17 @@ import { z } from "zod";
 
 import { BaseSchema } from "../../base-schema";
 import { Type } from "@nestjs/common";
-import { getAttributeByName, getType } from "../../helpers/schema-helper";
+import { getType } from "../../helpers/schema-helper";
 import { zodAttributesSchema, zodRelationsSchema } from "../common";
 import { RelationshipData } from "../type";
 
 export const jsonApiPatchInputSchema = (schema: Type<BaseSchema<any>>) => {
   const type = getType(schema);
-  const idField = getAttributeByName(schema, "id");
-  if (!idField) {
-    throw new Error(`Id field does not exist on ${schema.name}.`);
-  }
   return z
     .object({
       data: z
         .object({
-          id: idField.validate,
+          id: z.coerce.string(),
           type: z.literal(type),
           attributes: zodAttributesSchema(schema).optional(),
           relationships: zodRelationsSchema(schema).optional(),

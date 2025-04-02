@@ -24,6 +24,7 @@ import { AddressResource } from './resource/AddressResource.controller';
       entities: ['./dist/**/*.entity.js'],
       entitiesTs: ['./src/**/*.entity.ts'],
       extensions: [EntityGenerator, Migrator],
+      debug: ['query'],
     }),
     JsonApiModule.forRoot({
       resources: [UserResource, PostResource, CommentResource, AddressResource],

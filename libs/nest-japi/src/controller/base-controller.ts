@@ -1,7 +1,12 @@
 import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityDTO, EntityManager, serialize } from "@mikro-orm/core";
+import {
+  Collection,
+  EntityDTO,
+  EntityManager,
+  serialize,
+} from "@mikro-orm/core";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
@@ -199,6 +204,7 @@ export class JsonBaseController<
     relationshipName: string,
     body: PatchRelationshipBody<Id, string, boolean>,
   ) {
+    console.log(body);
     const schema =
       this.currentSchemas.updateSchema || this.currentSchemas.schema;
     const data = await this.dataLayer.patchRelationship(
@@ -206,13 +212,11 @@ export class JsonBaseController<
       body,
       relationshipName,
     );
+
     const relation = getRelationByName(schema, relationshipName);
     const relationSchema = relation.schema();
-    const serialized = serialize(data, { forceObject: true });
-    const result = this.schemaBuilder.transformFromDb(
-      serialized,
-      relationSchema,
-    );
+
+    const result = this.schemaBuilder.transformFromDb(data, relationSchema);
     return this.serializerService.serialize(result, relationSchema);
   }
 

@@ -15,6 +15,8 @@ export class SparseFieldsService {
       return null;
     }
 
+    console.log(value);
+
     const result: SparseFields = { db: {}, schema: {} };
     for (const type in value) {
       // Get unique field names

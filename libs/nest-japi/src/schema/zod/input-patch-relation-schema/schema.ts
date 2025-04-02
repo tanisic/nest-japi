@@ -12,10 +12,6 @@ export const jsonApiPatchRelationInputSchema = (
   parentSchema: Type<BaseSchema<any>>,
   relationName: string,
 ) => {
-  const idField = getAttributeByName(parentSchema, "id");
-  if (!idField) {
-    throw new Error(`Id field does not exist on ${parentSchema.name}.`);
-  }
   const relation = getRelationByName(parentSchema, relationName);
   if (!relation) {
     throw new NotFoundException(
@@ -33,7 +29,7 @@ export const jsonApiPatchRelationInputSchema = (
   }
   const dataSchema = z
     .object({
-      id: relationIdField.validate,
+      id: z.coerce.string(),
       type: z.literal(relationType),
     })
     .strict();

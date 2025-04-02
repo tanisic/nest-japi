@@ -23,7 +23,11 @@ export class Post {
   @ManyToOne(() => User)
   author!: User;
 
-  @OneToMany(() => Comment, (comment) => comment.post)
+  @OneToMany({
+    entity: () => Comment,
+    mappedBy: (comment) => comment.post,
+    nullable: true,
+  })
   comments = new Collection<Comment>(this);
 
   @Property({ onCreate: () => new Date() })

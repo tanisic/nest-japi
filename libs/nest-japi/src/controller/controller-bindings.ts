@@ -10,6 +10,7 @@ import { patchOne } from "../swagger/methods/patch-one";
 import { inputPatchBodyMixin } from "../mixins/input-patch-body.mixin";
 import { inputPostBodyMixin } from "../mixins/input-post-body.mixin";
 import { inputRelationNameMixin } from "../mixins/input-relation-name.mixin";
+import { JsonApiInputPatchRelationInterceptor } from "../schema/interceptors/input-patch-relation.interceptor";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -106,6 +107,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.GET,
     schema: "schema",
     implementation: JsonBaseController.prototype.getRelationship,
+    pipes: [],
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,
@@ -125,6 +127,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.PATCH,
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchRelationship,
+    interceptors: [JsonApiInputPatchRelationInterceptor],
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,

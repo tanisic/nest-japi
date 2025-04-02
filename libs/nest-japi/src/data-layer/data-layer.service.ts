@@ -223,26 +223,40 @@ export class DataLayerService<
   ) {
     const schema = this.schemas.updateSchema || this.schemas.schema;
 
-    const parentItem = await this.em.findOne(parentEntity as any, { id });
-
     const relation = getRelationByName(schema, relationshipName);
-
     if (!relation) {
       throw new NotFoundException(
         `Relation '${relationshipName}' does not exist on "${schema.name}".`,
       );
     }
 
-    const relationSchema = relation.schema();
+    const parentItem = await this.em.findOne(parentEntity as any, id, {
+      populate: [relation.dataKey as any],
+    });
 
+    if (!parentItem) {
+      throw new NotFoundException(
+        `Parent object with id ${id} does not exist.`,
+      );
+    }
+
+    const relationSchema = relation.schema();
     const relationEntity = getEntityFromSchema(relationSchema);
 
     if (Array.isArray(body.data)) {
-      const ids = body.data.map((item) => item.id);
-      const items = await this.findObjectsByIds(ids, relationEntity);
-      parentItem[relation.dataKey] = items;
+      if (body.data.length) {
+        // Setting multiple relations
+        const ids = body.data.map((item) => item.id);
+        const items = await this.findObjectsByIds(ids, relationEntity);
+        console.log(items);
+        parentItem[relation.dataKey].set(items);
+      } else {
+        // Unlinking all relations
+        parentItem[relation.dataKey].removeAll();
+      }
     } else if (body.data) {
-      const item = await this.em.findOne(relationEntity, { id: body.data.id });
+      // Setting a single relation
+      const item = await this.em.findOne(relationEntity, body.data.id);
       if (!item) {
         throw new NotFoundException(
           `Relation ${relation.name} does not have item with id ${body.data.id}.`,
@@ -250,11 +264,13 @@ export class DataLayerService<
       }
       parentItem[relation.dataKey] = item;
     } else {
+      // Unlinking a single relation
       parentItem[relation.dataKey] = null;
     }
 
-    await this.em.persistAndFlush(parentItem);
-    return parentItem[relation.dataKey];
+    await this.em.flush();
+    const serialized = serialize(parentItem, { forceObject: true });
+    return serialized[relation.dataKey];
   }
 
   async findObjectsByIds(ids: Id[], entity: EntityName<any>) {

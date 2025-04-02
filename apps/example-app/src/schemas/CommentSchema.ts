@@ -10,12 +10,12 @@ export class CommentSchema extends BaseSchema<Comment> {
   id: number;
   @Attribute({ validate: z.string() })
   content: string;
-  @Relation({ schema: () => UserSchema })
+  @Relation({ schema: () => UserSchema, required: true })
   author: UserSchema;
   @Relation({ schema: () => PostSchema })
   post: PostSchema;
-  @Attribute({ validate: z.date() })
+  @Attribute({ validate: z.date().optional() })
   createdAt: Date;
-  @Attribute({ validate: z.date() })
+  @Attribute({ validate: z.date().optional() })
   updatedAt: Date;
 }

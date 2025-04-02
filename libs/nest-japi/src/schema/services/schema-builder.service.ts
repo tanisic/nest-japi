@@ -6,9 +6,10 @@ import { getAttributes, getRelations } from "../helpers/schema-helper";
 @Injectable()
 export class SchemaBuilderService {
   transformFromDb<Entity>(
-    dbData: EntityDTO<Entity> | EntityDTO<Entity>[],
+    dbData: EntityDTO<Entity> | EntityDTO<Entity>[] | null,
     schema: Type<BaseSchema<any>>,
-  ): EntityDTO<Entity> | EntityDTO<Entity>[] {
+  ): EntityDTO<Entity> | EntityDTO<Entity>[] | null {
+    if (dbData === null) return null;
     const isArray = Array.isArray(dbData);
     if (isArray) {
       return dbData.map((entity) => this.transformSingle(entity, schema));

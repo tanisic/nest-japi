@@ -13,7 +13,7 @@ export class Comment {
   @ManyToOne(() => User)
   author!: User;
 
-  @ManyToOne(() => Post)
+  @ManyToOne({ entity: () => Post, nullable: true })
   post!: Post;
 
   @Property({ onCreate: () => new Date() })

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { BaseSchema } from "../../base-schema";
 import { Type } from "@nestjs/common";
-import { getType } from "../../helpers/schema-helper";
+import { getRelations, getType } from "../../helpers/schema-helper";
 import { zodAttributesSchema, zodRelationsSchema } from "../common";
 import { RelationshipData } from "../type";
 
@@ -14,7 +14,7 @@ export const jsonApiPostInputSchema = (schema: Type<BaseSchema<any>>) => {
         .object({
           type: z.literal(type),
           attributes: zodAttributesSchema(schema),
-          relationships: zodRelationsSchema(schema).optional(),
+          relationships: zodRelationsSchema(schema),
         })
         .strict(),
     })

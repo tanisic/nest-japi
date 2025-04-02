@@ -19,7 +19,7 @@ import {
   getType,
 } from "../schema";
 import { JsonBaseController } from "../controller/base-controller";
-import { ModuleExplorerService } from "./services/module-exporer.service";
+import { ModuleExplorerService } from "./services/module-explorer.service";
 import { JsonApiBodyParserMiddleware } from "../middlewares/bodyparser.middleware";
 
 export interface JsonApiModuleOptions

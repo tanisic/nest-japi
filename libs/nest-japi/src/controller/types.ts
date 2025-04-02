@@ -1,5 +1,5 @@
 import { PipeTransform, RequestMethod } from "@nestjs/common";
-import { Type } from "@nestjs/common/interfaces";
+import { NestInterceptor, Type } from "@nestjs/common/interfaces";
 import { Schemas } from "../schema/types";
 import { BaseSchema } from "../schema/base-schema";
 import { SwaggerMethodImplementation } from "../swagger";
@@ -37,6 +37,7 @@ export interface Binding<T extends MethodName> {
   implementation: any[T];
   swaggerImplementation?: SwaggerMethodImplementation;
   pipes?: (Type<PipeTransform> | PipeTransform)[];
+  interceptors?: (NestInterceptor | Function)[];
   parameters: {
     decorator: (
       property?: string,

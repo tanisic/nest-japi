@@ -18,6 +18,8 @@ export type RelationOptions<Entity = any> = {
 
   schema: () => Type<BaseSchema<Entity>>;
 
+  required?: boolean;
+
   many?: boolean;
   openapi?: Partial<SchemaObject>;
 };

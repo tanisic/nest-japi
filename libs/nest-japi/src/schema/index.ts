@@ -5,6 +5,7 @@
 export * from "./base-schema";
 export * from "./types";
 export * from "./helpers/schema-helper";
+export * from "./interceptors/input-patch-relation.interceptor";
 export * from "./pipes/input-patch.pipe";
 export * from "./pipes/input-post.pipe";
 export * from "./pipes/input-relations.pipe";

@@ -210,7 +210,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "mappedType": "integer"
         },
         "created_at": {
@@ -272,6 +272,7 @@
             "id"
           ],
           "referencedTableName": "public.post",
+          "deleteRule": "set null",
           "updateRule": "cascade"
         }
       },

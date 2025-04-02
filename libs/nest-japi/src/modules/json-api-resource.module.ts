@@ -24,7 +24,11 @@ import { includeServiceProvider } from "../query/providers/include.provider";
 import { sortServiceProvider } from "../query/providers/sort.provider";
 import { sparseFieldsServiceProvider } from "../query/providers/sparse-fields.provider";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
-import { getSchemasFromResource, SchemaBuilderService } from "../schema";
+import {
+  getSchemasFromResource,
+  JsonApiInputPatchRelationInterceptor,
+  SchemaBuilderService,
+} from "../schema";
 import { DataLayerService } from "../data-layer/data-layer.service";
 import { filterServiceProvider } from "../query/providers/filter.provider";
 import { JsonBaseController } from "../controller/base-controller";
