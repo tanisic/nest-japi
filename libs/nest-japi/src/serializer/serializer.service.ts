@@ -19,6 +19,7 @@ import { joinUrlPaths } from "../helpers";
 import { JsonApiOptions } from "../modules/json-api-options";
 import Resource from "ts-japi/lib/models/resource.model";
 import { JsonBaseController } from "../controller/base-controller";
+import ResourceIdentifier from "ts-japi/lib/models/resource-identifier.model";
 
 export interface SerializeCustomOptions {
   include?: string[];
@@ -29,6 +30,9 @@ export interface SerializeCustomOptions {
 type JsonApiTypeString = string;
 type CollectionName = string;
 type RelatorKey = `${JsonApiTypeString}__${CollectionName}`;
+type SerializePostProcessProps = {
+  fields?: SparseFields["schema"];
+};
 
 @Injectable()
 export class SerializerService {
@@ -133,7 +137,79 @@ export class SerializerService {
         ...options?.linkers,
       },
     });
-    return this.transformSparseFields(document, options?.fields);
+    return this.postProcess(document, { fields: options?.fields });
+  }
+
+  private postProcess(
+    document: Partial<DataDocument<unknown>>,
+    { fields }: SerializePostProcessProps,
+  ) {
+    if (Array.isArray(document.data)) {
+      document.data = document.data.map((item) =>
+        this.postProcessItem(item, { fields }),
+      );
+    } else if (document.data) {
+      document.data = this.postProcessItem(document.data, { fields });
+    }
+    document.included = document.included.map((item) =>
+      this.postProcessSingleResource(item, { fields }),
+    );
+    return document;
+  }
+
+  private postProcessItem(
+    item: ResourceIdentifier | Resource<unknown>,
+    { fields }: SerializePostProcessProps,
+  ) {
+    if (this.isResource(item)) {
+      return this.postProcessSingleResource(item, { fields });
+    } else {
+      return this.postProcessSingleResourceIdentifier(item);
+    }
+  }
+
+  private isResource(item: any): item is Resource<unknown> {
+    return (
+      (!!item.attributes || !!item.relationships) && !!item.id && !!item.type
+    );
+  }
+
+  private postProcessSingleResource(
+    resource: Resource<unknown>,
+    { fields }: SerializePostProcessProps,
+  ) {
+    const allowedFields = fields[resource.type] || [];
+    if (resource.id && typeof resource.id !== "string") {
+      resource.id = String(resource.id);
+    }
+
+    if (resource.attributes && allowedFields.length) {
+      resource.attributes = Object.fromEntries(
+        Object.entries(resource.attributes).filter(([key]) =>
+          allowedFields.includes(key),
+        ),
+      );
+    }
+
+    if (resource.relationships) {
+      for (const [relKey, relation] of Object.entries(resource.relationships)) {
+        if (Array.isArray(relation.data)) {
+          resource.relationships[relKey].data = relation.data.map((data) =>
+            this.postProcessSingleResourceIdentifier(data),
+          );
+        } else if (relation.data) {
+          resource.relationships[relKey].data =
+            this.postProcessSingleResourceIdentifier(relation.data);
+        }
+      }
+    }
+    return resource;
+  }
+
+  private postProcessSingleResourceIdentifier(
+    identifier: ResourceIdentifier,
+  ): ResourceIdentifier {
+    return { ...identifier, id: String(identifier.id) } as ResourceIdentifier;
   }
 
   private transformSparseFields(
