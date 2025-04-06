@@ -169,16 +169,14 @@ export class SerializerService {
   }
 
   private isResource(item: any): item is Resource<unknown> {
-    return (
-      (!!item.attributes || !!item.relationships) && !!item.id && !!item.type
-    );
+    return item instanceof Resource;
   }
 
   private postProcessSingleResource(
     resource: Resource<unknown>,
     { fields }: SerializePostProcessProps,
   ) {
-    const allowedFields = fields[resource.type] || [];
+    const allowedFields = fields?.[resource.type] || [];
     if (resource.id && typeof resource.id !== "string") {
       resource.id = String(resource.id);
     }
@@ -210,55 +208,6 @@ export class SerializerService {
     identifier: ResourceIdentifier,
   ): ResourceIdentifier {
     return { ...identifier, id: String(identifier.id) } as ResourceIdentifier;
-  }
-
-  private transformSparseFields(
-    document: Partial<DataDocument<unknown>>,
-    sparseFields?: SparseFields["schema"],
-  ): Partial<DataDocument<unknown>> {
-    if (!sparseFields) return document;
-
-    const filterFields = (
-      resource: Resource<unknown>,
-      allowedFields: string[],
-    ) => {
-      if (resource.id) {
-        resource.id = String(resource.id);
-      }
-      if (resource.attributes) {
-        resource.attributes = Object.fromEntries(
-          Object.entries(resource.attributes).filter(([key]) =>
-            allowedFields.includes(key),
-          ),
-        );
-      }
-      return resource;
-    };
-
-    // Process `data`
-    if (Array.isArray(document.data)) {
-      document.data = document.data.map((resource) =>
-        sparseFields[resource.type]
-          ? filterFields(resource, sparseFields[resource.type])
-          : resource,
-      );
-    } else if (document.data && sparseFields[document.data.type]) {
-      document.data = filterFields(
-        document.data,
-        sparseFields[document.data.type],
-      );
-    }
-
-    // Process `included`
-    if (document.included) {
-      document.included = document.included.map((resource) =>
-        sparseFields[resource.type]
-          ? filterFields(resource, sparseFields[resource.type])
-          : resource,
-      );
-    }
-
-    return document;
   }
 
   private getTypeRelators(

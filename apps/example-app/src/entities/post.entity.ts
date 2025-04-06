@@ -27,6 +27,7 @@ export class Post {
     entity: () => Comment,
     mappedBy: (comment) => comment.post,
     nullable: true,
+    strategy: 'select-in',
   })
   comments = new Collection<Comment>(this);
 

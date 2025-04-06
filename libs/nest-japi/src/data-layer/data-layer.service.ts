@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   getEntityFromSchema,
   getRelationByName,
@@ -105,6 +110,7 @@ export class DataLayerService<
   }
 
   async patchOne<TAttributes extends Record<string, unknown>>(
+    id: Id,
     body: PatchBody<Id, string, TAttributes>,
     entity: UpdateEntity | ViewEntity = this.updateEntity,
   ) {
@@ -112,6 +118,12 @@ export class DataLayerService<
     const result = {
       ...this.schemaBuilder.transformToDb(body.data.attributes, schema),
     };
+
+    if (String(id) !== String(body.data.id)) {
+      throw new BadRequestException(
+        "id field not same as ID parameter from URL.",
+      );
+    }
 
     const item = await this.em.findOne(
       entity as EntityClass<CreateEntity | ViewEntity>,
@@ -162,6 +174,7 @@ export class DataLayerService<
       mergeObjectProperties: true,
       em: this.em,
       updateNestedEntities: true,
+      ignoreUndefined: true,
     });
     await this.em.persistAndFlush(item);
     return item;
@@ -248,7 +261,6 @@ export class DataLayerService<
         // Setting multiple relations
         const ids = body.data.map((item) => item.id);
         const items = await this.findObjectsByIds(ids, relationEntity);
-        console.log(items);
         parentItem[relation.dataKey].set(items);
       } else {
         // Unlinking all relations

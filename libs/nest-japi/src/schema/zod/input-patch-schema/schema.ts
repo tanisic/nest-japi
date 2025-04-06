@@ -14,8 +14,8 @@ export const jsonApiPatchInputSchema = (schema: Type<BaseSchema<any>>) => {
         .object({
           id: z.coerce.string(),
           type: z.literal(type),
-          attributes: zodAttributesSchema(schema).optional(),
-          relationships: zodRelationsSchema(schema).optional(),
+          attributes: zodAttributesSchema(schema),
+          relationships: zodRelationsSchema(schema),
         })
         .strict()
         .refine((obj) => obj.relationships || obj.attributes, {

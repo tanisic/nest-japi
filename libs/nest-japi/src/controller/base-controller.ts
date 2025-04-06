@@ -1,12 +1,7 @@
 import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import {
-  Collection,
-  EntityDTO,
-  EntityManager,
-  serialize,
-} from "@mikro-orm/core";
+import { EntityDTO, EntityManager, serialize } from "@mikro-orm/core";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
@@ -190,12 +185,14 @@ export class JsonBaseController<
   }
 
   async patchOne(id: Id, body: PatchBody<Id, string, any>) {
-    const data = await this.dataLayer.patchOne(body as any);
+    const data = await this.dataLayer.patchOne(id, body as any);
+    console.log({ data });
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
       this.currentSchemas.schema,
     );
+    console.log({ result });
     return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
