@@ -16,7 +16,13 @@ import {
 } from "../schema";
 import { CURRENT_SCHEMAS } from "../constants";
 import { QueryParams } from "../query";
-import { EntityClass, EntityManager, serialize, wrap } from "@mikro-orm/core";
+import {
+  EntityClass,
+  EntityManager,
+  Populate,
+  serialize,
+  wrap,
+} from "@mikro-orm/core";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { EntityName } from "@mikro-orm/nestjs";
 
@@ -80,15 +86,11 @@ export class DataLayerService<
     );
   }
 
-  getOne(
-    id: Id,
-    include: QueryParams["include"] = { dbIncludes: [], schemaIncludes: [] },
-    entity: ViewEntity = this.viewEntity,
-  ) {
+  getOne(id: Id, include: string[] = [], entity: ViewEntity = this.viewEntity) {
     return this.em.findOne(
       entity as EntityClass<ViewEntity>,
       { id },
-      { populate: include?.dbIncludes ?? ([] as any[]) },
+      { populate: include as Populate<string, any> },
     );
   }
 

@@ -121,6 +121,26 @@ export const controllerBindings: BindingsConfig = {
       },
     ],
   },
+  getRelationshipData: {
+    path: `:${PARAMS_RESOURCE_ID}/:${PARAMS_RELATION_NAME}`,
+    name: "getRelationshipData",
+    method: RequestMethod.GET,
+    schema: "schema",
+    implementation: JsonBaseController.prototype.getRelationshipData,
+    pipes: [],
+    parameters: [
+      {
+        property: PARAMS_RESOURCE_ID,
+        decorator: Param,
+        mixins: [],
+      },
+      {
+        property: PARAMS_RELATION_NAME,
+        decorator: Param,
+        mixins: [inputRelationNameMixin],
+      },
+    ],
+  },
   patchRelationship: {
     path: `:${PARAMS_RESOURCE_ID}/relationships/:${PARAMS_RELATION_NAME}`,
     name: "patchRelationship",

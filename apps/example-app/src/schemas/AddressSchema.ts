@@ -1,11 +1,10 @@
 import { Attribute, BaseSchema, Relation, Schema } from 'nest-japi';
-import { User } from 'src/entities/user.entity';
 import { Address } from 'src/entities/address.entity';
 import { UserSchema } from './UserSchema';
 import { z } from 'zod';
 
 @Schema({ jsonapiType: 'address', entity: Address })
-export class AddressSchema extends BaseSchema<User> {
+export class AddressSchema extends BaseSchema<Address> {
   @Attribute({ validate: z.number() })
   id!: number;
   @Attribute({ validate: z.string().optional() })

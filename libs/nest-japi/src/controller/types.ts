@@ -8,6 +8,7 @@ export type MethodName =
   | "getAll"
   | "getOne"
   | "getRelationship"
+  | "getRelationshipData"
   | "deleteOne"
   | "postOne"
   | "patchOne"
@@ -21,6 +22,7 @@ type MapNameToTypeMethod = {
   postOne: RequestMethod.POST;
   deleteOne: RequestMethod.DELETE;
   getRelationship: RequestMethod.GET;
+  getRelationshipData: RequestMethod.GET;
 };
 
 export interface PipeMixinParams {

@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { RedocModule, RedocOptions } from 'nest-redoc';
+// import { RedocModule, RedocOptions } from 'nest-redoc';
 
 import { transports, format } from 'winston';
 import { extendZodWithOpenApi } from '@anatine/zod-openapi';
 import { z } from 'zod';
 import { WinstonModule } from 'nest-winston';
+import { apiReference } from '@scalar/nestjs-api-reference';
+import { NestExpressApplication } from '@nestjs/platform-express';
 extendZodWithOpenApi(z);
 
 const winstonLogger = WinstonModule.createLogger({
@@ -38,9 +40,10 @@ const winstonLogger = WinstonModule.createLogger({
 });
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // logger: winstonLogger,
   });
+  app.set('query parser', 'extended'); // <-- Add this line
   // app.use(
   //   bodyparser.json({
   //     type: 'application/vnd.api+json',
@@ -51,14 +54,8 @@ async function bootstrap() {
     .setDescription('The cats API description')
     .setVersion('1.0')
     .build();
-  const redocOptions: Partial<RedocOptions> = {
-    title: 'Hello Nest',
-    sortPropsAlphabetically: true,
-    hideDownloadButton: false,
-    hideHostname: false,
-  };
   const document = SwaggerModule.createDocument(app, config);
-  RedocModule.setup('api', app, document, redocOptions);
+  app.use('/docs', apiReference({ content: document }));
   await app.listen(3000);
 }
 bootstrap();

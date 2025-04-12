@@ -27,7 +27,12 @@ import { AddressResource } from './resource/AddressResource.controller';
       debug: ['query'],
     }),
     JsonApiModule.forRoot({
-      resources: [UserResource, PostResource, CommentResource, AddressResource],
+      resources: [
+        UserResource,
+        PostResource,
+        CommentResource,
+        AddressResource,
+      ] as any,
       baseUrl: 'http://localhost:3000/',
     }),
   ],

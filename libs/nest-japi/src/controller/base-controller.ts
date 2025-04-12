@@ -1,7 +1,7 @@
 import { Inject, NotFoundException } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityDTO, EntityManager, serialize } from "@mikro-orm/core";
+import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
 import type { Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
@@ -10,6 +10,7 @@ import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
 import {
   BaseSchema,
+  getEntityFromSchema,
   getRelationByName,
   PatchBody,
   PatchRelationshipBody,
@@ -99,7 +100,7 @@ export class JsonBaseController<
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
     const schema = this.currentSchemas.schema;
-    const data = await this.dataLayer.getOne(id, query.include);
+    const data = await this.dataLayer.getOne(id, query.include.dbIncludes);
 
     if (!data) {
       throw new NotFoundException(`Object with id ${id} does not exist.`);
@@ -129,10 +130,7 @@ export class JsonBaseController<
       );
     }
 
-    const data = await this.dataLayer.getOne(id, {
-      dbIncludes: [relation.dataKey],
-      schemaIncludes: [],
-    });
+    const data = await this.dataLayer.getOne(id, [relation.dataKey]);
 
     if (!data) {
       throw new NotFoundException("Root data does not exist.");
@@ -167,6 +165,35 @@ export class JsonBaseController<
         nullData: shouldDisplayNull(relation, unwrapped),
       },
     );
+  }
+
+  async getRelationshipData(id: Id, relationName: string) {
+    const schema = this.currentSchemas.schema;
+    const relation = getRelationByName(schema, relationName);
+    if (!relation) {
+      throw new NotFoundException(
+        `Relationship ${relationName} does not exist on schema "${schema.name}".`,
+      );
+    }
+
+    const relSchema = relation.schema();
+
+    const data = await this.dataLayer.getOne(id, [relation.dataKey]);
+    if (!data) {
+      throw new NotFoundException("Root data does not exist.");
+    }
+
+    const unwrapped = wrap(data).serialize({
+      forceObject: true,
+      populate: [relation.dataKey as any],
+    });
+
+    const result = this.schemaBuilder.transformFromDb(
+      unwrapped[relation.dataKey],
+      relSchema,
+    );
+
+    return this.serializerService.serialize(result, relSchema);
   }
 
   async deleteOne(id: Id, ...rest: any[]) {

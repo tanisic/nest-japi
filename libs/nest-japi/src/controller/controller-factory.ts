@@ -45,6 +45,7 @@ const allowedMethods: MethodName[] = [
   "patchRelationship",
   "deleteOne",
   "getRelationship",
+  "getRelationshipData",
 ];
 
 @Injectable()
