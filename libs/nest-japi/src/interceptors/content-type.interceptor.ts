@@ -18,7 +18,7 @@ export class JsonApiContentTypeInterceptor implements NestInterceptor {
 
     if (contentType !== JSONAPI_CONTENT_TYPE) {
       throw new JapiError({
-        status: "400",
+        status: "415",
         detail: `Invalid content type. Expected ${JSONAPI_CONTENT_TYPE}`,
         source: {
           header: "Content-Type",
