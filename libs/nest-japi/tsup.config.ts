@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"], // entry point of your library
+  entry: ["src/index.ts", "!src/**/*.spec.ts"], // entry point of your library
   format: ["cjs", "esm"], // output formats: CommonJS and ES Modules
   dts: true, // generate .d.ts declaration files
   clean: true, // clean the output directory before building

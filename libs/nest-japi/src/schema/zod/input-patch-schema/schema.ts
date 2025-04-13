@@ -17,7 +17,7 @@ export const jsonApiPatchInputSchema = (schema: Type<BaseSchema<any>>) => {
           attributes: zodAttributesSchema(schema),
           relationships: zodRelationsSchema(schema),
         })
-        .strict()
+        .strip()
         .refine((obj) => obj.relationships || obj.attributes, {
           message: "At least one relationship or attribute should be present.",
         }),

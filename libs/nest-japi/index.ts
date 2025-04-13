@@ -3,5 +3,6 @@
  */
 
 export * from "./tsup.config";
+export * from "./vitest.config";
 export * from "./dist/index";
 export * from "./src/index";

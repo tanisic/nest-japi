@@ -35,9 +35,7 @@ export const jsonApiPatchRelationInputSchema = (
     .strict();
   return z
     .object({
-      data: relation.many
-        ? z.array(dataSchema).nullable()
-        : dataSchema.nullable(),
+      data: relation.many ? z.array(dataSchema) : dataSchema.nullable(),
     })
     .strict();
 };

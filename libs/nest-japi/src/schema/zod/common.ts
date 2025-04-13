@@ -53,10 +53,10 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
     return shape;
   }, {} as ZodRawShape);
 
-  const base = z.object(shape).strict().nullish();
+  const base = z.object(shape).strip().nullish();
 
   if (hasRequiredRelations) {
-    return z.object(shape).strict().required();
+    return z.object(shape).strip().required();
   }
 
   return base;
@@ -96,6 +96,10 @@ export const zodRelationsSchemaWithLinksAndData = (
 export const zodAttributesSchema = (schema: Type<BaseSchema<any>>) => {
   const attributes = getAttributes(schema);
 
+  const isOptional = attributes
+    .filter((attr) => attr.name !== "id")
+    .every((attr) => attr.validate.isOptional());
+
   let shape = {};
   for (const attribute of attributes) {
     if (attribute.name === "id") continue;
@@ -113,7 +117,13 @@ export const zodAttributesSchema = (schema: Type<BaseSchema<any>>) => {
     }
   }
 
-  return z.object(shape).strict();
+  let base = z.object(shape).strip();
+
+  if (isOptional) {
+    return base.optional().nullish();
+  }
+
+  return base.required();
 };
 
 export const jsonApiVersionSchema = z.object({

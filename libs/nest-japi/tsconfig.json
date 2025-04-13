@@ -1,9 +1,15 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
     "incremental": false,
     "declaration": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
   },
   "include": [
     "src/**/*"
