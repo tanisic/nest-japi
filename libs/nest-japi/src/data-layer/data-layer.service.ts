@@ -206,6 +206,7 @@ export class DataLayerService<
             const relationIds = relationData.map(
               (relationLink) => relationLink.id,
             );
+            console.log({ relationIds, entity });
             const items = await this.findObjectsByIds(relationIds, entity);
             result[relation.dataKey] = items;
           } else if (relationData) {
@@ -290,9 +291,11 @@ export class DataLayerService<
   async findObjectsByIds(ids: Id[], entity: EntityName<any>) {
     const objects = await this.em.find(entity, { id: { $in: ids } });
 
-    const foundIds = objects.map((obj) => obj.id);
+    const foundIds = objects.map((obj) => String(obj.id));
 
-    const missingIds = ids.filter((id) => !foundIds.includes(id));
+    const missingIds = ids
+      .map((id) => String(id))
+      .filter((id) => !foundIds.includes(id));
 
     if (missingIds.length > 0) {
       throw new NotFoundException(

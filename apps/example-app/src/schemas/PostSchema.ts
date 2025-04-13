@@ -9,16 +9,16 @@ import { z } from 'zod';
 export class PostSchema extends BaseSchema<Post> {
   @Attribute({ validate: z.number() })
   id: number;
-  @Relation({ schema: () => CommentSchema, many: true })
+  @Relation({ schema: () => CommentSchema, many: true, required: false })
   comments: CommentSchema[];
-  @Attribute({ validate: z.date() })
+  @Attribute({ validate: z.date().optional() })
   createdAt: Date;
-  @Attribute({ validate: z.date() })
+  @Attribute({ validate: z.date().optional() })
   updatedAt: Date;
   @Attribute({ validate: z.string() })
   title: string;
   @Attribute({ validate: z.string() })
   content: string;
-  @Relation({ schema: () => UserSchema })
+  @Relation({ schema: () => UserSchema, required: true })
   author: User;
 }

@@ -100,7 +100,7 @@ export class JsonBaseController<
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
     const schema = this.currentSchemas.schema;
-    const data = await this.dataLayer.getOne(id, query.include.dbIncludes);
+    const data = await this.dataLayer.getOne(id, query.include?.dbIncludes);
 
     if (!data) {
       throw new NotFoundException(`Object with id ${id} does not exist.`);

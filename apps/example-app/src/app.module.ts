@@ -33,6 +33,7 @@ import { AddressResource } from './resource/AddressResource.controller';
         CommentResource,
         AddressResource,
       ] as any,
+      maxPaginationSize: 5000,
       baseUrl: 'http://localhost:3000/',
     }),
   ],

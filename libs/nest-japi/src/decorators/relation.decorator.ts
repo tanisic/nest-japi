@@ -16,11 +16,26 @@ export type RelationOptions<Entity = any> = {
    * */
   dataKey?: EntityKey<Entity>;
 
+  /**
+   *
+   * Connected schema that describes relation
+   */
   schema: () => Type<BaseSchema<Entity>>;
 
+  /**
+   * Is relation required on PATCH and POST?
+   * @default false
+   */
   required?: boolean;
 
+  /**
+   * Is relation belongs to or to many?
+   * @default false
+   */
   many?: boolean;
+  /**
+   * Write your own openapi documentation about this relation.
+   */
   openapi?: Partial<SchemaObject>;
 };
 
@@ -31,7 +46,7 @@ export function Relation<Entity = any>(
 ): PropertyDecorator {
   return (target, propertyKey) => {
     const opts: RelationOptions = {
-      ...options,
+      ...{ required: false, many: false, ...options },
       dataKey: propertyKey as string,
     };
     Reflect.defineMetadata(

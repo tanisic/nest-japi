@@ -1,9 +1,5 @@
 import { z, ZodRawShape, ZodTypeAny } from "zod";
-import {
-  getAttributeByName,
-  getAttributes,
-  getRelations,
-} from "../helpers/schema-helper";
+import { getAttributes, getRelations } from "../helpers/schema-helper";
 import { Type } from "@nestjs/common";
 import { BaseSchema } from "../base-schema";
 import { zodTypeSchema } from "./type";
@@ -42,6 +38,10 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
       shape[relation.name] = (
         shape[relation.name] as z.ZodObject<any>
       ).required();
+    } else {
+      shape[relation.name] = (shape[relation.name] as z.ZodObject<any>)
+        .optional()
+        .nullish();
     }
 
     if (relation.openapi) {
@@ -53,7 +53,7 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
     return shape;
   }, {} as ZodRawShape);
 
-  const base = z.object(shape).strict().optional();
+  const base = z.object(shape).strict().nullish();
 
   if (hasRequiredRelations) {
     return z.object(shape).strict().required();

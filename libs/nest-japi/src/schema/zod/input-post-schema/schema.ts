@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { BaseSchema } from "../../base-schema";
 import { Type } from "@nestjs/common";
-import { getRelations, getType } from "../../helpers/schema-helper";
+import { getType } from "../../helpers/schema-helper";
 import { zodAttributesSchema, zodRelationsSchema } from "../common";
 import { RelationshipData } from "../type";
 
