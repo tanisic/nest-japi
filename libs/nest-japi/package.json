@@ -6,7 +6,7 @@
   "author": "Tin Anišić",
   "license": "Apache 2.0",
   "scripts": {
-    "build": "pnpm barrel && tsup",
+    "build": "pnpm tsup",
     "test": "pnpm vitest",
     "barrel": "barrelsby --delete .src/ -l branch"
   },

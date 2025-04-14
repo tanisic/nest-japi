@@ -206,7 +206,6 @@ export class DataLayerService<
             const relationIds = relationData.map(
               (relationLink) => relationLink.id,
             );
-            console.log({ relationIds, entity });
             const items = await this.findObjectsByIds(relationIds, entity);
             result[relation.dataKey] = items;
           } else if (relationData) {
@@ -284,7 +283,10 @@ export class DataLayerService<
     }
 
     await this.em.flush();
-    const serialized = serialize(parentItem, { forceObject: true });
+    const serialized = serialize(parentItem, {
+      forceObject: true,
+      populate: [relation.dataKey] as any,
+    });
     return serialized[relation.dataKey];
   }
 

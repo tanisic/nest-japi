@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-// import { RedocModule, RedocOptions } from 'nest-redoc';
+import { RedocModule } from 'nest-redoc';
 
 import { transports, format } from 'winston';
 import { extendZodWithOpenApi } from '@anatine/zod-openapi';
@@ -44,18 +44,15 @@ async function bootstrap() {
     // logger: winstonLogger,
   });
   app.set('query parser', 'extended'); // <-- Add this line
-  // app.use(
-  //   bodyparser.json({
-  //     type: 'application/vnd.api+json',
-  //   }),
-  // );
   const config = new DocumentBuilder()
     .setTitle('Cats example')
     .setDescription('The cats API description')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  app.use('/docs', apiReference({ content: document }));
+  app.use('/docs-new', apiReference({ content: document }));
+  RedocModule.setup('/docs', app, document, {});
+
   await app.listen(3000);
 }
 bootstrap();

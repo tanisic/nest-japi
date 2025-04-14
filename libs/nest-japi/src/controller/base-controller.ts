@@ -141,7 +141,12 @@ export class JsonBaseController<
       populate: [relation.dataKey as any],
     });
 
-    const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
+    const relationSchema = relation.schema();
+
+    const result = this.schemaBuilder.transformFromDb(
+      unwrapped[relation.dataKey],
+      relationSchema,
+    );
 
     const shouldDisplayNull = (
       relation: RelationAttribute,
@@ -155,16 +160,10 @@ export class JsonBaseController<
 
       return false;
     };
-
-    return this.serializerService.serialize(
-      result,
-      this.currentSchemas.schema,
-      {
-        onlyIdentifier: true,
-        onlyRelationship: relationName,
-        nullData: shouldDisplayNull(relation, unwrapped),
-      },
-    );
+    return this.serializerService.serialize(result, relationSchema, {
+      onlyIdentifier: true,
+      nullData: shouldDisplayNull(relation, unwrapped),
+    });
   }
 
   async getRelationshipData(id: Id, relationName: string) {
@@ -213,13 +212,11 @@ export class JsonBaseController<
 
   async patchOne(id: Id, body: PatchBody<Id, string, any>) {
     const data = await this.dataLayer.patchOne(id, body as any);
-    console.log({ data });
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
       this.currentSchemas.schema,
     );
-    console.log({ result });
     return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
@@ -228,7 +225,6 @@ export class JsonBaseController<
     relationshipName: string,
     body: PatchRelationshipBody<Id, string, boolean>,
   ) {
-    console.log(body);
     const schema =
       this.currentSchemas.updateSchema || this.currentSchemas.schema;
     const data = await this.dataLayer.patchRelationship(

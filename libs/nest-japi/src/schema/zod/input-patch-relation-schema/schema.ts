@@ -39,3 +39,17 @@ export const jsonApiPatchRelationInputSchema = (
     })
     .strict();
 };
+
+export const jsonApiPatchRelationInputSwaggerSchema = () => {
+  const dataSchema = z
+    .object({
+      id: z.string(),
+      type: z.string(),
+    })
+    .strict();
+  return z
+    .object({
+      data: z.array(dataSchema).or(dataSchema.nullable()),
+    })
+    .strict();
+};

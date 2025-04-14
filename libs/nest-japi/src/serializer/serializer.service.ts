@@ -151,9 +151,11 @@ export class SerializerService {
     } else if (document.data) {
       document.data = this.postProcessItem(document.data, { fields });
     }
-    document.included = document.included.map((item) =>
-      this.postProcessSingleResource(item, { fields }),
-    );
+    if (document.included) {
+      document.included = document.included.map((item) =>
+        this.postProcessSingleResource(item, { fields }),
+      );
+    }
     return document;
   }
 
