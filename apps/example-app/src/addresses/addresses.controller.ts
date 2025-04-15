@@ -1,6 +1,6 @@
 import { Resource } from 'nest-japi';
-import { AddressSchema } from 'src/schemas/AddressSchema';
-import { BaseResource } from './BaseResource';
+import { AddressSchema } from 'src/addresses/addresses.schema';
+import { BaseResource } from 'src/resource/BaseResource';
 
 @Resource({
   schemas: { schema: AddressSchema },

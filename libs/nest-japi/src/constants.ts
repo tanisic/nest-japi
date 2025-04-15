@@ -10,6 +10,7 @@ export const JSONAPI_SCHEMA_ATTRIBUTES = Symbol();
 export const JSONAPI_SCHEMA_RELATION_OPTIONS = Symbol();
 export const JSONAPI_SCHEMA_RELATIONS = Symbol();
 export const CURRENT_METHOD_SCHEMA = Symbol();
+export const JSONAPI_RESOURCE_REGISTRY = Symbol("JSONAPI_RESOURCE_REGISTRY");
 export const CURRENT_SCHEMAS = Symbol();
 export const CURRENT_MODELS = Symbol();
 export const CURRENT_ENTITY_METADATA = Symbol();

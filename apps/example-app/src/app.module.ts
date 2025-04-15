@@ -6,10 +6,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EntityGenerator } from '@mikro-orm/entity-generator';
 import { Migrator } from '@mikro-orm/migrations';
-import { UserResource } from './resource/UserResource.controller';
-import { PostResource } from './resource/PostResource.controller';
-import { CommentResource } from './resource/CommentResource.controller';
-import { AddressResource } from './resource/AddressResource.controller';
+import { UserModule } from './user/user.module';
+import { PostsModule } from './posts/posts.module';
+import { CommentsModule } from './comments/comments.module';
+import { AddressesModule } from './addresses/addresses.module';
 
 @Module({
   imports: [
@@ -27,15 +27,13 @@ import { AddressResource } from './resource/AddressResource.controller';
       debug: ['query'],
     }),
     JsonApiModule.forRoot({
-      resources: [
-        UserResource,
-        PostResource,
-        CommentResource,
-        AddressResource,
-      ] as any,
       maxPaginationSize: 5000,
       baseUrl: 'http://localhost:3000/',
     }),
+    UserModule,
+    PostsModule,
+    CommentsModule,
+    AddressesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

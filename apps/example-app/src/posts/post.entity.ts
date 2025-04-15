@@ -6,8 +6,8 @@ import {
   OneToMany,
   Collection,
 } from '@mikro-orm/core';
-import { User } from './user.entity';
-import { Comment } from './comment.entity';
+import { User } from '../user/user.entity';
+import { Comment } from '../comments/comment.entity';
 
 @Entity()
 export class Post {

@@ -1,6 +1,6 @@
 import { Resource } from 'nest-japi';
-import { CommentSchema } from 'src/schemas/CommentSchema';
-import { BaseResource } from './BaseResource';
+import { BaseResource } from 'src/resource/BaseResource';
+import { CommentSchema } from 'src/comments/comments.schema';
 
 @Resource({
   schemas: { schema: CommentSchema },

@@ -1,5 +1,5 @@
 import { Entity, Property, PrimaryKey, OneToOne } from '@mikro-orm/core';
-import { User } from './user.entity';
+import { User } from '../user/user.entity';
 
 @Entity({ tableName: 'addresses' })
 export class Address {

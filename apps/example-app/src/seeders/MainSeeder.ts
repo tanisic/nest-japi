@@ -1,10 +1,10 @@
 import type { EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
-import { Post } from 'src/entities/post.entity';
-import { User } from 'src/entities/user.entity';
-import { Comment } from 'src/entities/comment.entity';
+import { Post } from 'src/posts/post.entity';
+import { User } from 'src/user/user.entity';
+import { Comment } from 'src/comments/comment.entity';
 import { faker } from '@faker-js/faker';
-import { Address } from 'src/entities/address.entity';
+import { Address } from 'src/addresses/address.entity';
 
 export class MainSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {

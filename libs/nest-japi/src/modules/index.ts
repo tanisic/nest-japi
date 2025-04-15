@@ -3,6 +3,5 @@
  */
 
 export * from "./json-api-options";
-export * from "./json-api-resource.module";
 export * from "./json-api.module";
 export * from "./services/module-explorer.service";

@@ -5,11 +5,11 @@ import {
   Relation,
   Schema,
 } from 'nest-japi';
-import { Post } from 'src/entities/post.entity';
-import { User } from 'src/entities/user.entity';
-import { UserSchema } from './UserSchema';
-import { CommentSchema } from './CommentSchema';
+import { Post } from 'src/posts/post.entity';
+import { User } from 'src/user/user.entity';
+import { CommentSchema } from '../comments/comments.schema';
 import { z } from 'zod';
+import { UserSchema } from 'src/user/user.schema';
 
 @Schema({ jsonapiType: 'post', entity: Post })
 export class PostSchema extends BaseSchema<Post> {

@@ -1,8 +1,8 @@
 import { Attribute, BaseSchema, Relation, Schema } from 'nest-japi';
-import { Comment } from 'src/entities/comment.entity';
-import { UserSchema } from './UserSchema';
-import { PostSchema } from './PostSchema';
+import { Comment } from 'src/comments/comment.entity';
+import { PostSchema } from '../posts/posts.schema';
 import { z } from 'zod';
+import { UserSchema } from 'src/user/user.schema';
 
 @Schema({ jsonapiType: 'comment', entity: Comment })
 export class CommentSchema extends BaseSchema<Comment> {

@@ -20,6 +20,7 @@ import { JsonApiOptions } from "../modules/json-api-options";
 import Resource from "ts-japi/lib/models/resource.model";
 import { JsonBaseController } from "../controller/base-controller";
 import ResourceIdentifier from "ts-japi/lib/models/resource-identifier.model";
+import { JsonApiResourceExplorerService } from "../modules/services/resource-explorer.service";
 
 export interface SerializeCustomOptions {
   include?: string[];
@@ -40,9 +41,12 @@ export class SerializerService {
   private serializerMap = new Map<JsonApiTypeString, Serializer<any>>();
   private relatorsMap = new Map<RelatorKey, Relator<unknown, any>>();
 
-  constructor(private globalOptions: JsonApiOptions) {
+  constructor(
+    private globalOptions: JsonApiOptions,
+    private resourceExplorerService: JsonApiResourceExplorerService,
+  ) {
     this.baseUrl = this.globalOptions.global.baseUrl;
-    this.resources = this.globalOptions.global.resources ?? [];
+    this.resources = this.resourceExplorerService.getAllResources();
     this.generateSerializers();
     this.generateRelators();
     this.connectSerializersAndRelators();

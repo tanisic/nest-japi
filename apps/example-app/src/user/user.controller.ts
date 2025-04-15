@@ -1,11 +1,9 @@
 import { PatchBody, QueryParams, Resource } from 'nest-japi';
-import { CreateUserSchema } from 'src/schemas/CreateUserSchema';
-import { UserSchema } from 'src/schemas/UserSchema';
-import { BaseResource } from './BaseResource';
 import { Request } from 'express';
 import { DataDocument } from 'ts-japi';
 import { ApiOperation } from '@nestjs/swagger';
-import { PatchUserSchema } from 'src/schemas/PatchUserSchema';
+import { BaseResource } from 'src/resource/BaseResource';
+import { UserSchema, CreateUserSchema, PatchUserSchema } from './user.schema';
 
 @Resource({
   schemas: {

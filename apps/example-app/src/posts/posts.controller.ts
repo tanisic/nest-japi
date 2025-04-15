@@ -1,6 +1,6 @@
 import { Resource } from 'nest-japi';
-import { CreatePostSchema, PostSchema } from 'src/schemas/PostSchema';
-import { BaseResource } from './BaseResource';
+import { BaseResource } from 'src/resource/BaseResource';
+import { CreatePostSchema, PostSchema } from 'src/posts/posts.schema';
 
 @Resource({
   schemas: { schema: PostSchema, createSchema: CreatePostSchema },

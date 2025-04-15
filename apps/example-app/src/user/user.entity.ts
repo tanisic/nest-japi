@@ -7,9 +7,9 @@ import {
   OneToOne,
   Unique,
 } from '@mikro-orm/core';
-import { Post } from './post.entity';
-import { Comment } from './comment.entity';
-import { Address } from './address.entity';
+import { Post } from '../posts/post.entity';
+import { Address } from 'src/addresses/address.entity';
+import { Comment } from 'src/comments/comment.entity';
 
 @Entity({ tableName: 'users' })
 @Unique({ name: 'ux_idx_users_email', properties: ['email'] })
