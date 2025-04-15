@@ -58,7 +58,7 @@ export class PaginateService {
     throw new JapiError({
       status: "400",
       title: parse.error.name,
-      detail: parse.error.errors[0].message,
+      detail: parse.error?.errors[0]?.message,
       source: {
         parameter: "page",
       },

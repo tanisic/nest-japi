@@ -3,7 +3,6 @@ import { SwaggerMethodProps } from "../types";
 import { generateSchema } from "@anatine/zod-openapi";
 import {
   fullJsonApiResponseSchema,
-  jsonApiPatchInputSchema,
   jsonApiPatchRelationInputSwaggerSchema,
 } from "../../schema";
 import { JSONAPI_CONTENT_TYPE } from "../../constants";
@@ -20,14 +19,15 @@ export function patchRelationship({
   ApiProduces(JSONAPI_CONTENT_TYPE)(resource, "patchRelationship", descriptor);
   ApiResponse({
     status: 200,
-    schema: generateSchema(
-      fullJsonApiResponseSchema(schemas.updateSchema || schemas.schema, {
-        hasIncludes: false,
-        withPagination: false,
-      }),
-    ) as any,
     content: {
-      [JSONAPI_CONTENT_TYPE]: {},
+      [JSONAPI_CONTENT_TYPE]: {
+        schema: generateSchema(
+          fullJsonApiResponseSchema(schemas.updateSchema || schemas.schema, {
+            hasIncludes: false,
+            withPagination: false,
+          }),
+        ) as any,
+      },
     },
   })(resource, "patchRelationship", descriptor);
 }

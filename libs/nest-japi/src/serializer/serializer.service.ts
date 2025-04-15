@@ -37,8 +37,8 @@ type SerializePostProcessProps = {
 @Injectable()
 export class SerializerService {
   private resources: Type<JsonBaseController>[];
-  private serializerMap = new Map<JsonApiTypeString, Serializer<unknown>>();
-  private relatorsMap = new Map<RelatorKey, Relator<unknown, unknown>>();
+  private serializerMap = new Map<JsonApiTypeString, Serializer<any>>();
+  private relatorsMap = new Map<RelatorKey, Relator<unknown, any>>();
 
   constructor(private globalOptions: JsonApiOptions) {
     this.baseUrl = this.globalOptions.global.baseUrl;
@@ -85,6 +85,11 @@ export class SerializerService {
         const relationName = relation.name;
         const relationType = getType(relationSchema);
         const relationSerializer = this.serializerMap.get(relationType);
+        if (!relationSerializer) {
+          throw new Error(
+            `Relation serializer not defined for relation type ${relationType}.`,
+          );
+        }
         const relationLinker = new Linker((parentData) => {
           return joinUrlPaths(
             this.resourceUrl(resource),
@@ -98,7 +103,7 @@ export class SerializerService {
           );
         });
         const relator = new Relator(
-          (data) => data[relationName],
+          (data: any) => data[relationName],
           relationSerializer,
           {
             linkers: { relationship: relationLinker, related: relatedLinker },
@@ -118,13 +123,16 @@ export class SerializerService {
     }
   }
 
-  async serialize(
-    data: any,
-    schema: Type<BaseSchema<any>>,
-    options?: SerializeCustomOptions & Partial<SerializerOptions<unknown>>,
+  async serialize<Schema extends BaseSchema<any>>(
+    data: Record<string, unknown> | Record<string, unknown>[] | null,
+    schema: Type<Schema>,
+    options?: SerializeCustomOptions & Partial<SerializerOptions<any>>,
   ) {
     const type = getType(schema);
     const serializer = this.serializerMap.get(type);
+    if (!serializer) {
+      throw new Error(`Serializer for type ${type} not defined.`);
+    }
     const projection = this.getVisibleAttributesOrSparse(
       schema,
       options?.fields,
@@ -141,7 +149,7 @@ export class SerializerService {
   }
 
   private postProcess(
-    document: Partial<DataDocument<unknown>>,
+    document: Partial<DataDocument<any>>,
     { fields }: SerializePostProcessProps,
   ) {
     if (Array.isArray(document.data)) {
@@ -194,11 +202,11 @@ export class SerializerService {
     if (resource.relationships) {
       for (const [relKey, relation] of Object.entries(resource.relationships)) {
         if (Array.isArray(relation.data)) {
-          resource.relationships[relKey].data = relation.data.map((data) =>
+          resource.relationships[relKey]!.data = relation.data.map((data) =>
             this.postProcessSingleResourceIdentifier(data),
           );
         } else if (relation.data) {
-          resource.relationships[relKey].data =
+          resource.relationships[relKey]!.data =
             this.postProcessSingleResourceIdentifier(relation.data);
         }
       }
@@ -212,15 +220,13 @@ export class SerializerService {
     return { ...identifier, id: String(identifier.id) } as ResourceIdentifier;
   }
 
-  private getTypeRelators(
-    type: JsonApiTypeString,
-  ): Relator<unknown, unknown>[] {
+  private getTypeRelators(type: JsonApiTypeString): Relator<unknown, any>[] {
     const validRelatorKeys = Array.from(this.relatorsMap.keys()).filter((key) =>
       key.startsWith(type),
     );
     const result = [];
     for (const key of validRelatorKeys) {
-      result.push(this.relatorsMap.get(key));
+      result.push(this.relatorsMap.get(key)!);
     }
     return result;
   }
@@ -229,12 +235,12 @@ export class SerializerService {
     schema: Type<BaseSchema<any>>,
     sparseFields?: Record<string, string[]>,
   ): Record<string, 1> {
-    const result = {};
+    const result: Record<string, 1> = {};
 
     if (sparseFields) {
       const type = getType(schema);
       if (type in sparseFields) {
-        for (const field of sparseFields[type]) {
+        for (const field of sparseFields[type] || []) {
           result[field] = 1;
         }
         return result;

@@ -31,19 +31,19 @@ export class QueryAllPipe
   implements PipeTransform<Record<string, any>, QueryParams>
 {
   @Inject(SortService)
-  private sortService: SortService;
+  private sortService!: SortService;
 
   @Inject(SparseFieldsService)
-  private sparseFieldsService: SparseFieldsService;
+  private sparseFieldsService!: SparseFieldsService;
 
   @Inject(PaginateService)
-  private paginateService: PaginateService;
+  private paginateService!: PaginateService;
 
   @Inject(IncludeService)
-  private includeService: IncludeService;
+  private includeService!: IncludeService;
 
   @Inject(FilterService)
-  private filterService: FilterService;
+  private filterService!: FilterService;
 
   transform(
     value: Record<string, any>,

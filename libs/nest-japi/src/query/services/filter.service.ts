@@ -1,4 +1,4 @@
-import { Injectable, Type } from "@nestjs/common";
+import { Injectable, type Type } from "@nestjs/common";
 import { FilterQuery } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
 import {
@@ -49,15 +49,19 @@ export class FilterService {
       const attribute = getAttributeByName(currentSchema, key);
 
       if (this.logicalOperatorKeys.includes(key)) {
+        // @ts-expect-error
         transformedFilters[key] = this.handleLogicalOperator(value);
       } else if (this.filterKeys.includes(key)) {
+        // @ts-expect-error
         transformedFilters[key] = this.handleOperator(key, value);
       } else if (relation) {
+        // @ts-expect-error
         transformedFilters[relation.dataKey] = this.handleRelation(
           relation,
           value,
         );
       } else if (attribute) {
+        // @ts-expect-error
         transformedFilters[attribute.dataKey] = this.transform(
           value,
           currentSchema,
@@ -94,8 +98,8 @@ export class FilterService {
     return value;
   }
 
-  private handleRelation(
-    relation: RelationOptions,
+  private handleRelation<Schema extends BaseSchema<any>>(
+    relation: RelationOptions<Schema>,
     value: FilterQuery<unknown>,
   ): FilterQuery<unknown> {
     const relationSchema = relation.schema();

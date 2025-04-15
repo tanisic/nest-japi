@@ -4,7 +4,7 @@ import { BaseSchema } from "../../base-schema";
 import { Type } from "@nestjs/common";
 import { getType } from "../../helpers/schema-helper";
 import { zodAttributesSchema, zodRelationsSchema } from "../common";
-import { RelationshipData } from "../type";
+import { ExtractAttributes, Relationships } from "../../types";
 
 export const jsonApiPostInputSchema = (schema: Type<BaseSchema<any>>) => {
   const type = getType(schema);
@@ -21,14 +21,10 @@ export const jsonApiPostInputSchema = (schema: Type<BaseSchema<any>>) => {
     .strict();
 };
 
-export type PostBody<
-  IdType,
-  TType extends string,
-  TAttributes extends Record<string, unknown>,
-> = {
+export type PostBody<Schema extends BaseSchema<any>> = {
   data: {
-    type: TType;
-    attributes: TAttributes;
-    relationships?: Record<string, RelationshipData<IdType>>;
+    type: string;
+    attributes: ExtractAttributes<Schema>;
+    relationships?: Relationships<Schema>;
   };
 };

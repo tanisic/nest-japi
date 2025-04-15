@@ -1,5 +1,5 @@
 import {
-  Type,
+  type Type,
   RequestMethod,
   Get,
   Delete,
@@ -52,18 +52,13 @@ const allowedMethods: MethodName[] = [
 export class ControllerFactory {
   private resource: Type<JsonBaseController>;
   private controllerClass: Type<JsonBaseController>;
-  private options: ResourceOptions | undefined;
-  private schemas: Schemas;
+  private options: Required<ResourceOptions>;
 
   constructor(resource: Type<JsonBaseController>) {
     this.validateResource(resource);
     this.resource = resource;
     this.controllerClass = resource;
     this.options = this.getResourceOptions();
-    this.schemas = Reflect.getMetadata(
-      JSONAPI_RESOURCE_SCHEMAS,
-      this.controllerClass,
-    );
   }
 
   private validateResource(resource: Type<JsonBaseController>): void {
@@ -74,7 +69,7 @@ export class ControllerFactory {
     }
   }
 
-  private getResourceOptions(): ResourceOptions | undefined {
+  private getResourceOptions(): Required<ResourceOptions> {
     return Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, this.resource);
   }
 
@@ -98,7 +93,7 @@ export class ControllerFactory {
     return this.options?.disabledMethods?.includes(methodName) || false;
   }
 
-  private defineControllerMethod(methodName: string): void {
+  private defineControllerMethod(methodName: MethodName): void {
     const { name, implementation, schema } = controllerBindings[methodName];
 
     if (
@@ -110,6 +105,7 @@ export class ControllerFactory {
       const fn = function (
         ...arg: Parameters<typeof implementation>
       ): ReturnType<typeof implementation> {
+        // @ts-expect-error
         return this.constructor.__proto__.prototype[name].call(this, ...arg);
       };
 
@@ -222,7 +218,7 @@ export class ControllerFactory {
     const schema = this.getSchemaFromControllerMethod(methodName);
 
     for (const paramKey in parameters) {
-      const parameter = parameters[paramKey];
+      const parameter = parameters[paramKey]!;
       const { property, decorator, mixins = [] } = parameter;
 
       const resolvedPipes = mixins.map((mixin) => mixin({ schema }));
@@ -260,16 +256,6 @@ export class ControllerFactory {
         typeDecorator = RouteParamtypes.BODY;
         break;
     }
-
-    // TODO: finish
-    //   const pipes = Object.entries(paramsMetadata)
-    //     .filter(([k]) => k.split(":").at(0) === typeDecorator.toString())
-    //     .reduce(
-    //       (accum, [, v]) => (accum.push(...(v as any).pipes), accum),
-    //       [] as any[],
-    //     );
-    //
-    //   // resultMixin.push(...pipes); // Assuming this was a TODO for future logic.
   }
 
   private applyControllerDecorator(): void {

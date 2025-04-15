@@ -12,7 +12,7 @@ export class IncludeService {
 
   transform(value: string): Includes {
     if (!value) {
-      return null;
+      return { dbIncludes: [], schemaIncludes: [] };
     }
 
     const fields: string[] = value.split(",");

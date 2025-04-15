@@ -5,8 +5,12 @@ import {
 import { EntityKey } from "@mikro-orm/core";
 import { type SchemaObject } from "openapi3-ts/oas31";
 import { ZodTypeAny } from "zod";
+import { BaseSchema, InferEntity } from "../schema";
 
-export type AttributeOptions<Entity = any> = {
+export type AttributeOptions<
+  Schema extends BaseSchema<any>,
+  Entity = InferEntity<Schema>,
+> = {
   /**
    * Map this property to another entity attribute.
    *
@@ -18,14 +22,20 @@ export type AttributeOptions<Entity = any> = {
   validate: ZodTypeAny;
 };
 
-export type SchemaAttribute = AttributeOptions & { name: string };
+export type SchemaAttribute<
+  Schema extends BaseSchema<any>,
+  Entity = InferEntity<Schema>,
+> = Required<AttributeOptions<Schema, Entity>> & {
+  name: string;
+};
 
-export function Attribute<Entity = any>(
-  options: AttributeOptions<Entity>,
-): PropertyDecorator {
+export function Attribute<
+  Schema extends BaseSchema<any>,
+  Entity = InferEntity<Schema>,
+>(options: AttributeOptions<Schema>): PropertyDecorator {
   return (target, propertyKey) => {
-    const opts: AttributeOptions = {
-      dataKey: propertyKey as string,
+    const opts: AttributeOptions<Schema> = {
+      dataKey: propertyKey as EntityKey<Entity>,
       ...options,
     };
     Reflect.defineMetadata(
@@ -40,7 +50,7 @@ export function Attribute<Entity = any>(
 
     Reflect.defineMetadata(
       JSONAPI_SCHEMA_ATTRIBUTES,
-      [...restAttributes, { name: propertyKey, ...opts }] as SchemaAttribute[],
+      [...restAttributes, { name: propertyKey, ...opts }],
       target,
     );
   };

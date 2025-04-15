@@ -1,19 +1,25 @@
-import { Inject, NotFoundException } from "@nestjs/common";
+import { Inject, NotFoundException, Type } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
-import type { Schemas } from "../schema/types";
+import {
+  EntityClass,
+  EntityDTO,
+  EntityManager,
+  serialize,
+  wrap,
+} from "@mikro-orm/core";
+import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
 import {
-  BaseSchema,
-  getEntityFromSchema,
+  type BaseSchema,
   getRelationByName,
   PatchBody,
-  PatchRelationshipBody,
+  PatchRelationship,
+  PostBody,
 } from "../schema";
 import { Request } from "express";
 import type { QueryParams, SingleQueryParams } from "../query";
@@ -23,10 +29,8 @@ import { RelationAttribute } from "../decorators/relation.decorator";
 
 type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
 
-type InferEntity<T> = T extends BaseSchema<infer U> ? U : never;
-
 export class JsonBaseController<
-  Id = string | number,
+  Id extends string | number = string | number,
   TEntityManager extends EntityManager = EntityManager,
   ViewSchema extends BaseSchema<any> = BaseSchema<any>,
   CreateSchema extends BaseSchema<any> = ViewSchema,
@@ -37,27 +41,27 @@ export class JsonBaseController<
 > implements ControllerMethods
 {
   @Inject(SerializerService)
-  protected serializerService: SerializerService;
+  protected serializerService!: SerializerService;
 
   @Inject(EntityManager)
-  protected em: TEntityManager;
+  protected em!: TEntityManager;
 
   @Inject(CURRENT_SCHEMAS)
-  protected currentSchemas: Schemas;
+  protected currentSchemas!: Schemas;
 
   @Inject(SchemaBuilderService)
-  protected schemaBuilder: SchemaBuilderService;
+  protected schemaBuilder!: SchemaBuilderService;
 
   @Inject(JsonApiOptions)
-  protected options: JsonApiOptions;
+  protected options!: JsonApiOptions;
 
   @Inject(DataLayerService)
-  protected dataLayer: DataLayerService<
+  protected dataLayer!: DataLayerService<
     Id,
     TEntityManager,
-    ViewEntity,
-    CreateEntity,
-    UpdateEntity
+    ViewSchema,
+    CreateSchema,
+    UpdateSchema
   >;
 
   get baseUrl() {
@@ -82,7 +86,7 @@ export class JsonBaseController<
 
     const pagination = this.generatePagination(request, count);
     return this.serializerService.serialize(result, schema, {
-      page: query.page,
+      page: query.page || undefined,
       include: query.include?.schemaIncludes || [],
       fields: query.fields?.schema || {},
       linkers: {
@@ -121,7 +125,7 @@ export class JsonBaseController<
   async getRelationship(id: Id, relationName: string, ...rest: any[]) {
     const schema = this.currentSchemas.schema;
     const relation = getRelationByName(
-      this.currentSchemas.schema,
+      this.currentSchemas.schema as Type<ViewSchema>,
       relationName,
     );
     if (!relation) {
@@ -139,20 +143,22 @@ export class JsonBaseController<
     const unwrapped = serialize(data, {
       forceObject: true,
       populate: [relation.dataKey as any],
-    });
-
+    }) as EntityDTO<ViewEntity>;
     const relationSchema = relation.schema();
 
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped[relation.dataKey],
+      unwrapped[
+        relation.dataKey as keyof EntityDTO<ViewEntity>
+      ] as EntityDTO<any>,
       relationSchema,
     );
 
     const shouldDisplayNull = (
-      relation: RelationAttribute,
+      relation: RelationAttribute<ViewSchema>,
       rootData: EntityDTO<object>,
     ) => {
-      const relationData = rootData[relation.dataKey];
+      const relationData =
+        rootData[relation.dataKey as keyof EntityDTO<object>];
       if (relation.many || Array.isArray(relationData)) return false;
       if (!relationData || !Object.keys(relationData).length) {
         return true;
@@ -185,23 +191,25 @@ export class JsonBaseController<
     const unwrapped = wrap(data).serialize({
       forceObject: true,
       populate: [relation.dataKey as any],
-    });
+    }) as EntityDTO<object>;
 
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped[relation.dataKey],
+      unwrapped[
+        relation.dataKey as keyof EntityDTO<object>
+      ] as EntityDTO<object>,
       relSchema,
     );
 
     return this.serializerService.serialize(result, relSchema);
   }
 
-  async deleteOne(id: Id, ...rest: any[]) {
+  async deleteOne(id: Id, ..._rest: any[]) {
     const data = await this.dataLayer.deleteOne(id);
     return this.serializerService.serialize(data, this.currentSchemas.schema);
   }
 
-  async postOne(body: unknown, ...args: any[]) {
-    const data = await this.dataLayer.postOne(body as any);
+  async postOne(body: PostBody<CreateSchema>, ..._args: any[]) {
+    const data = await this.dataLayer.postOne(body);
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
@@ -210,8 +218,8 @@ export class JsonBaseController<
     return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
-  async patchOne(id: Id, body: PatchBody<Id, string, any>) {
-    const data = await this.dataLayer.patchOne(id, body as any);
+  async patchOne(id: Id, body: PatchBody<UpdateSchema>) {
+    const data = await this.dataLayer.patchOne(id, body);
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
@@ -220,10 +228,12 @@ export class JsonBaseController<
     return this.serializerService.serialize(result, this.currentSchemas.schema);
   }
 
-  async patchRelationship(
+  async patchRelationship<
+    RelationName extends keyof ExtractRelations<UpdateSchema>,
+  >(
     id: Id,
-    relationshipName: string,
-    body: PatchRelationshipBody<Id, string, boolean>,
+    relationshipName: RelationName,
+    body: PatchRelationship<UpdateSchema, RelationName>,
   ) {
     const schema =
       this.currentSchemas.updateSchema || this.currentSchemas.schema;
@@ -233,7 +243,14 @@ export class JsonBaseController<
       relationshipName,
     );
 
-    const relation = getRelationByName(schema, relationshipName);
+    const relation = getRelationByName(schema, relationshipName as string);
+
+    if (!relation) {
+      throw new NotFoundException(
+        `Relationship ${String(relationshipName)} does not exist on ${schema.name} schema.`,
+      );
+    }
+
     const relationSchema = relation.schema();
 
     const result = this.schemaBuilder.transformFromDb(data, relationSchema);

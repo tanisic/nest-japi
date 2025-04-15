@@ -32,7 +32,7 @@ export interface JsonApiModuleOptions
 @Global()
 @Module({})
 export class JsonApiModule implements NestModule {
-  @Inject(ModuleExplorerService) private moduleExplorer: ModuleExplorerService;
+  @Inject(ModuleExplorerService) private moduleExplorer!: ModuleExplorerService;
 
   configure(consumer: MiddlewareConsumer) {
     const controllers = this.moduleExplorer.getControllersFromModule(

@@ -4,13 +4,9 @@ import {
   swaggerIncludesQueryParams,
   swaggerSparseFieldsQueryParams,
 } from "../common";
-import { ApiQuery, ApiResponse, getSchemaPath } from "@nestjs/swagger";
+import { ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { getAttributes, getRelations } from "../../schema";
-import {
-  FilterOperators,
-  FilterOperatorsSwagger,
-  LogicalOperators,
-} from "../filter-operators";
+import { FilterOperators, LogicalOperators } from "../filter-operators";
 import { generateSchema } from "@anatine/zod-openapi";
 import { fullJsonApiResponseSchema } from "../../schema/zod/common";
 import { JSONAPI_CONTENT_TYPE } from "../../constants";
@@ -70,6 +66,7 @@ export function getAll({ resource, descriptor, schemas }: SwaggerMethodProps) {
         summary: "Sort fields by DESC",
         value: sortFieldsDesc,
       },
+      // @ts-expect-error
       sortByRelation: relations.length
         ? {
             summary: "Sort by nested relation field",
@@ -110,12 +107,12 @@ export function getAll({ resource, descriptor, schemas }: SwaggerMethodProps) {
   let getRelationByConditional = {};
 
   if (relations.length) {
-    const relationAttr = getAttributes(relations[0].schema())[0].name;
+    const relationAttr = getAttributes(relations[0]!.schema())[0]!.name;
     getRelationByConditional = {
       summary: "Get if relation field is",
       description: "Get if relation field is",
       value: JSON.stringify({
-        [relations[0].name]: {
+        [relations[0]!.name]: {
           [relationAttr]: {
             $eq: 123,
           },

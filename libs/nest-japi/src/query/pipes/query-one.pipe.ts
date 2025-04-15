@@ -15,13 +15,13 @@ export interface SingleQueryParams
 @Injectable()
 export class QueryOnePipe implements PipeTransform<unknown, SingleQueryParams> {
   @Inject(SortService)
-  private sortService: SortService;
+  private sortService!: SortService;
 
   @Inject(SparseFieldsService)
-  private sparseFieldsService: SparseFieldsService;
+  private sparseFieldsService!: SparseFieldsService;
 
   @Inject(IncludeService)
-  private includeService: IncludeService;
+  private includeService!: IncludeService;
 
   transform(value: any, metadata: ArgumentMetadata): SingleQueryParams {
     if (metadata.type !== "query") {

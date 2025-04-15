@@ -8,7 +8,7 @@ import { NotFoundException } from "@nestjs/common";
 @Schema({ jsonapiType: "post", entity: class {} })
 class PostSchema extends BaseSchema {
   @Attribute({ validate: z.string() })
-  id: string;
+  id!: string;
   @Attribute({ validate: z.string() })
   content!: string;
   @Attribute({ validate: z.string() })
@@ -18,7 +18,7 @@ class PostSchema extends BaseSchema {
 @Schema({ jsonapiType: "user", entity: class {} })
 class UserSchema extends BaseSchema {
   @Attribute({ validate: z.string() })
-  id: string;
+  id!: string;
   @Attribute({ validate: z.string() })
   firstName!: string;
   @Attribute({ validate: z.string() })

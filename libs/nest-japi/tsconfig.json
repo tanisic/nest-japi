@@ -1,15 +1,26 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "types": [
       "node",
       "vitest/globals"
     ],
-    "incremental": false,
-    "declaration": true,
-    "outDir": "./dist",
+    "skipLibCheck": true,
+    "target": "es2022",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+    "module": "Preserve",
+    "noEmit": true,
+    "lib": [
+      "es2022"
+    ]
   },
   "include": [
     "src/**/*"
@@ -18,6 +29,5 @@
     "node_modules",
     "dist",
     "test",
-    "**/*spec.ts"
   ]
 }

@@ -1,4 +1,4 @@
-import { OrderDefinition, QueryOrderMap } from "@mikro-orm/core";
+import { OrderDefinition } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
 import {
   BaseSchema,
@@ -17,7 +17,7 @@ export class SortService {
 
   transform(value: string): SortDefinitions {
     if (!value) {
-      return null;
+      return { dbOrderBy: {}, schemaOrderBy: {} };
     }
 
     const fields: string[] = value.split(",");
@@ -107,10 +107,18 @@ export class SortService {
     return { dbSortCriteria, schemaSortCriteria };
   }
 
-  private createObjectChain(
+  private createObjectChain<T = any>(
     fields: string[],
-    sort: "DESC" | "ASC",
-  ): QueryOrderMap<any> {
-    return fields.reduceRight((acc, field) => ({ [field]: acc }) as any, sort);
+    sort: QueryOrder,
+  ): QueryOrderMap<T> {
+    return fields.reduceRight<QueryOrderMap<T>>(
+      (acc, field) => ({ [field]: acc }) as QueryOrderMap<T>,
+      sort as QueryOrderMap<T>,
+    );
   }
 }
+
+type QueryOrder = "ASC" | "DESC";
+type QueryOrderMap<T> = {
+  [K in keyof T]?: QueryOrderMap<T[K]> | QueryOrder;
+};

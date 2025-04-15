@@ -12,15 +12,13 @@ export class SparseFieldsService {
 
   transform(value: Record<string, string>): SparseFields {
     if (!value) {
-      return null;
+      return { schema: {}, db: {} };
     }
-
-    console.log(value);
 
     const result: SparseFields = { db: {}, schema: {} };
     for (const type in value) {
       // Get unique field names
-      const fields = [...new Set(value[type].split(","))];
+      const fields = [...new Set(value[type]?.split(","))];
       const dbFields = this.validate(type, fields);
       result.db[type] = dbFields;
       result.schema[type] = fields;

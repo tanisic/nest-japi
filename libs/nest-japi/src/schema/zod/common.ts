@@ -1,4 +1,4 @@
-import { z, ZodRawShape, ZodTypeAny } from "zod";
+import { z, ZodObject, ZodRawShape, ZodTypeAny } from "zod";
 import { getAttributes, getRelations } from "../helpers/schema-helper";
 import { Type } from "@nestjs/common";
 import { BaseSchema } from "../base-schema";
@@ -6,7 +6,9 @@ import { zodTypeSchema } from "./type";
 import { extendZodWithOpenApi } from "@anatine/zod-openapi";
 extendZodWithOpenApi(z);
 
-export const zodDataSchema = (schema: Type<BaseSchema<any>>) => {
+export const zodDataSchema = <Schema extends BaseSchema<any>>(
+  schema: Type<Schema>,
+) => {
   return z
     .object({
       id: z.coerce.string(),
@@ -15,7 +17,9 @@ export const zodDataSchema = (schema: Type<BaseSchema<any>>) => {
     .strict();
 };
 
-export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
+export const zodRelationsSchema = <Schema extends BaseSchema<any>>(
+  schema: Type<Schema>,
+) => {
   const relations = getRelations(schema);
 
   const hasRequiredRelations = relations.some(
@@ -39,13 +43,13 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
         shape[relation.name] as z.ZodObject<any>
       ).required();
     } else {
-      shape[relation.name] = (shape[relation.name] as z.ZodObject<any>)
+      shape[relation.name] = (shape[relation.name] as ZodObject<any>)
         .optional()
         .nullish();
     }
 
     if (relation.openapi) {
-      shape[relation.name] = shape[relation.name].openapi({
+      shape[relation.name] = (shape[relation.name] as ZodObject<any>).openapi({
         ...relation.openapi,
       });
     }
@@ -62,8 +66,10 @@ export const zodRelationsSchema = (schema: Type<BaseSchema<any>>) => {
   return base;
 };
 
-export const zodRelationsSchemaWithLinksAndData = (
-  schema: Type<BaseSchema<any>>,
+export const zodRelationsSchemaWithLinksAndData = <
+  Schema extends BaseSchema<any>,
+>(
+  schema: Type<Schema>,
 ) => {
   const relations = getRelations(schema);
 
@@ -82,7 +88,7 @@ export const zodRelationsSchemaWithLinksAndData = (
       .optional();
 
     if (relation.openapi) {
-      shape[relation.name] = shape[relation.name].openapi({
+      shape[relation.name] = (shape[relation.name] as ZodObject<any>).openapi({
         ...relation.openapi,
       });
     }
@@ -93,14 +99,16 @@ export const zodRelationsSchemaWithLinksAndData = (
   return z.object(shape).strict().optional();
 };
 
-export const zodAttributesSchema = (schema: Type<BaseSchema<any>>) => {
+export const zodAttributesSchema = <Schema extends BaseSchema<any>>(
+  schema: Type<Schema>,
+) => {
   const attributes = getAttributes(schema);
 
   const isOptional = attributes
     .filter((attr) => attr.name !== "id")
     .every((attr) => attr.validate.isOptional());
 
-  let shape = {};
+  let shape: ZodRawShape = {};
   for (const attribute of attributes) {
     if (attribute.name === "id") continue;
     if (!attribute.validate)
@@ -111,9 +119,11 @@ export const zodAttributesSchema = (schema: Type<BaseSchema<any>>) => {
     shape = { ...shape, [attribute.name]: attribute.validate };
 
     if (attribute.openapi) {
-      shape[attribute.name] = shape[attribute.name].openapi({
-        ...attribute.openapi,
-      });
+      shape[attribute.name] = (shape[attribute.name] as ZodObject<any>).openapi(
+        {
+          ...attribute.openapi,
+        },
+      );
     }
   }
 
@@ -149,8 +159,8 @@ export const relationshipsLinkSchema = z
   .object({ self: z.string(), related: z.string() })
   .optional();
 
-export const fullJsonApiResponseSchema = (
-  schema: Type<BaseSchema<any>>,
+export const fullJsonApiResponseSchema = <Schema extends BaseSchema<any>>(
+  schema: Type<Schema>,
   {
     withPagination = false,
     topLevelMetaSchema = metaSchema,

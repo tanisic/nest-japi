@@ -6,8 +6,12 @@ import { EntityKey } from "@mikro-orm/core";
 import { BaseSchema } from "../schema/base-schema";
 import { Type } from "@nestjs/common";
 import { type SchemaObject } from "openapi3-ts/oas31";
+import { InferEntity } from "../schema";
 
-export type RelationOptions<Entity = any> = {
+export type RelationOptions<
+  Schema extends BaseSchema<any>,
+  Entity = InferEntity<Schema>,
+> = {
   /**
    * Map this property to another entity relation.
    *
@@ -20,7 +24,7 @@ export type RelationOptions<Entity = any> = {
    *
    * Connected schema that describes relation
    */
-  schema: () => Type<BaseSchema<Entity>>;
+  schema: () => Type<BaseSchema<any>>;
 
   /**
    * Is relation required on PATCH and POST?
@@ -39,15 +43,19 @@ export type RelationOptions<Entity = any> = {
   openapi?: Partial<SchemaObject>;
 };
 
-export type RelationAttribute = RelationOptions & { name: string };
+export type RelationAttribute<
+  Schema extends BaseSchema<any>,
+  Entity = InferEntity<Schema>,
+> = Required<RelationOptions<Schema, Entity>> & { name: string };
 
-export function Relation<Entity = any>(
-  options: RelationOptions<Entity>,
-): PropertyDecorator {
+export function Relation<
+  Schema extends BaseSchema<any>,
+  Entity = InferEntity<Schema>,
+>(options: RelationOptions<Schema, Entity>): PropertyDecorator {
   return (target, propertyKey) => {
-    const opts: RelationOptions = {
+    const opts: RelationOptions<Schema, Entity> = {
       ...{ required: false, many: false, ...options },
-      dataKey: propertyKey as string,
+      dataKey: propertyKey as EntityKey<Entity>,
     };
     Reflect.defineMetadata(
       JSONAPI_SCHEMA_RELATION_OPTIONS,
@@ -61,10 +69,7 @@ export function Relation<Entity = any>(
 
     Reflect.defineMetadata(
       JSONAPI_SCHEMA_RELATIONS,
-      [
-        ...restAttributes,
-        { name: propertyKey, ...opts },
-      ] as RelationAttribute[],
+      [...restAttributes, { name: propertyKey, ...opts }],
       target,
     );
   };

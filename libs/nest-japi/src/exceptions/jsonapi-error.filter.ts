@@ -11,7 +11,7 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
     const errorSerializer = new ErrorSerializer({});
     const requestId = response.getHeader(X_REQUEST_ID_NAME);
     exception.id = requestId as string;
-    const statusCode = parseInt(exception.status, 10);
+    const statusCode = parseInt(exception.status ?? "500", 10);
 
     response
       .status(statusCode)

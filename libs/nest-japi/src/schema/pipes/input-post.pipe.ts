@@ -16,7 +16,7 @@ export class JsonApiInputPostPipe implements PipeTransform {
     if (!this.schema) {
       throw new JapiError({
         status: 500,
-        detail: `${this.schema.name}: Missing createSchema definition.`,
+        detail: `${JsonApiInputPostPipe.name}: Missing createSchema definition.`,
       });
     }
 

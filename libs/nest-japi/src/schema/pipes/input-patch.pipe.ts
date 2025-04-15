@@ -1,4 +1,4 @@
-import { ArgumentMetadata, PipeTransform, Type } from "@nestjs/common";
+import { ArgumentMetadata, PipeTransform, type Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 import { jsonApiPatchInputSchema } from "../zod";
 import { errorMap } from "zod-validation-error";
@@ -16,7 +16,7 @@ export class JsonApiInputPatchPipe implements PipeTransform {
     if (!this.schema) {
       throw new JapiError({
         status: 500,
-        detail: `${this.schema.name}: Missing schema or updateSchema definition.`,
+        detail: `${JsonApiInputPatchPipe.name}: Missing schema or updateSchema definition.`,
       });
     }
 

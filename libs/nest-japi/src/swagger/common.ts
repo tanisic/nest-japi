@@ -17,13 +17,13 @@ export function swaggerSparseFieldsQueryParams({
   let withRelation = {};
 
   if (relations.length) {
-    const relSchema = relations[0].schema();
+    const relSchema = relations[0]!.schema();
     const relType = getType(relSchema);
     const relAttributes = getAttributes(relSchema)
       .map((attr) => attr.name)
       .join(",");
     withRelation = {
-      summary: `Select some fields from relation (picked "${relations[0].name}" relation as example)`,
+      summary: `Select some fields from relation (picked "${relations[0]!.name}" relation as example)`,
       value: {
         [relType]: relAttributes,
       },

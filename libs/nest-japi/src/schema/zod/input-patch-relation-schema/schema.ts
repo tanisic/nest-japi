@@ -7,9 +7,10 @@ import {
   getRelationByName,
   getType,
 } from "../../helpers/schema-helper";
+import { ExtractRelations, Relationships } from "../../types";
 
-export const jsonApiPatchRelationInputSchema = (
-  parentSchema: Type<BaseSchema<any>>,
+export const jsonApiPatchRelationInputSchema = <Schema extends BaseSchema<any>>(
+  parentSchema: Type<Schema>,
   relationName: string,
 ) => {
   const relation = getRelationByName(parentSchema, relationName);
@@ -53,3 +54,8 @@ export const jsonApiPatchRelationInputSwaggerSchema = () => {
     })
     .strict();
 };
+
+export type PatchRelationship<
+  Schema extends BaseSchema<any>,
+  RelName extends keyof ExtractRelations<Schema>,
+> = Relationships<Schema>[RelName];

@@ -4,9 +4,11 @@ import { BaseSchema } from "../../base-schema";
 import { Type } from "@nestjs/common";
 import { getType } from "../../helpers/schema-helper";
 import { zodAttributesSchema, zodRelationsSchema } from "../common";
-import { RelationshipData } from "../type";
+import { ExtractAttributes, Relationships } from "../../types";
 
-export const jsonApiPatchInputSchema = (schema: Type<BaseSchema<any>>) => {
+export const jsonApiPatchInputSchema = <Schema extends BaseSchema<any>>(
+  schema: Type<Schema>,
+) => {
   const type = getType(schema);
   return z
     .object({
@@ -25,33 +27,11 @@ export const jsonApiPatchInputSchema = (schema: Type<BaseSchema<any>>) => {
     .strict();
 };
 
-export type PatchBody<
-  IdType,
-  TType extends string,
-  TAttributes extends Record<string, unknown>,
-> = {
+export type PatchBody<Schema extends BaseSchema<any>> = {
   data: {
-    id: IdType;
-    type: TType;
-    attributes?: TAttributes;
-    relationships?: Record<string, RelationshipData<IdType>>;
+    id: string;
+    type: string;
+    attributes?: ExtractAttributes<Schema>;
+    relationships?: Relationships<Schema>;
   };
 };
-
-export type PatchRelationshipBody<
-  IdType,
-  TType extends string,
-  IsMany extends boolean = false,
-> = IsMany extends true
-  ? {
-      data: {
-        id: IdType;
-        type: TType;
-      }[];
-    }
-  : {
-      data: {
-        id: IdType;
-        type: TType;
-      } | null;
-    };

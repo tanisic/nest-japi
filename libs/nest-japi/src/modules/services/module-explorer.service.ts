@@ -1,6 +1,7 @@
 import { Injectable, Logger, Type } from "@nestjs/common";
 import { ModulesContainer } from "@nestjs/core";
 import { InstanceWrapper } from "@nestjs/core/injector/instance-wrapper";
+import type { Module } from "@nestjs/core/injector/module";
 
 @Injectable()
 export class ModuleExplorerService {
@@ -32,7 +33,7 @@ export class ModuleExplorerService {
   }
 
   private collectControllers(
-    module: any,
+    module: Module,
     controllers: Type<any>[],
     visitedModules: Set<any>,
   ) {
