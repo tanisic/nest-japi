@@ -40,7 +40,7 @@ export type ExtractAttributes<T> = {
 export type ExtractRelations<T> = {
   [K in keyof T as T[K] extends Function
     ? never
-    : T[K] extends Array<Function> | object
+    : T[K] extends Array<any> | object
       ? K
       : never]: T[K];
 };

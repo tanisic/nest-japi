@@ -11,13 +11,12 @@ import { InferEntity } from "../schema";
 export type RelationOptions<
   Schema extends BaseSchema<any>,
   Entity = InferEntity<Schema>,
+  isMany extends boolean = boolean,
 > = {
   /**
    * Map this property to another entity relation.
-   *
    * @default property name
-   *
-   * */
+   */
   dataKey?: EntityKey<Entity>;
 
   /**
@@ -33,14 +32,33 @@ export type RelationOptions<
   required?: boolean;
 
   /**
-   * Is relation belongs to or to many?
-   * @default false
-   */
-  many?: boolean;
-  /**
    * Write your own openapi documentation about this relation.
    */
   openapi?: Partial<SchemaObject>;
+} & (isMany extends true
+  ? ToManyRelationAttribute
+  : BelongsToRelationAttribute);
+
+export type ToManyRelationAttribute = {
+  /**
+   * Is relation belongs to or to many?
+   * @default false
+   */
+  many: true;
+};
+
+export type BelongsToRelationAttribute = {
+  /**
+   * Is relation belongs to or to many?
+   * @default false
+   */
+  many?: false;
+
+  /**
+   * Works only on `many: false` relations
+   * @default false
+   */
+  nullable?: boolean;
 };
 
 export type RelationAttribute<
@@ -54,7 +72,7 @@ export function Relation<
 >(options: RelationOptions<Schema, Entity>): PropertyDecorator {
   return (target, propertyKey) => {
     const opts: RelationOptions<Schema, Entity> = {
-      ...{ required: false, many: false, ...options },
+      ...{ required: false, many: false, nullable: false, ...options },
       dataKey: propertyKey as EntityKey<Entity>,
     };
     Reflect.defineMetadata(

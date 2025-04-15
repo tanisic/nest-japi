@@ -19,7 +19,7 @@ export function postOne({ resource, schemas, descriptor }: SwaggerMethodProps) {
     content: {
       [JSONAPI_CONTENT_TYPE]: {
         schema: generateSchema(
-          fullJsonApiResponseSchema(schema, {
+          fullJsonApiResponseSchema(schemas.schema, {
             dataArray: false,
             hasIncludes: false,
             withPagination: false,

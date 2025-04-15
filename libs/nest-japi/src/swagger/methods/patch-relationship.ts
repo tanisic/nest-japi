@@ -22,7 +22,7 @@ export function patchRelationship({
     content: {
       [JSONAPI_CONTENT_TYPE]: {
         schema: generateSchema(
-          fullJsonApiResponseSchema(schemas.updateSchema || schemas.schema, {
+          fullJsonApiResponseSchema(schemas.schema, {
             hasIncludes: false,
             withPagination: false,
           }),

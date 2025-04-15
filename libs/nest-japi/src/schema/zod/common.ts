@@ -34,7 +34,9 @@ export const zodRelationsSchema = <Schema extends BaseSchema<any>>(
       .object({
         data: relation.many
           ? dataSchema.strict().array()
-          : dataSchema.strict().nullable(),
+          : relation.nullable
+            ? dataSchema.strict().nullable()
+            : dataSchema.strict(),
       })
       .strict();
 
@@ -81,7 +83,9 @@ export const zodRelationsSchemaWithLinksAndData = <
       .object({
         data: relation.many
           ? dataSchema.strict().array()
-          : dataSchema.strict().nullable(),
+          : relation.nullable
+            ? dataSchema.strict().nullable()
+            : dataSchema.strict(),
         links: relationshipsLinkSchema,
       })
       .strict()
@@ -152,9 +156,11 @@ export const paginationLinksSchema = z
   .optional();
 
 export const topLevelSelfLinkSchema = z.object({ self: z.string() }).optional();
+
 export const documentLevelLinkSchema = z
   .object({ self: z.string() })
   .optional();
+
 export const relationshipsLinkSchema = z
   .object({ self: z.string(), related: z.string() })
   .optional();

@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "author": "Tin Anišić",
   "license": "Apache 2.0",
-  "type": "module",
   "scripts": {
     "build": "pnpm tsup",
     "test": "pnpm vitest",

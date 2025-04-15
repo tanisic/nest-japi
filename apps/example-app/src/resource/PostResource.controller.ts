@@ -1,9 +1,13 @@
 import { Resource } from 'nest-japi';
-import { PostSchema } from 'src/schemas/PostSchema';
+import { CreatePostSchema, PostSchema } from 'src/schemas/PostSchema';
 import { BaseResource } from './BaseResource';
 
 @Resource({
-  schemas: { schema: PostSchema },
+  schemas: { schema: PostSchema, createSchema: CreatePostSchema },
   path: 'v1/posts',
 })
-export class PostResource extends BaseResource<string, PostSchema> {}
+export class PostResource extends BaseResource<
+  string,
+  PostSchema,
+  CreatePostSchema
+> {}

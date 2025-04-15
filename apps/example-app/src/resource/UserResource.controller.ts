@@ -1,4 +1,4 @@
-import { QueryParams, Resource } from 'nest-japi';
+import { PatchBody, QueryParams, Resource } from 'nest-japi';
 import { CreateUserSchema } from 'src/schemas/CreateUserSchema';
 import { UserSchema } from 'src/schemas/UserSchema';
 import { BaseResource } from './BaseResource';
@@ -32,7 +32,7 @@ export class UserResource extends BaseResource<
   @ApiOperation({
     description: 'test123',
   })
-  override patchOne(id, body) {
+  override patchOne(id: string, body: PatchBody<PatchUserSchema>) {
     return super.patchOne(id, body);
   }
 }
