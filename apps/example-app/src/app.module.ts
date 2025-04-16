@@ -18,7 +18,7 @@ import { AddressesModule } from './addresses/addresses.module';
       host: process.env.POSTGRES_HOST,
       password: 'postgres',
       user: 'postgres',
-      port: 5444,
+      port: 5432,
       dbName: 'json_api_db',
       schema: 'public',
       entities: ['./dist/**/*.entity.js'],

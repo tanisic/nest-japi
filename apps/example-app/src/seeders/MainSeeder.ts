@@ -1,11 +1,10 @@
 import type { EntityManager } from '@mikro-orm/core';
 import { Seeder } from '@mikro-orm/seeder';
-import { Post } from 'src/posts/post.entity';
-import { User } from 'src/user/user.entity';
-import { Comment } from 'src/comments/comment.entity';
 import { faker } from '@faker-js/faker';
-import { Address } from 'src/addresses/address.entity';
-
+import { Post } from '../posts/post.entity';
+import { User } from '../user/user.entity';
+import { Address } from '../addresses/address.entity';
+import { Comment } from '../comments/comment.entity';
 export class MainSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
     const users: User[] = [];
@@ -14,9 +13,9 @@ export class MainSeeder extends Seeder {
     const addresses: Address[] = [];
 
     // Generate 50 users
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 200; i++) {
       const user = em.create(User, {
-        name: faker.name.fullName(),
+        name: faker.person.fullName(),
         email: faker.internet.email(),
       });
       users.push(user);
@@ -30,7 +29,7 @@ export class MainSeeder extends Seeder {
       addresses.push(address);
     }
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10000; i++) {
       const randomUser = faker.helpers.arrayElement(users); // Assign a random user to each post
       const post = em.create(Post, {
         title: faker.lorem.sentence(),
@@ -40,7 +39,7 @@ export class MainSeeder extends Seeder {
       posts.push(post);
     }
 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 200000; i++) {
       const randomUser = faker.helpers.arrayElement(users); // Assign a random user to each comment
       const randomPost = faker.helpers.arrayElement(posts); // Assign a random post to each comment
       const comment = em.create(Comment, {
