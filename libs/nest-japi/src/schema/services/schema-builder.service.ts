@@ -30,9 +30,17 @@ export class SchemaBuilderService {
     const result = {} as TransformedItem<Schema>;
     for (const attribute of attributes) {
       if (dbData && attribute.dataKey in dbData) {
-        //@ts-expect-error
-        result[attribute.name as keyof ExtractAttributes<Schema>] =
-          dbData[attribute.dataKey as keyof EntityDTO<Entity>];
+        if (attribute.transform) {
+          //@ts-expect-error
+          result[attribute.name as keyof ExtractAttributes<Schema>] =
+            attribute.transform(
+              dbData[attribute.dataKey as keyof EntityDTO<Entity>],
+            );
+        } else {
+          //@ts-expect-error
+          result[attribute.name as keyof ExtractAttributes<Schema>] =
+            dbData[attribute.dataKey as keyof EntityDTO<Entity>];
+        }
       }
     }
 

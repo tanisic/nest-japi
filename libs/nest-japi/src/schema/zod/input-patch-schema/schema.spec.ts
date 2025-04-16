@@ -24,7 +24,12 @@ class UserSchema extends BaseSchema {
   lastName!: string;
   @Relation({ schema: () => PostSchema, many: true, required: false })
   posts!: PostSchema[];
-  @Relation({ schema: () => UserSchema, many: false, required: false })
+  @Relation({
+    schema: () => UserSchema,
+    many: false,
+    required: false,
+    nullable: true,
+  })
   boss!: UserSchema;
 }
 
