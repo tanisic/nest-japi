@@ -1,6 +1,6 @@
 # nest-japi
 
-**nest-japi** is a plugin for [NestJS](https://nestjs.com/) (Express platform only) that lets you build fully compliant [JSON:API](https://jsonapi.org/) services with minimal boilerplate. It combines powerful technologies like [Zod](https://github.com/colinhacks/zod), [MikroORM](https://github.com/mikro-orm/mikro-orm), [ts-japi](https://github.com/totalpave/ts-japi), and [anatine/zod-openapi](https://github.com/anatine/zod-openapi) to create elegant and maintainable APIs.
+**nest-japi** is a plugin for [NestJS](https://nestjs.com/) (Express platform only) that lets you build fully compliant [JSON:API v1.1](https://jsonapi.org/) services with minimal boilerplate. It combines powerful technologies like [Zod](https://www.npmjs.com/package/zod), [MikroORM](https://www.npmjs.com/package/mikro-orm), [ts-japi](https://www.npmjs.com/package/ts-japi), and [@anatine/zod-openapi](https://www.npmjs.com/package/@anatine/zod-openapi) to create elegant and maintainable APIs.
 
 ---
 
@@ -9,8 +9,8 @@
 - ⚙️ **Plug-and-play NestJS integration** (requires Express platform)
 - 📄 **JSON:API compliant** controllers, routes, payloads, and relationships
 - 🔐 **Zod-based schema validation** with full TypeScript support
-- 📘 **Zod → OpenAPI** generation via [`anatine/zod-openapi`](https://github.com/anatine/zod-openapi)
-- 📦 **JSON:API serialization** using [`ts-japi`](https://github.com/totalpave/ts-japi)
+- 📘 **Zod → OpenAPI** generation via [`anatine/zod-openapi`](https://www.npmjs.com/package/@anatine/zod-openapi)
+- 📦 **JSON:API serialization** using [`ts-japi`](https://www.npmjs.com/package/ts-japi)
 - 🔗 **Automatic controller and route generation** for all standard JSON:API endpoints
 - 🧬 **Attribute and Relation decorators** directly map class properties to JSON:API `attributes` and `relationships`
 - 🗃️ **MikroORM required** as the data persistence layer
@@ -21,8 +21,8 @@
 ## ⚠️ Requirements
 
 - [NestJS](https://nestjs.com/) (Express platform only)
-- [MikroORM](https://github.com/mikro-orm/mikro-orm) (**required**)
-- [Zod](https://github.com/colinhacks/zod)
+- [MikroORM](https://www.npmjs.com/package/mikro-orm) (**required**)
+- [Zod](https://www.npmjs.com/package/zod)
 - Each JSON:API resource must define:
   - A MikroORM Entity
   - A corresponding `@Schema()` class
