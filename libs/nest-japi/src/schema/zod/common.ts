@@ -59,10 +59,10 @@ export const zodRelationsSchema = <Schema extends BaseSchema<any>>(
     return shape;
   }, {} as ZodRawShape);
 
-  const base = z.object(shape).strip().nullish();
+  const base = z.object(shape).strict().nullish();
 
   if (hasRequiredRelations) {
-    return z.object(shape).strip().required();
+    return z.object(shape).strict().required();
   }
 
   return base;
