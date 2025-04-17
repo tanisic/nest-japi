@@ -5,6 +5,7 @@ import type {
   MiddlewareConsumer,
   ModuleMetadata,
   NestModule,
+  Provider,
   Type,
   ValueProvider,
 } from "@nestjs/common";
@@ -20,7 +21,6 @@ import {
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
 import {
-  BaseSchema,
   Entities,
   getSchemasFromResource,
   SchemaBuilderService,
@@ -57,6 +57,12 @@ export interface JsonApiResourceModuleOptions {
   resource: Type<JsonBaseController>;
 }
 
+type AsyncOptions<T> = {
+  useFactory: (...args: any[]) => Promise<T> | T;
+  inject?: any[];
+  imports?: any[];
+};
+
 @Global()
 @Module({})
 export class JsonApiModule implements NestModule {
@@ -72,56 +78,80 @@ export class JsonApiModule implements NestModule {
   }
 
   static forRoot(options: JsonApiModuleOptions): DynamicModule {
-    const globalOptionsProvider: ValueProvider<JsonApiModuleOptions> = {
+    const optionsProvider: ValueProvider<JsonApiModuleOptions> = {
       provide: JSONAPI_GLOBAL_OPTIONS,
       useValue: options,
     };
 
+    return this.buildRootModule({
+      imports: options.imports ?? [],
+      providers: [optionsProvider, ...(options.providers ?? [])],
+      exports: [
+        optionsProvider,
+        ...(options.providers ?? []),
+        ...(options.exports ?? []),
+      ],
+    });
+  }
+
+  static forRootAsync(
+    options: AsyncOptions<JsonApiModuleOptions>,
+  ): DynamicModule {
+    const optionsProvider: Provider = {
+      provide: JSONAPI_GLOBAL_OPTIONS,
+      useFactory: options.useFactory,
+      inject: options.inject ?? [],
+    };
+
+    return this.buildRootModule({
+      imports: options.imports ?? [],
+      providers: [optionsProvider],
+      exports: [],
+    });
+  }
+
+  private static buildRootModule(
+    config: Omit<ModuleMetadata, "controller">,
+  ): DynamicModule {
     const entityManagerProvider: FactoryProvider<EntityManager> = {
       provide: EntityManager,
       useFactory: (orm: MikroORM) => orm.em.fork(),
       inject: [MikroORM],
     };
 
-    const schemaRepositoryProvider: FactoryProvider<
-      Map<string, Type<BaseSchema<any>>>
-    > = {
+    const schemaRepositoryProvider: FactoryProvider<Map<string, Type<any>>> = {
       provide: SCHEMA_REPOSITORY,
       useFactory: (schemaRegistry: SchemaRegistryService) =>
         schemaRegistry.getSchemaMap(),
       inject: [SchemaRegistryService],
     };
 
-    const resourceRepositoryProvider: FactoryProvider = {
+    const resourceRegistryProvider: FactoryProvider<
+      Set<Type<JsonBaseController>>
+    > = {
       provide: JSONAPI_RESOURCE_REGISTRY,
       useFactory: () => new Set<Type<JsonBaseController>>(),
     };
 
-    const imports = [...(options.imports ?? [])];
-    const providers = [
+    const coreProviders: Provider[] = [
       ModuleExplorerService,
-      globalOptionsProvider,
       entityManagerProvider,
       schemaRepositoryProvider,
-      resourceRepositoryProvider,
+      resourceRegistryProvider,
       JsonApiResourceExplorerService,
       SchemaRegistryService,
-      ...(options.providers ?? []),
     ];
-
-    const exports = [...providers, ...(options.exports ?? [])];
 
     return {
       module: JsonApiModule,
-      providers,
-      imports,
-      exports,
+      imports: config.imports,
+      providers: [...coreProviders, ...(config.providers ?? [])],
+      exports: [...coreProviders, ...(config.exports ?? [])],
     };
   }
 
   static forFeature(options: JsonApiResourceModuleOptions): DynamicModule {
     const { resource } = options;
-
     const controllerFactory = new ControllerFactory(resource);
     const ResourceClass = controllerFactory.createController();
 
@@ -152,6 +182,7 @@ export class JsonApiModule implements NestModule {
               schemas.updateSchema,
             )
           : viewEntity;
+
         return { viewEntity, updateEntity, createEntity };
       },
     };
@@ -180,7 +211,6 @@ export class JsonApiModule implements NestModule {
       `JsonApi${ResourceClass.name}Module`,
       JsonApiModule,
     );
-
     const logger = new Logger(module!.name);
     logger.log(`JSON:API Resource ${ResourceClass.name} initialized`);
 

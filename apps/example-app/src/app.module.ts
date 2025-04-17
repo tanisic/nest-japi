@@ -10,21 +10,28 @@ import { UserModule } from './user/user.module';
 import { PostsModule } from './posts/posts.module';
 import { CommentsModule } from './comments/comments.module';
 import { AddressesModule } from './addresses/addresses.module';
-
+import { ConfigModule, ConfigService } from '@nestjs/config';
 @Module({
   imports: [
-    MikroOrmModule.forRoot({
+    ConfigModule.forRoot({ isGlobal: true }),
+    MikroOrmModule.forRootAsync({
       driver: PostgreSqlDriver,
-      host: process.env.POSTGRES_HOST,
-      password: 'postgres',
-      user: 'postgres',
-      port: 5432,
-      dbName: 'json_api_db',
-      schema: 'public',
-      entities: ['./dist/**/*.entity.js'],
-      entitiesTs: ['./src/**/*.entity.ts'],
-      extensions: [EntityGenerator, Migrator],
-      debug: ['query'],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        return {
+          driver: PostgreSqlDriver,
+          host: config.get('POSTGRES_HOST'),
+          password: config.get('POSTGRES_PASSWORD'),
+          user: config.get('POSTGRES_USER'),
+          port: Number(config.get('POSTGRES_PORT')),
+          dbName: config.get('POSTGRES_DB_NAME'),
+          schema: 'public',
+          entities: ['./dist/**/*.entity.js'],
+          entitiesTs: ['./src/**/*.entity.ts'],
+          extensions: [EntityGenerator, Migrator],
+          debug: ['query'],
+        };
+      },
     }),
     JsonApiModule.forRoot({
       maxPaginationSize: 5000,
