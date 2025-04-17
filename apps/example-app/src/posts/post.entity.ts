@@ -5,11 +5,13 @@ import {
   ManyToOne,
   OneToMany,
   Collection,
+  Index,
 } from '@mikro-orm/core';
 import { User } from '../user/user.entity';
 import { Comment } from '../comments/comment.entity';
 
 @Entity()
+@Index({ properties: ['author'] })
 export class Post {
   @PrimaryKey()
   id!: number;

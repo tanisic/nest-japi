@@ -148,6 +148,16 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "post_author_id_index",
+          "columnNames": [
+            "author_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "post_pkey",
           "columnNames": [
             "id"
@@ -237,6 +247,26 @@
       "name": "comment",
       "schema": "public",
       "indexes": [
+        {
+          "keyName": "comment_post_id_index",
+          "columnNames": [
+            "post_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "comment_author_id_index",
+          "columnNames": [
+            "author_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
         {
           "keyName": "comment_pkey",
           "columnNames": [

@@ -1,8 +1,16 @@
-import { Entity, Property, PrimaryKey, ManyToOne } from '@mikro-orm/core';
+import {
+  Entity,
+  Property,
+  PrimaryKey,
+  ManyToOne,
+  Index,
+} from '@mikro-orm/core';
 import { User } from '../user/user.entity';
 import { Post } from '../posts/post.entity';
 
 @Entity()
+@Index({ properties: ['author'] })
+@Index({ properties: ['post'] })
 export class Comment {
   @PrimaryKey()
   id!: number;
