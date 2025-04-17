@@ -35,7 +35,7 @@ export interface Binding<T extends MethodName> {
   path: string;
   method: MapNameToTypeMethod[T];
   name: T;
-  schema: keyof Schemas;
+  schema: keyof Schemas<any, any, any>;
   implementation: any[T];
   swaggerImplementation?: SwaggerMethodImplementation;
   pipes?: (Type<PipeTransform> | PipeTransform)[];

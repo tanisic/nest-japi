@@ -28,7 +28,7 @@ export class IncludeService {
       } else {
         const relation = this.validateSingle(field);
         schemaIncludes.push(relation.name);
-        dbIncludes.push(relation.dataKey);
+        dbIncludes.push(relation.dataKey as string);
       }
     }
 
@@ -36,6 +36,7 @@ export class IncludeService {
   }
 
   private validateSingle(field: string) {
+    // @ts-expect-error
     const relation = getRelationByName(this.schema, field);
     if (!relation) {
       throw new JapiError({
@@ -53,6 +54,7 @@ export class IncludeService {
     const schemaFields: string[] = [];
     const dbFields: string[] = [];
     for (const part of fieldParts) {
+      // @ts-expect-error
       const exists = getRelationByName(currentSchema, part);
       if (!exists) {
         throw new JapiError({
@@ -62,7 +64,7 @@ export class IncludeService {
         });
       }
 
-      dbFields.push(exists.dataKey);
+      dbFields.push(exists.dataKey as string);
       schemaFields.push(exists.name);
       currentSchema = exists.schema();
     }

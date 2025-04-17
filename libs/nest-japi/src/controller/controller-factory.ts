@@ -36,6 +36,7 @@ import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 import { JsonBaseController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
+import { BaseSchema } from "../schema";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -52,7 +53,9 @@ const allowedMethods: MethodName[] = [
 export class ControllerFactory {
   private resource: Type<JsonBaseController>;
   private controllerClass: Type<JsonBaseController>;
-  private options: Required<ResourceOptions>;
+  private options: Required<
+    ResourceOptions<BaseSchema<any>, BaseSchema<any>, BaseSchema<any>>
+  >;
 
   constructor(resource: Type<JsonBaseController>) {
     this.validateResource(resource);
@@ -69,7 +72,7 @@ export class ControllerFactory {
     }
   }
 
-  private getResourceOptions(): Required<ResourceOptions> {
+  private getResourceOptions(): Required<ResourceOptions<any, any, any>> {
     return Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, this.resource);
   }
 
@@ -136,18 +139,25 @@ export class ControllerFactory {
     );
   }
 
-  private getControllerSchemas(): Schemas {
+  private getControllerSchemas(): Schemas<
+    BaseSchema<any>,
+    BaseSchema<any>,
+    BaseSchema<any>
+  > {
     const schemas = Reflect.getMetadata(
       JSONAPI_RESOURCE_SCHEMAS,
       this.controllerClass,
-    ) as Schemas;
+    ) as Schemas<BaseSchema<any>, BaseSchema<any>, BaseSchema<any>>;
     return schemas;
   }
 
   private getSchemaFromControllerMethod(methodName: MethodName) {
     const binding = controllerBindings[methodName];
     const schemas = this.getControllerSchemas();
-    return schemas[binding.schema] || schemas["schema"];
+    return (
+      schemas[binding.schema as keyof Schemas<any, any, any>] ||
+      schemas["schema"]
+    );
   }
 
   private bindRouteMethod(methodName: MethodName): void {

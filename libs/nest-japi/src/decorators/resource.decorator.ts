@@ -7,15 +7,26 @@ import { Injectable } from "@nestjs/common";
 import { Schemas } from "../schema/types";
 import { snakeCase } from "es-toolkit";
 import { JsonBaseController } from "../controller/base-controller";
+import { BaseSchema } from "../schema";
 
-export interface ResourceOptions {
-  schemas: Schemas;
+export interface ResourceOptions<
+  ViewSchema extends BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+> {
+  schemas: Schemas<ViewSchema, CreateSchema, UpdateSchema>;
   path?: string;
   disabledMethods?: ReadonlyArray<MethodName>;
   maxPaginationSize?: number;
 }
 
-export const Resource = (options: ResourceOptions): ClassDecorator => {
+export const Resource = <
+  ViewSchema extends BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+>(
+  options: ResourceOptions<ViewSchema, CreateSchema, UpdateSchema>,
+) => {
   return (target: Function) => {
     Injectable()(target);
     if (!Object.prototype.isPrototypeOf.call(JsonBaseController, target)) {
@@ -24,7 +35,7 @@ export const Resource = (options: ResourceOptions): ClassDecorator => {
       );
     }
 
-    const opts: ResourceOptions = {
+    const opts: ResourceOptions<ViewSchema, CreateSchema, UpdateSchema> = {
       path: snakeCase(target.name),
       ...options,
     };

@@ -5,7 +5,7 @@ import { FilterService } from "../services/filter.service";
 export const filterServiceProvider: FactoryProvider<FilterService> = {
   provide: FilterService,
   inject: [CURRENT_SCHEMAS],
-  useFactory: (schemas: Schemas) => {
+  useFactory: (schemas: Schemas<any, any, any>) => {
     return new FilterService(schemas.schema);
   },
 };

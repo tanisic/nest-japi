@@ -29,6 +29,7 @@ export class JsonApiInputRelationsParamPipe implements PipeTransform {
 
     const relName = value;
 
+    // @ts-expect-error
     const relation = getRelationByName(this.schema, relName);
 
     if (!relation) {

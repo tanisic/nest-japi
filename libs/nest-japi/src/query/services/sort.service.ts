@@ -41,7 +41,7 @@ export class SortService {
         globalSchemaSortCriteria.push(schemaObjectChain);
       } else {
         const attribute = this.validateField(fieldName);
-        globalDbSortCriteria.push({ [attribute.dataKey]: sortOrder });
+        globalDbSortCriteria.push({ [attribute.dataKey as string]: sortOrder });
         globalSchemaSortCriteria.push({ [attribute.name]: sortOrder });
       }
     }
@@ -71,6 +71,7 @@ export class SortService {
     const schemaSortCriteria: string[] = [];
 
     for (const [index, field] of fieldParts.entries()) {
+      // @ts-expect-error
       const relation = getRelationByName(currentSchema, field);
       const isLastIndex = index === fieldParts.length - 1;
 
@@ -85,7 +86,7 @@ export class SortService {
           });
         }
 
-        dbSortCriteria.push(attribute.dataKey);
+        dbSortCriteria.push(attribute.dataKey as string);
         schemaSortCriteria.push(attribute.name);
 
         return { dbSortCriteria, schemaSortCriteria };
@@ -99,7 +100,7 @@ export class SortService {
         });
       }
 
-      dbSortCriteria.push(relation.dataKey);
+      dbSortCriteria.push(relation.dataKey as string);
       schemaSortCriteria.push(relation.name);
 
       currentSchema = relation.schema();

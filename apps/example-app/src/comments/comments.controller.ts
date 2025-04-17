@@ -1,9 +1,12 @@
 import { Resource } from 'nest-japi';
 import { BaseResource } from 'src/resource/BaseResource';
-import { CommentSchema } from 'src/comments/comments.schema';
+import {
+  CommentSchema,
+  CreateCommentSchema,
+} from 'src/comments/comments.schema';
 
 @Resource({
-  schemas: { schema: CommentSchema },
+  schemas: { schema: CommentSchema, createSchema: CreateCommentSchema },
   path: 'v1/comments',
 })
 export class CommentResource extends BaseResource {}

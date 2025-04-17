@@ -15,7 +15,9 @@ import { errorMap } from "zod-validation-error";
 
 @Injectable()
 export class JsonApiInputPatchRelationInterceptor implements NestInterceptor {
-  constructor(@Inject(CURRENT_SCHEMAS) private schemas: Schemas) {}
+  constructor(
+    @Inject(CURRENT_SCHEMAS) private schemas: Schemas<any, any, any>,
+  ) {}
   async intercept(
     context: ExecutionContext,
     next: CallHandler,

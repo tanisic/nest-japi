@@ -117,7 +117,7 @@ export const zodAttributesSchema = <Schema extends BaseSchema<any>>(
     if (attribute.name === "id") continue;
     if (!attribute.validate)
       throw new Error(
-        `${schema.name}: Missing 'validate' property on attribute '${schema.name}.${attribute.name}'.`,
+        `${schema.name}: Missing 'validate' property on attribute '${schema.name}.${String(attribute.name)}'.`,
       );
 
     shape = { ...shape, [attribute.name]: attribute.validate };

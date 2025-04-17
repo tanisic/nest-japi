@@ -42,7 +42,7 @@ export class SerializerService {
   private relatorsMap = new Map<RelatorKey, Relator<unknown, any>>();
 
   constructor(
-    private globalOptions: JsonApiOptions,
+    private globalOptions: JsonApiOptions<any, any, any>,
     private resourceExplorerService: JsonApiResourceExplorerService,
   ) {
     this.baseUrl = this.globalOptions.global.baseUrl;
@@ -97,15 +97,16 @@ export class SerializerService {
         const relationLinker = new Linker((parentData) => {
           return joinUrlPaths(
             this.resourceUrl(resource),
-            `/${parentData.id}/relationships/${relation.name}`,
+            `/${parentData.id}/relationships/${String(relation.name)}`,
           );
         });
         const relatedLinker = new Linker((parentData) => {
           return joinUrlPaths(
             this.resourceUrl(resource),
-            `/${parentData.id}/${relationName}`,
+            `/${parentData.id}/${String(relationName)}`,
           );
         });
+        // @ts-expect-error
         const relator = new Relator(
           (data: any) => data[relationName],
           relationSerializer,
@@ -114,7 +115,7 @@ export class SerializerService {
             relatedName: relationName,
           },
         );
-        this.relatorsMap.set(`${type}__${relationName}`, relator);
+        this.relatorsMap.set(`${type}__${String(relationName)}`, relator);
       }
     }
   }

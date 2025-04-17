@@ -13,6 +13,7 @@ export const jsonApiPatchRelationInputSchema = <Schema extends BaseSchema<any>>(
   parentSchema: Type<Schema>,
   relationName: string,
 ) => {
+  // @ts-expect-error
   const relation = getRelationByName(parentSchema, relationName);
   if (!relation) {
     throw new NotFoundException(

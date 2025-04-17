@@ -5,7 +5,7 @@ import { Schemas } from "../schema";
 export type SwaggerMethodProps = {
   resource: Type<JsonBaseController>;
   descriptor: PropertyDescriptor;
-  schemas: Schemas;
+  schemas: Schemas<any, any, any>;
 };
 
 export type SwaggerMethodImplementation = (props: SwaggerMethodProps) => void;

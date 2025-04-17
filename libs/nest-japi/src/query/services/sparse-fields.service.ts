@@ -48,7 +48,7 @@ export class SparseFieldsService {
           source: { parameter: "fields" },
         });
       }
-      dbTransformed.push(attribute.dataKey);
+      dbTransformed.push(attribute.dataKey as string);
     }
     return dbTransformed;
   }

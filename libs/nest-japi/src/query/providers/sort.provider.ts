@@ -6,7 +6,7 @@ import { SortService } from "../services/sort.service";
 export const sortServiceProvider: FactoryProvider<SortService> = {
   provide: SortService,
   inject: [CURRENT_SCHEMAS],
-  useFactory: (schemas: Schemas) => {
+  useFactory: (schemas: Schemas<any, any, any>) => {
     return new SortService(schemas.schema);
   },
 };

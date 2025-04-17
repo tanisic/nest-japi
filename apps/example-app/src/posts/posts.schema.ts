@@ -6,7 +6,6 @@ import {
   Schema,
 } from 'nest-japi';
 import { Post } from 'src/posts/post.entity';
-import { User } from 'src/user/user.entity';
 import { CommentSchema } from '../comments/comments.schema';
 import { z } from 'zod';
 import { UserSchema } from 'src/user/user.schema';
@@ -32,7 +31,7 @@ export class PostSchema extends BaseSchema<Post> {
   content: string;
 
   @Relation({ schema: () => UserSchema, required: true })
-  author: User;
+  author: UserSchema;
 }
 
 @Schema({ jsonapiType: 'post', entity: Post })
@@ -54,7 +53,7 @@ export class CreatePostSchema extends BaseSchema<Post> {
     nullable: false,
     many: false,
   })
-  author: User;
+  author: UserSchema;
 }
 
 type t = ExtractRelations<CreatePostSchema>;

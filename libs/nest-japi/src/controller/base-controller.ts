@@ -1,13 +1,7 @@
 import { Inject, NotFoundException, Type } from "@nestjs/common";
 import { MethodName } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import {
-  EntityClass,
-  EntityDTO,
-  EntityManager,
-  serialize,
-  wrap,
-} from "@mikro-orm/core";
+import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
 import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
@@ -47,13 +41,13 @@ export class JsonBaseController<
   protected em!: TEntityManager;
 
   @Inject(CURRENT_SCHEMAS)
-  protected currentSchemas!: Schemas;
+  protected currentSchemas!: Schemas<ViewSchema, CreateSchema, UpdateSchema>;
 
   @Inject(SchemaBuilderService)
   protected schemaBuilder!: SchemaBuilderService;
 
   @Inject(JsonApiOptions)
-  protected options!: JsonApiOptions;
+  protected options!: JsonApiOptions<ViewSchema, CreateSchema, UpdateSchema>;
 
   @Inject(DataLayerService)
   protected dataLayer!: DataLayerService<
@@ -122,7 +116,9 @@ export class JsonBaseController<
     });
   }
 
-  async getRelationship(id: Id, relationName: string, ...rest: any[]) {
+  async getRelationship<
+    RelationName extends keyof ExtractRelations<ViewSchema>,
+  >(id: Id, relationName: RelationName, ...rest: any[]) {
     const schema = this.currentSchemas.schema;
     const relation = getRelationByName(
       this.currentSchemas.schema as Type<ViewSchema>,
@@ -130,11 +126,13 @@ export class JsonBaseController<
     );
     if (!relation) {
       throw new NotFoundException(
-        `Relationship ${relationName} does not exist on schema "${schema.name}".`,
+        `Relationship ${String(relationName)} does not exist on schema "${schema.name}".`,
       );
     }
 
-    const data = await this.dataLayer.getOne(id, [relation.dataKey]);
+    const data = await this.dataLayer.getOne(id, [
+      relation.dataKey as keyof ExtractRelations<ViewSchema>,
+    ]);
 
     if (!data) {
       throw new NotFoundException("Root data does not exist.");
@@ -154,7 +152,11 @@ export class JsonBaseController<
     );
 
     const shouldDisplayNull = (
-      relation: RelationAttribute<ViewSchema>,
+      relation: RelationAttribute<
+        ViewSchema,
+        boolean,
+        keyof ExtractRelations<ViewSchema>
+      >,
       rootData: EntityDTO<object>,
     ) => {
       const relationData =
@@ -172,18 +174,22 @@ export class JsonBaseController<
     });
   }
 
-  async getRelationshipData(id: Id, relationName: string) {
+  async getRelationshipData<
+    RelationName extends keyof ExtractRelations<ViewSchema>,
+  >(id: Id, relationName: RelationName) {
     const schema = this.currentSchemas.schema;
     const relation = getRelationByName(schema, relationName);
     if (!relation) {
       throw new NotFoundException(
-        `Relationship ${relationName} does not exist on schema "${schema.name}".`,
+        `Relationship ${String(relationName)} does not exist on schema "${schema.name}".`,
       );
     }
 
     const relSchema = relation.schema();
 
-    const data = await this.dataLayer.getOne(id, [relation.dataKey]);
+    const data = await this.dataLayer.getOne(id, [
+      relation.dataKey as keyof ExtractRelations<ViewSchema>,
+    ]);
     if (!data) {
       throw new NotFoundException("Root data does not exist.");
     }
@@ -191,12 +197,10 @@ export class JsonBaseController<
     const unwrapped = wrap(data).serialize({
       forceObject: true,
       populate: [relation.dataKey as any],
-    }) as EntityDTO<object>;
+    });
 
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped[
-        relation.dataKey as keyof EntityDTO<object>
-      ] as EntityDTO<object>,
+      unwrapped[relation.dataKey as keyof EntityDTO<object>],
       relSchema,
     );
 
@@ -208,7 +212,7 @@ export class JsonBaseController<
     return this.serializerService.serialize(data, this.currentSchemas.schema);
   }
 
-  async postOne(body: PostBody<CreateSchema>, ..._args: any[]) {
+  async postOne(body: PostBody<CreateSchema>) {
     const data = await this.dataLayer.postOne(body);
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
@@ -235,15 +239,15 @@ export class JsonBaseController<
     relationshipName: RelationName,
     body: PatchRelationship<UpdateSchema, RelationName>,
   ) {
-    const schema =
-      this.currentSchemas.updateSchema || this.currentSchemas.schema;
+    const schema = (this.currentSchemas.updateSchema ||
+      this.currentSchemas.schema) as Type<UpdateSchema>;
     const data = await this.dataLayer.patchRelationship(
       id,
       body,
       relationshipName,
     );
 
-    const relation = getRelationByName(schema, relationshipName as string);
+    const relation = getRelationByName(schema, relationshipName);
 
     if (!relation) {
       throw new NotFoundException(

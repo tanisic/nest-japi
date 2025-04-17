@@ -2,10 +2,9 @@ import {
   JSONAPI_SCHEMA_ATTRIBUTE_OPTIONS,
   JSONAPI_SCHEMA_ATTRIBUTES,
 } from "../constants";
-import { EntityKey } from "@mikro-orm/core";
 import { type SchemaObject } from "openapi3-ts/oas31";
 import { ZodTypeAny } from "zod";
-import { BaseSchema, InferEntity } from "../schema";
+import { BaseSchema, ExtractAttributes, InferEntity } from "../schema";
 
 export type JSONValue =
   | string
@@ -21,9 +20,21 @@ export interface JSONObject {
 
 export interface JSONArray extends Array<JSONValue> {}
 
+type TransformValue<
+  Schema extends BaseSchema<any>,
+  AttributeKey extends keyof ExtractAttributes<Schema>,
+  Entity extends InferEntity<Schema>,
+  DataKey,
+> = DataKey extends keyof Entity
+  ? (value: Entity[DataKey]) => JSONValue
+  : AttributeKey extends keyof Entity
+    ? (value: Entity[AttributeKey]) => JSONValue
+    : (value: unknown) => JSONValue;
+
 export type AttributeOptions<
   Schema extends BaseSchema<any>,
-  Entity = InferEntity<Schema>,
+  AttributeKey extends keyof ExtractAttributes<Schema>,
+  DataKey extends keyof InferEntity<Schema> = AttributeKey,
 > = {
   /**
    * Map this property to another entity attribute.
@@ -31,7 +42,9 @@ export type AttributeOptions<
    * @default property name
    *
    * */
-  dataKey?: EntityKey<Entity>;
+  dataKey?: DataKey extends keyof InferEntity<Schema>
+    ? DataKey
+    : keyof InferEntity<Schema>;
   /**
    * Write your openapi docs for this attribute.
    */
@@ -41,31 +54,38 @@ export type AttributeOptions<
    * Used in final serialization to response.
    * Works only on view schema, because that schema is reserved for all responses.
    */
-  transform?: <TValue>(value: TValue) => JSONValue;
+  transform?: TransformValue<
+    Schema,
+    AttributeKey,
+    InferEntity<Schema>,
+    DataKey
+  >;
   validate: ZodTypeAny;
 };
 
 export type SchemaAttribute<
   Schema extends BaseSchema<any>,
-  Entity = InferEntity<Schema>,
-> = Required<AttributeOptions<Schema, Entity>> & {
-  name: string;
+  AttributeKey extends keyof ExtractAttributes<Schema>,
+  DataKey extends keyof InferEntity<Schema> = AttributeKey,
+> = Required<AttributeOptions<Schema, AttributeKey, DataKey>> & {
+  name: AttributeKey;
 };
 
 export function Attribute<
   Schema extends BaseSchema<any>,
-  Entity = InferEntity<Schema>,
->(options: AttributeOptions<Schema>): PropertyDecorator {
-  return (target, propertyKey) => {
-    const opts: AttributeOptions<Schema> = {
-      dataKey: propertyKey as EntityKey<Entity>,
+  AttributeKey extends keyof ExtractAttributes<Schema>,
+  DataKey extends keyof InferEntity<Schema> = AttributeKey,
+>(options: AttributeOptions<Schema, AttributeKey, DataKey>) {
+  return (target: Schema, propertyKey: AttributeKey) => {
+    const opts: AttributeOptions<Schema, AttributeKey, DataKey> = {
+      dataKey: propertyKey as any,
       ...options,
     };
     Reflect.defineMetadata(
       JSONAPI_SCHEMA_ATTRIBUTE_OPTIONS,
       opts,
       target,
-      propertyKey,
+      propertyKey as string,
     );
 
     const restAttributes =

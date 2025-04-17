@@ -6,7 +6,7 @@ import { IncludeService } from "../services/include.service";
 export const includeServiceProvider: FactoryProvider<IncludeService> = {
   provide: IncludeService,
   inject: [CURRENT_SCHEMAS],
-  useFactory: (schemas: Schemas) => {
+  useFactory: (schemas: Schemas<any, any, any>) => {
     return new IncludeService(schemas.schema);
   },
 };

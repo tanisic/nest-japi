@@ -12,10 +12,24 @@ export class CommentSchema extends BaseSchema<Comment> {
   content: string;
   @Relation({ schema: () => UserSchema, required: true })
   author: UserSchema;
-  @Relation({ schema: () => PostSchema })
+  @Relation({ schema: () => PostSchema, required: false })
   post: PostSchema;
-  @Attribute({ validate: z.date().optional() })
+  @Attribute({
+    validate: z.date().optional(),
+  })
   createdAt: Date;
   @Attribute({ validate: z.date().optional() })
   updatedAt: Date;
+}
+
+@Schema({ jsonapiType: 'comment', entity: Comment })
+export class CreateCommentSchema extends BaseSchema<Comment> {
+  @Attribute({ validate: z.number() })
+  id: number;
+  @Attribute({ validate: z.string() })
+  content: string;
+  @Relation({ schema: () => UserSchema, required: true })
+  author: UserSchema;
+  @Relation({ schema: () => PostSchema, required: false })
+  post: PostSchema;
 }

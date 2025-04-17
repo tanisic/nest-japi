@@ -155,9 +155,10 @@ export class JsonApiModule implements NestModule {
     const controllerFactory = new ControllerFactory(resource);
     const ResourceClass = controllerFactory.createController();
 
-    const schemas: Schemas = getSchemasFromResource(ResourceClass);
+    const schemas: Schemas<any, any, any> =
+      getSchemasFromResource(ResourceClass);
 
-    const schemasProvider: ValueProvider<Schemas> = {
+    const schemasProvider: ValueProvider<Schemas<any, any, any>> = {
       provide: CURRENT_SCHEMAS,
       useValue: schemas,
     };
@@ -165,7 +166,7 @@ export class JsonApiModule implements NestModule {
     const modelsProvider: FactoryProvider<Entities> = {
       provide: CURRENT_MODELS,
       inject: [CURRENT_SCHEMAS],
-      useFactory: (schemas: Schemas) => {
+      useFactory: (schemas: Schemas<any, any, any>) => {
         const viewEntity = Reflect.getMetadata(
           JSONAPI_SCHEMA_ENTITY_CLASS,
           schemas.schema,
@@ -187,16 +188,20 @@ export class JsonApiModule implements NestModule {
       },
     };
 
-    const resourceOptionsProvider: ValueProvider<ResourceOptions> = {
+    const resourceOptionsProvider: ValueProvider<
+      ResourceOptions<any, any, any>
+    > = {
       provide: JSONAPI_RESOURCE_OPTIONS,
       useValue: Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, ResourceClass),
     };
 
-    const allOptionsProvider: FactoryProvider<JsonApiOptions> = {
+    const allOptionsProvider: FactoryProvider<JsonApiOptions<any, any, any>> = {
       provide: JsonApiOptions,
       inject: [JSONAPI_GLOBAL_OPTIONS, JSONAPI_RESOURCE_OPTIONS],
-      useFactory: (global: JsonApiModuleOptions, resource: ResourceOptions) =>
-        new JsonApiOptions({ global, resource }),
+      useFactory: (
+        global: JsonApiModuleOptions,
+        resource: ResourceOptions<any, any, any>,
+      ) => new JsonApiOptions({ global, resource }),
     };
 
     const registerResourceProvider: FactoryProvider<void> = {

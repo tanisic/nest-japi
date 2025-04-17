@@ -3,6 +3,7 @@ import { FilterQuery } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
 import {
   BaseSchema,
+  ExtractRelations,
   getAttributeByName,
   getRelationByName,
 } from "../../schema";
@@ -45,7 +46,10 @@ export class FilterService {
     const transformedFilters: FilterQuery<T> = {};
 
     for (const [key, value] of Object.entries(filters)) {
-      const relation = getRelationByName(currentSchema, key);
+      const relation = getRelationByName(
+        currentSchema,
+        key as keyof ExtractRelations<BaseSchema<any>>,
+      );
       const attribute = getAttributeByName(currentSchema, key);
 
       if (this.logicalOperatorKeys.includes(key)) {
@@ -99,7 +103,7 @@ export class FilterService {
   }
 
   private handleRelation<Schema extends BaseSchema<any>>(
-    relation: RelationOptions<Schema>,
+    relation: RelationOptions<Schema, boolean, keyof ExtractRelations<Schema>>,
     value: FilterQuery<unknown>,
   ): FilterQuery<unknown> {
     const relationSchema = relation.schema();

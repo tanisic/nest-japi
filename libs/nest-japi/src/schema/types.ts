@@ -1,13 +1,18 @@
 import { Type } from "@nestjs/common";
 import { BaseSchema } from "./base-schema";
 import { EntityClass } from "@mikro-orm/core";
+import { JsonBaseController } from "../controller/base-controller";
 
 export type SchemaTypes = "createSchema" | "updateSchema" | "schema";
 
-export type Schemas = {
-  createSchema?: Type<BaseSchema<any>>;
-  updateSchema?: Type<BaseSchema<any>>;
-  schema: Type<BaseSchema<any>>;
+export type Schemas<
+  ViewSchema extends BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+> = {
+  createSchema?: Type<CreateSchema>;
+  updateSchema?: Type<UpdateSchema>;
+  schema: Type<ViewSchema>;
 };
 
 export type Entities = {
@@ -25,16 +30,26 @@ export type Primitive =
   | symbol
   | bigint;
 
+type IsWritable<T, K extends keyof T> = { -readonly [P in K]: T[P] } extends {
+  [P in K]: T[P];
+}
+  ? true
+  : false;
+
 export type ExtractAttributes<T> = {
-  [K in keyof T as T[K] extends Primitive
-    ? K
-    : T[K] extends Array<any>
-      ? never
-      : T[K] extends object
-        ? T[K] extends BaseSchema<any>
-          ? never
+  [K in keyof T as IsWritable<T, K> extends true
+    ? T[K] extends Primitive
+      ? K
+      : T[K] extends Array<any>
+        ? never
+        : T[K] extends object
+          ? T[K] extends BaseSchema<any>
+            ? never
+            : K extends keyof BaseSchema<any>
+              ? never
+              : K
           : K
-        : K]: T[K];
+    : never]: T[K];
 };
 
 export type ExtractRelations<T> = {
@@ -60,3 +75,18 @@ export type Relationships<
 
 export type InferEntity<Schema, OverrideEntity = never> =
   Schema extends BaseSchema<infer Entity> ? Entity : OverrideEntity;
+
+export type InferSchemas<T> =
+  T extends JsonBaseController<
+    any,
+    any,
+    infer ViewSchema,
+    infer CreateSchema,
+    infer UpdateSchema
+  >
+    ? {
+        ViewSchema: ViewSchema;
+        CreateSchema: CreateSchema;
+        UpdateSchema: UpdateSchema;
+      }
+    : never;

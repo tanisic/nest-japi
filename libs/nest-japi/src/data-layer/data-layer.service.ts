@@ -35,10 +35,10 @@ import { JsonApiOptions } from "../modules/json-api-options";
 export class DataLayerService<
   Id extends string | number,
   TEntityManager extends EntityManager,
-  Schema extends BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = Schema,
-  UpdateSchema extends BaseSchema<any> = Schema,
-  ViewEntity = InferEntity<Schema>,
+  ViewSchema extends BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+  ViewEntity = InferEntity<ViewSchema>,
   CreateEntity = InferEntity<CreateSchema>,
   UpdateEntity = InferEntity<UpdateSchema>,
 > {
@@ -47,8 +47,9 @@ export class DataLayerService<
   protected updateEntity: UpdateEntity;
 
   constructor(
-    private options: JsonApiOptions,
-    @Inject(CURRENT_SCHEMAS) private schemas: Schemas,
+    private options: JsonApiOptions<ViewSchema, CreateSchema, UpdateSchema>,
+    @Inject(CURRENT_SCHEMAS)
+    private schemas: Schemas<ViewSchema, CreateSchema, UpdateSchema>,
     @Inject(EntityManager)
     private em: TEntityManager,
     private schemaBuilder: SchemaBuilderService,
@@ -165,19 +166,16 @@ export class DataLayerService<
               // @ts-expect-error
               entity,
             );
-            // @ts-expect-error
             result[relation.dataKey as keyof InferEntity<UpdateSchema>] = items;
           } else if (relationData) {
             const item = await this.em.findOne(entity, { id: relationData.id });
             if (!item) {
               throw new NotFoundException(
-                `Relation ${relation.name} does not have item with id ${relationData.id}.`,
+                `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
               );
             }
-            // @ts-expect-error
             result[relation.dataKey as keyof InferEntity<UpdateSchema>] = item;
           } else {
-            // @ts-expect-error
             result[relation.dataKey as keyof InferEntity<UpdateSchema>] = null;
           }
         }
@@ -198,7 +196,8 @@ export class DataLayerService<
     body: PostBody<CreateSchema>,
     entity: CreateEntity = this.createEntity,
   ) {
-    const schema = this.schemas.createSchema || this.schemas.schema;
+    const schema = (this.schemas.createSchema ||
+      this.schemas.schema) as Type<CreateSchema>;
     const result = {
       ...this.schemaBuilder.transformToDb(body.data.attributes, schema),
     };
@@ -226,19 +225,18 @@ export class DataLayerService<
               // @ts-expect-error
               entity,
             );
-            // @ts-expect-error
             result[relation.dataKey as keyof InferEntity<CreateSchema>] = items;
           } else if (relationData) {
-            const item = await this.em.findOne(entity, { id: relationData.id });
+            const item = await this.em.findOne(entity, {
+              id: relationData.id,
+            } as any);
             if (!item) {
               throw new NotFoundException(
-                `Relation ${relation.name} does not have item with id ${relationData.id}.`,
+                `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
               );
             }
-            // @ts-expect-error
             result[relation.dataKey as keyof InferEntity<CreateSchema>] = item;
           } else {
-            // @ts-expect-error
             result[relation.dataKey as keyof InferEntity<CreateSchema>] = null;
           }
         }
@@ -266,7 +264,6 @@ export class DataLayerService<
     const schema = (this.schemas.updateSchema ||
       this.schemas.schema) as Type<UpdateSchema>;
 
-    // @ts-expect-error
     const relation = getRelationByName(schema, relationshipName);
     if (!relation) {
       throw new NotFoundException(
@@ -310,10 +307,12 @@ export class DataLayerService<
       }
     } else if (body.data) {
       // Setting a single relation
-      const item = await this.em.findOne(relationEntity, body.data.id);
+      const item = await this.em.findOne(relationEntity, {
+        id: body.data.id,
+      } as any);
       if (!item) {
         throw new NotFoundException(
-          `Relation ${relation.name} does not have item with id ${body.data.id}.`,
+          `Relation ${String(relation.name)} does not have item with id ${body.data.id}.`,
         );
       }
       // @ts-expect-error
