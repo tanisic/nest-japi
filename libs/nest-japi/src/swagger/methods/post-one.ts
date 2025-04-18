@@ -7,7 +7,12 @@ import {
 } from "../../schema";
 import { JSONAPI_CONTENT_TYPE } from "../../constants";
 
-export function postOne({ resource, schemas, descriptor }: SwaggerMethodProps) {
+export function postOne({
+  resource,
+  schemas,
+  descriptor,
+  resourceOptions,
+}: SwaggerMethodProps) {
   const schema = schemas.createSchema || schemas.schema;
   ApiBody({
     //@ts-expect-error
@@ -23,6 +28,8 @@ export function postOne({ resource, schemas, descriptor }: SwaggerMethodProps) {
             dataArray: false,
             hasIncludes: false,
             withPagination: false,
+            resourceMetaSchema: resourceOptions.metaSchemas?.postOne?.resource,
+            documentMetaSchema: resourceOptions.metaSchemas?.postOne?.document,
           }),
         ) as any,
       },

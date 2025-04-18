@@ -1,8 +1,9 @@
 import { PipeTransform, RequestMethod } from "@nestjs/common";
 import { NestInterceptor, Type } from "@nestjs/common/interfaces";
-import { Schemas } from "../schema/types";
+import { InferEntity, Schemas } from "../schema/types";
 import { BaseSchema } from "../schema/base-schema";
 import { SwaggerMethodImplementation } from "../swagger";
+import { EntityManager } from "@mikro-orm/core";
 
 export type MethodName =
   | "getAll"
@@ -53,3 +54,31 @@ export interface Binding<T extends MethodName> {
 export type BindingsConfig = {
   [Key in MethodName]: Binding<Key>;
 };
+
+export type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
+
+export type ControllerGenerics<
+  Id extends string | number = string | number,
+  TEntityManager extends EntityManager = EntityManager,
+  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+  ViewEntity = InferEntity<ViewSchema>,
+  CreateEntity = InferEntity<CreateSchema>,
+  UpdateEntity = InferEntity<UpdateSchema>,
+> = {
+  Id: Id;
+  TEntityManager: TEntityManager;
+  ViewSchema: ViewSchema;
+  CreateSchema: CreateSchema;
+  UpdateSchema: UpdateSchema;
+  ViewEntity: ViewEntity;
+  CreateEntity: CreateEntity;
+  UpdateEntity: UpdateEntity;
+};
+
+export type InferControllerGenerics<T> = T extends {
+  __generics: ControllerGenerics;
+}
+  ? T["__generics"]
+  : never;

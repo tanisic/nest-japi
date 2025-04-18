@@ -8,7 +8,7 @@ export function swaggerSparseFieldsQueryParams({
   descriptor,
   schemas,
   methodName,
-}: SwaggerMethodProps & { methodName: MethodName }) {
+}: Omit<SwaggerMethodProps, "resourceOptions"> & { methodName: MethodName }) {
   const schema = schemas.schema;
   const attributes = getAttributes(schema);
   const type = getType(schema);
@@ -65,7 +65,7 @@ export function swaggerIncludesQueryParams({
   descriptor,
   schemas,
   methodName,
-}: SwaggerMethodProps & { methodName: MethodName }) {
+}: Omit<SwaggerMethodProps, "resourceOptions"> & { methodName: MethodName }) {
   const schema = schemas.schema;
   const relations = getRelations(schema);
   let nestedRelations = {};

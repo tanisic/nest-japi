@@ -36,7 +36,7 @@ import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 import { JsonBaseController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
-import { BaseSchema } from "../schema";
+import { BaseSchema, getResourceOptions } from "../schema";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -102,7 +102,7 @@ export class ControllerFactory {
   }
 
   private defineControllerMethod(methodName: MethodName): void {
-    const { name, implementation, schema } = controllerBindings[methodName];
+    const { name, implementation } = controllerBindings[methodName];
 
     if (
       !Object.prototype.hasOwnProperty.call(
@@ -187,10 +187,12 @@ export class ControllerFactory {
 
     if (swaggerImplementation) {
       const schemas = this.getControllerSchemas();
+      const resourceOptions = getResourceOptions(this.controllerClass) as any;
       swaggerImplementation({
         resource: this.controllerClass.prototype,
         descriptor,
         schemas,
+        resourceOptions,
       });
     }
 

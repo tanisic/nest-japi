@@ -144,8 +144,6 @@ export const jsonApiVersionSchema = z.object({
   version: z.string().default("1.0"),
 });
 
-export const metaSchema = z.object({}).optional();
-
 export const paginationLinksSchema = z
   .object({
     first: z.string(),
@@ -169,23 +167,29 @@ export const fullJsonApiResponseSchema = <Schema extends BaseSchema<any>>(
   schema: Type<Schema>,
   {
     withPagination = false,
-    topLevelMetaSchema = metaSchema,
+    documentMetaSchema,
+    resourceMetaSchema,
     dataArray = true,
     hasIncludes = false,
   }: {
     withPagination?: boolean;
     dataArray?: boolean;
     hasIncludes?: boolean;
-    topLevelMetaSchema?: ZodTypeAny;
+    documentMetaSchema?: ZodObject<any>;
+    resourceMetaSchema?: ZodObject<any>;
   },
 ) => {
-  const dataObjectSchema = z
+  let dataObjectSchema = z
     .object({
       attributes: zodAttributesSchema(schema),
       links: documentLevelLinkSchema,
       relationships: zodRelationsSchemaWithLinksAndData(schema),
     })
     .merge(zodDataSchema(schema));
+
+  if (resourceMetaSchema) {
+    dataObjectSchema = dataObjectSchema.extend({ meta: resourceMetaSchema });
+  }
 
   const includedDataObjectSchema = z.object({
     id: z.coerce.string(),
@@ -198,9 +202,14 @@ export const fullJsonApiResponseSchema = <Schema extends BaseSchema<any>>(
   let baseDocumentSchema = z.object({
     jsonapi: jsonApiVersionSchema,
     links: withPagination ? paginationLinksSchema : topLevelSelfLinkSchema,
-    meta: topLevelMetaSchema,
     data: dataArray ? z.array(dataObjectSchema) : dataObjectSchema,
   });
+
+  if (documentMetaSchema) {
+    baseDocumentSchema = baseDocumentSchema.extend({
+      meta: documentMetaSchema,
+    });
+  }
 
   if (hasIncludes) {
     baseDocumentSchema = baseDocumentSchema.extend({

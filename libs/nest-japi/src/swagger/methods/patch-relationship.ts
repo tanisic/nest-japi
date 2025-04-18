@@ -11,6 +11,7 @@ export function patchRelationship({
   resource,
   schemas,
   descriptor,
+  resourceOptions,
 }: SwaggerMethodProps) {
   ApiBody({
     schema: generateSchema(jsonApiPatchRelationInputSwaggerSchema()) as any,
@@ -25,6 +26,10 @@ export function patchRelationship({
           fullJsonApiResponseSchema(schemas.schema, {
             hasIncludes: false,
             withPagination: false,
+            resourceMetaSchema:
+              resourceOptions.metaSchemas?.patchRelationship?.resource,
+            documentMetaSchema:
+              resourceOptions.metaSchemas?.patchRelationship?.document,
           }),
         ) as any,
       },

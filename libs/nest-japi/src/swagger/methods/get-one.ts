@@ -8,7 +8,12 @@ import { generateSchema } from "@anatine/zod-openapi";
 import { fullJsonApiResponseSchema } from "../../schema/zod/common";
 import { JSONAPI_CONTENT_TYPE } from "../../constants";
 
-export function getOne({ resource, descriptor, schemas }: SwaggerMethodProps) {
+export function getOne({
+  resource,
+  descriptor,
+  schemas,
+  resourceOptions,
+}: SwaggerMethodProps) {
   swaggerSparseFieldsQueryParams({
     resource,
     descriptor,
@@ -32,6 +37,8 @@ export function getOne({ resource, descriptor, schemas }: SwaggerMethodProps) {
             hasIncludes: true,
             withPagination: false,
             dataArray: false,
+            resourceMetaSchema: resourceOptions.metaSchemas?.getOne?.resource,
+            documentMetaSchema: resourceOptions.metaSchemas?.getOne?.document,
           }),
         ),
       },

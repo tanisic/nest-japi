@@ -11,7 +11,12 @@ import { generateSchema } from "@anatine/zod-openapi";
 import { fullJsonApiResponseSchema } from "../../schema/zod/common";
 import { JSONAPI_CONTENT_TYPE } from "../../constants";
 
-export function getAll({ resource, descriptor, schemas }: SwaggerMethodProps) {
+export function getAll({
+  resource,
+  descriptor,
+  schemas,
+  resourceOptions,
+}: SwaggerMethodProps) {
   const schema = schemas.schema;
 
   swaggerSparseFieldsQueryParams({
@@ -182,6 +187,8 @@ export function getAll({ resource, descriptor, schemas }: SwaggerMethodProps) {
           fullJsonApiResponseSchema(schema, {
             hasIncludes: true,
             withPagination: true,
+            resourceMetaSchema: resourceOptions.metaSchemas?.getAll?.resource,
+            documentMetaSchema: resourceOptions.metaSchemas?.getAll?.document,
           }),
         ),
       },

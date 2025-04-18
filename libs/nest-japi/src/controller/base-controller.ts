@@ -1,5 +1,5 @@
 import { Inject, NotFoundException, Type } from "@nestjs/common";
-import { MethodName } from "./types";
+import { ControllerGenerics, ControllerMethods } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
 import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
 import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
@@ -20,34 +20,6 @@ import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
 import qs, { ParsedQs } from "qs";
 import { RelationAttribute } from "../decorators/relation.decorator";
-
-type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
-
-type ControllerGenerics<
-  Id extends string | number = string | number,
-  TEntityManager extends EntityManager = EntityManager,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
-  ViewEntity = InferEntity<ViewSchema>,
-  CreateEntity = InferEntity<CreateSchema>,
-  UpdateEntity = InferEntity<UpdateSchema>,
-> = {
-  Id: Id;
-  TEntityManager: TEntityManager;
-  ViewSchema: ViewSchema;
-  CreateSchema: CreateSchema;
-  UpdateSchema: UpdateSchema;
-  ViewEntity: ViewEntity;
-  CreateEntity: CreateEntity;
-  UpdateEntity: UpdateEntity;
-};
-
-export type InferControllerGenerics<T> = T extends {
-  __generics: ControllerGenerics;
-}
-  ? T["__generics"]
-  : never;
 
 export class JsonBaseController<
   Id extends string | number = string | number,

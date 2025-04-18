@@ -9,6 +9,7 @@ export function patchOne({
   resource,
   schemas,
   descriptor,
+  resourceOptions,
 }: SwaggerMethodProps) {
   ApiBody({
     schema: generateSchema(
@@ -19,15 +20,18 @@ export function patchOne({
   ApiProduces(JSONAPI_CONTENT_TYPE)(resource, "patchOne", descriptor);
   ApiResponse({
     status: 200,
-    schema: generateSchema(
-      fullJsonApiResponseSchema(schemas.schema, {
-        withPagination: false,
-        dataArray: false,
-        hasIncludes: false,
-      }),
-    ) as any,
     content: {
-      [JSONAPI_CONTENT_TYPE]: {},
+      [JSONAPI_CONTENT_TYPE]: {
+        schema: generateSchema(
+          fullJsonApiResponseSchema(schemas.schema, {
+            withPagination: false,
+            dataArray: false,
+            hasIncludes: false,
+            resourceMetaSchema: resourceOptions.metaSchemas?.patchOne?.resource,
+            documentMetaSchema: resourceOptions.metaSchemas?.patchOne?.document,
+          }),
+        ) as any,
+      },
     },
   })(resource, "patchOne", descriptor);
 }
