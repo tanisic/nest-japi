@@ -1,4 +1,5 @@
 import { DEFAULT_PAGINATION_SIZE } from "../constants";
+import { MethodName } from "../controller/types";
 import { ResourceOptions } from "../decorators/resource.decorator";
 import { BaseSchema } from "../schema";
 import { JsonApiModuleOptions } from "./json-api.module";
@@ -9,7 +10,12 @@ export class JsonApiOptions<
   UpdateSchema extends BaseSchema<any> = ViewSchema,
 > {
   global: JsonApiModuleOptions;
-  resource: ResourceOptions<ViewSchema, CreateSchema, UpdateSchema>;
+  resource: ResourceOptions<
+    MethodName[],
+    ViewSchema,
+    CreateSchema,
+    UpdateSchema
+  >;
 
   maxAllowedPagination: number;
 
@@ -18,7 +24,12 @@ export class JsonApiOptions<
     resource,
   }: {
     global: JsonApiModuleOptions;
-    resource: ResourceOptions<ViewSchema, CreateSchema, UpdateSchema>;
+    resource: ResourceOptions<
+      MethodName[],
+      ViewSchema,
+      CreateSchema,
+      UpdateSchema
+    >;
   }) {
     this.global = global;
     this.resource = resource;

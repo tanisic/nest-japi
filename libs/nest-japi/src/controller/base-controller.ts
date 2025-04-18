@@ -23,6 +23,32 @@ import { RelationAttribute } from "../decorators/relation.decorator";
 
 type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
 
+type ControllerGenerics<
+  Id extends string | number = string | number,
+  TEntityManager extends EntityManager = EntityManager,
+  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
+  CreateSchema extends BaseSchema<any> = ViewSchema,
+  UpdateSchema extends BaseSchema<any> = ViewSchema,
+  ViewEntity = InferEntity<ViewSchema>,
+  CreateEntity = InferEntity<CreateSchema>,
+  UpdateEntity = InferEntity<UpdateSchema>,
+> = {
+  Id: Id;
+  TEntityManager: TEntityManager;
+  ViewSchema: ViewSchema;
+  CreateSchema: CreateSchema;
+  UpdateSchema: UpdateSchema;
+  ViewEntity: ViewEntity;
+  CreateEntity: CreateEntity;
+  UpdateEntity: UpdateEntity;
+};
+
+export type InferControllerGenerics<T> = T extends {
+  __generics: ControllerGenerics;
+}
+  ? T["__generics"]
+  : never;
+
 export class JsonBaseController<
   Id extends string | number = string | number,
   TEntityManager extends EntityManager = EntityManager,
@@ -34,6 +60,17 @@ export class JsonBaseController<
   UpdateEntity = InferEntity<UpdateSchema>,
 > implements ControllerMethods
 {
+  public __generics!: ControllerGenerics<
+    Id,
+    TEntityManager,
+    ViewSchema,
+    CreateSchema,
+    UpdateSchema,
+    ViewEntity,
+    CreateEntity,
+    UpdateEntity
+  >;
+
   @Inject(SerializerService)
   protected serializerService!: SerializerService;
 
@@ -62,12 +99,25 @@ export class JsonBaseController<
     return this.options.global.baseUrl;
   }
 
+  get viewSchema() {
+    return this.currentSchemas.schema;
+  }
+
+  get createSchema() {
+    return (this.currentSchemas.createSchema ||
+      this.currentSchemas.schema) as Type<CreateSchema>;
+  }
+
+  get updateSchema() {
+    return (this.currentSchemas.updateSchema ||
+      this.currentSchemas.schema) as Type<UpdateSchema>;
+  }
+
   async getAll(
     query: QueryParams,
     request: Request,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
-    const schema = this.currentSchemas.schema;
     const [data, count] = await this.dataLayer.getAllAndCount(query);
     const unwrapped = serialize(data, {
       populate: query.include?.dbIncludes || ([] as any),
@@ -75,11 +125,11 @@ export class JsonBaseController<
     });
     const result = this.schemaBuilder.transformFromDb(
       unwrapped as EntityDTO<ViewEntity>,
-      schema,
+      this.viewSchema,
     );
 
     const pagination = this.generatePagination(request, count);
-    return this.serializerService.serialize(result, schema, {
+    return this.serializerService.serialize(result, this.viewSchema, {
       page: query.page || undefined,
       include: query.include?.schemaIncludes || [],
       fields: query.fields?.schema || {},
@@ -97,7 +147,6 @@ export class JsonBaseController<
     query: SingleQueryParams,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
-    const schema = this.currentSchemas.schema;
     const data = await this.dataLayer.getOne(id, query.include?.dbIncludes);
 
     if (!data) {
@@ -108,9 +157,12 @@ export class JsonBaseController<
       populate: query.include?.dbIncludes || ([] as any),
       forceObject: true,
     });
-    const result = this.schemaBuilder.transformFromDb(unwrapped, schema);
+    const result = this.schemaBuilder.transformFromDb(
+      unwrapped,
+      this.viewSchema,
+    );
 
-    return this.serializerService.serialize(result, schema, {
+    return this.serializerService.serialize(result, this.viewSchema, {
       include: query.include?.schemaIncludes || [],
       fields: query.fields?.schema || {},
     });

@@ -54,7 +54,12 @@ export class ControllerFactory {
   private resource: Type<JsonBaseController>;
   private controllerClass: Type<JsonBaseController>;
   private options: Required<
-    ResourceOptions<BaseSchema<any>, BaseSchema<any>, BaseSchema<any>>
+    ResourceOptions<
+      MethodName[],
+      BaseSchema<any>,
+      BaseSchema<any>,
+      BaseSchema<any>
+    >
   >;
 
   constructor(resource: Type<JsonBaseController>) {

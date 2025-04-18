@@ -9,4 +9,8 @@ import {
   schemas: { schema: CommentSchema, createSchema: CreateCommentSchema },
   path: 'v1/comments',
 })
-export class CommentResource extends BaseResource {}
+export class CommentResource extends BaseResource<
+  string,
+  CommentSchema,
+  CreateCommentSchema
+> {}

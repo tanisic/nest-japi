@@ -13,5 +13,6 @@ import { CreatePostSchema, PostSchema } from 'src/posts/posts.schema';
 export class PostResource extends BaseResource<
   string,
   PostSchema,
+  CreatePostSchema,
   CreatePostSchema
 > {}
