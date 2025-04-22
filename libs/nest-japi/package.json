@@ -1,9 +1,15 @@
 {
-  "name": "nest-japi",
-  "version": "0.0.0",
+  "name": "@tanisic/nest-japi",
+  "version": "0.0.1",
   "description": "Full fledged JSON:API solution on nestjs",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
   "author": "Tin Anišić",
+  "private": false,
+  "files": [
+    "dist"
+  ],
   "license": "Apache 2.0",
   "scripts": {
     "build": "pnpm tsup",

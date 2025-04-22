@@ -32,7 +32,7 @@
 ## 📦 Installation
 
 ```bash
-npm install nest-japi zod
+npm install @tanisic/nest-japi zod
 ```
 ## 🧠 Concepts
 
@@ -138,7 +138,7 @@ import { PostResource } from './post.controller';
 @Module({
   imports: [
     JsonApiModule.forFeature({
-      resource: [PostResource], // Register the PostResource
+      resource: PostResource, // Register the PostResource
     }),
   ],
   controllers: [PostController],
