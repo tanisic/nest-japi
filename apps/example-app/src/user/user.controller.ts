@@ -4,6 +4,7 @@ import { DataDocument } from 'ts-japi';
 import { ApiOperation } from '@nestjs/swagger';
 import { BaseResource } from 'src/resource/BaseResource';
 import { UserSchema, CreateUserSchema, PatchUserSchema } from './user.schema';
+import { UserService } from './user.service';
 
 @Resource({
   schemas: {
@@ -19,6 +20,9 @@ export class UserResource extends BaseResource<
   CreateUserSchema,
   PatchUserSchema
 > {
+  constructor(private userService: UserService) {
+    super();
+  }
   override getAll(
     query: QueryParams,
     request: Request,

@@ -53,7 +53,8 @@ export interface JsonApiModuleOptions
   baseUrl: string;
 }
 
-export interface JsonApiResourceModuleOptions {
+export interface JsonApiResourceModuleOptions
+  extends Omit<ModuleMetadata, "controllers"> {
   resource: Type<JsonBaseController>;
 }
 
@@ -151,7 +152,7 @@ export class JsonApiModule implements NestModule {
   }
 
   static forFeature(options: JsonApiResourceModuleOptions): DynamicModule {
-    const { resource } = options;
+    const { resource, imports, exports, providers } = options;
     const controllerFactory = new ControllerFactory(resource);
     const ResourceClass = controllerFactory.createController();
 
@@ -221,6 +222,7 @@ export class JsonApiModule implements NestModule {
 
     return {
       module: module!,
+      imports: imports || [],
       providers: [
         registerResourceProvider,
         resourceOptionsProvider,
@@ -237,7 +239,9 @@ export class JsonApiModule implements NestModule {
         PaginateService,
         DataLayerService,
         SchemaBuilderService,
+        ...(providers || []),
       ],
+      exports: exports || [],
       controllers: [ResourceClass],
     };
   }
