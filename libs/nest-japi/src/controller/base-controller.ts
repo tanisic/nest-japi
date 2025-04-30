@@ -32,7 +32,7 @@ export class JsonBaseController<
   UpdateEntity = InferEntity<UpdateSchema>,
 > implements ControllerMethods
 {
-  public __generics!: ControllerGenerics<
+  declare public __generics: ControllerGenerics<
     Id,
     TEntityManager,
     ViewSchema,

@@ -4,7 +4,7 @@ import {
   ExtractRelations,
   Relation,
   Schema,
-} from 'nest-japi';
+} from '@tanisic/nest-japi';
 import { Post } from 'src/posts/post.entity';
 import { CommentSchema } from '../comments/comments.schema';
 import { z } from 'zod';

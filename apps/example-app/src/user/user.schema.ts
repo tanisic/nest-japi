@@ -1,4 +1,4 @@
-import { Attribute, BaseSchema, Relation, Schema } from 'nest-japi';
+import { Attribute, BaseSchema, Relation, Schema } from '@tanisic/nest-japi';
 import { User } from 'src/user/user.entity';
 import { CommentSchema } from 'src/comments/comments.schema';
 import { PostSchema } from 'src/posts/posts.schema';

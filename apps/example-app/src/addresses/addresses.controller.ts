@@ -1,4 +1,4 @@
-import { Resource } from 'nest-japi';
+import { Resource } from '@tanisic/nest-japi';
 import { AddressSchema } from 'src/addresses/addresses.schema';
 import { BaseResource } from 'src/resource/BaseResource';
 import { z } from 'zod';

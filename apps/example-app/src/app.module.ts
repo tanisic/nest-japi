@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { JsonApiModule } from 'nest-japi';
+import { JsonApiModule } from '@tanisic/nest-japi';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { EntityGenerator } from '@mikro-orm/entity-generator';

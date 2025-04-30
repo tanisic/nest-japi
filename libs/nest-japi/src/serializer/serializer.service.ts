@@ -30,7 +30,7 @@ export interface SerializeCustomOptions {
 
 type JsonApiTypeString = string;
 type CollectionName = string;
-type RelatorKey = `${JsonApiTypeString}__${CollectionName}`;
+type RelatorKey = `${JsonApiTypeString}&&${CollectionName}`;
 type SerializePostProcessProps = {
   fields?: SparseFields["schema"];
 };
@@ -115,7 +115,7 @@ export class SerializerService {
             relatedName: relationName,
           },
         );
-        this.relatorsMap.set(`${type}__${String(relationName)}`, relator);
+        this.relatorsMap.set(`${type}&&${String(relationName)}`, relator);
       }
     }
   }
@@ -226,8 +226,8 @@ export class SerializerService {
   }
 
   private getTypeRelators(type: JsonApiTypeString): Relator<unknown, any>[] {
-    const validRelatorKeys = Array.from(this.relatorsMap.keys()).filter((key) =>
-      key.startsWith(type),
+    const validRelatorKeys = Array.from(this.relatorsMap.keys()).filter(
+      (key) => key.split("&&")[0] === type,
     );
     const result = [];
     for (const key of validRelatorKeys) {

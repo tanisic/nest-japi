@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommentsService } from './comments.service';
-import { JsonApiModule } from 'nest-japi';
+import { JsonApiModule } from '@tanisic/nest-japi';
 import { CommentResource } from './comments.controller';
 
 @Module({

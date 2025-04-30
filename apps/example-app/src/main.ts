@@ -53,6 +53,6 @@ async function bootstrap() {
   app.use('/docs-new', apiReference({ content: document }));
   RedocModule.setup('/docs', app, document, {});
 
-  await app.listen(3000);
+  await app.listen(3555);
 }
 bootstrap();

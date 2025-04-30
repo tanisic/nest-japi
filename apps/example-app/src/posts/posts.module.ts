@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PostResource } from './posts.controller';
-import { JsonApiModule } from 'nest-japi';
+import { JsonApiModule } from '@tanisic/nest-japi';
 
 @Module({
   imports: [JsonApiModule.forFeature({ resource: PostResource })],

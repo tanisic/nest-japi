@@ -1,5 +1,5 @@
 import { EntityManager } from '@mikro-orm/postgresql';
-import { BaseSchema, JsonBaseController } from 'nest-japi';
+import { BaseSchema, JsonBaseController } from '@tanisic/nest-japi';
 
 export class BaseResource<
   IdType extends string | number = string | number,

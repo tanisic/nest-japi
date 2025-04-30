@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AddressesService } from './addresses.service';
-import { JsonApiModule } from 'nest-japi';
+import { JsonApiModule } from '@tanisic/nest-japi';
 import { AddressResource } from './addresses.controller';
 
 @Module({

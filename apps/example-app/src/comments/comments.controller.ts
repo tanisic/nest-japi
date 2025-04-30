@@ -1,4 +1,4 @@
-import { Resource } from 'nest-japi';
+import { Resource } from '@tanisic/nest-japi';
 import { BaseResource } from 'src/resource/BaseResource';
 import {
   CommentSchema,

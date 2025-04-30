@@ -1,4 +1,4 @@
-import { PatchBody, QueryParams, Resource } from 'nest-japi';
+import { PatchBody, QueryParams, Resource } from '@tanisic/nest-japi';
 import { Request } from 'express';
 import { DataDocument } from 'ts-japi';
 import { ApiOperation } from '@nestjs/swagger';
