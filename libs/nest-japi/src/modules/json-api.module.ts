@@ -58,11 +58,9 @@ export interface JsonApiResourceModuleOptions
   resource: Type<JsonBaseController>;
 }
 
-type AsyncOptions<T> = {
-  useFactory: (...args: any[]) => Promise<T> | T;
-  inject?: any[];
-  imports?: any[];
-};
+export interface JsonApiAsyncModuleOptions
+  extends Pick<ModuleMetadata, "imports" | "providers">,
+    Pick<FactoryProvider<JsonApiModuleOptions>, "useFactory" | "inject"> {}
 
 @Global()
 @Module({})
@@ -95,19 +93,22 @@ export class JsonApiModule implements NestModule {
     });
   }
 
-  static forRootAsync(
-    options: AsyncOptions<JsonApiModuleOptions>,
-  ): DynamicModule {
+  static forRootAsync(options: JsonApiAsyncModuleOptions): DynamicModule {
     const optionsProvider: Provider = {
       provide: JSONAPI_GLOBAL_OPTIONS,
       useFactory: options.useFactory,
       inject: options.inject ?? [],
     };
 
+    const providers: Provider[] = [
+      optionsProvider,
+      ...(options.providers || []),
+    ];
+
     return this.buildRootModule({
       imports: options.imports ?? [],
-      providers: [optionsProvider],
-      exports: [],
+      providers,
+      exports: [...providers],
     });
   }
 
@@ -116,7 +117,7 @@ export class JsonApiModule implements NestModule {
   ): DynamicModule {
     const entityManagerProvider: FactoryProvider<EntityManager> = {
       provide: EntityManager,
-      useFactory: (orm: MikroORM) => orm.em.fork(),
+      useFactory: (orm: MikroORM) => orm.em,
       inject: [MikroORM],
     };
 
