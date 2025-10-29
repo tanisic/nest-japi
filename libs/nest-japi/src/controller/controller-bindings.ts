@@ -12,6 +12,7 @@ import { inputPostBodyMixin } from "../mixins/input-post-body.mixin";
 import { inputRelationNameMixin } from "../mixins/input-relation-name.mixin";
 import { JsonApiInputPatchRelationInterceptor } from "../schema/interceptors/input-patch-relation.interceptor";
 import { patchRelationship } from "../swagger/methods/patch-relationship";
+import { getRelationship } from "../swagger/methods/get-relationship";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -20,7 +21,7 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "schema",
     implementation: JsonBaseController.prototype.getAll,
-    swaggerImplementation: getAll,
+    // swaggerImplementation: getAll,
     pipes: [QueryAllPipe],
     parameters: [
       {
@@ -108,6 +109,7 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.GET,
     schema: "schema",
     implementation: JsonBaseController.prototype.getRelationship,
+    swaggerImplementation: getRelationship,
     pipes: [],
     parameters: [
       {

@@ -37,6 +37,7 @@ import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 import { JsonBaseController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
 import { BaseSchema, getResourceOptions } from "../schema";
+import { JsonApiSwaggerSchemasRegister } from "../swagger/json-api-swagger-schema-builder";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -85,6 +86,7 @@ export class ControllerFactory {
     this.bindMethods();
     ApiExtraModels(FilterOperatorsSwagger)(this.controllerClass.prototype);
     this.applyControllerDecorator();
+    this.generateSwaggerSchemas();
     return this.controllerClass;
   }
 
@@ -163,6 +165,13 @@ export class ControllerFactory {
       schemas[binding.schema as keyof Schemas<any, any, any>] ||
       schemas["schema"]
     );
+  }
+
+  private generateSwaggerSchemas() {
+    const swaggerGenerator = new JsonApiSwaggerSchemasRegister(
+      this.controllerClass,
+    );
+    swaggerGenerator.registerSchemas();
   }
 
   private bindRouteMethod(methodName: MethodName): void {

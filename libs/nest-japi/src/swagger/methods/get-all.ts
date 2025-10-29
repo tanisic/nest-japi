@@ -10,6 +10,7 @@ import { FilterOperators, LogicalOperators } from "../filter-operators";
 import { generateSchema } from "@anatine/zod-openapi";
 import { fullJsonApiResponseSchema } from "../../schema/zod/common";
 import { JSONAPI_CONTENT_TYPE } from "../../constants";
+import { z } from "zod";
 
 export function getAll({
   resource,
