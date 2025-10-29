@@ -5,10 +5,10 @@ import {
 import { InferControllerGenerics, MethodName } from "../controller/types";
 import { Injectable, Type } from "@nestjs/common";
 import { Schemas } from "../schema/types";
-import { snakeCase } from "es-toolkit";
 import { JsonBaseController } from "../controller/base-controller";
 import { BaseSchema } from "../schema";
 import { MetaSchemas, UniqueTuple } from "./types";
+import { snakeCase } from "../helpers";
 
 export interface ResourceOptions<
   DisabledMethods extends readonly MethodName[] | undefined = undefined,
