@@ -1,4 +1,4 @@
-import { z, ZodObject, ZodRawShape, ZodTypeAny } from "zod";
+import { z, ZodObject, ZodRawShape } from "zod";
 import { getAttributes, getRelations } from "../helpers/schema-helper";
 import { Type } from "@nestjs/common";
 import { BaseSchema } from "../base-schema";

@@ -1,10 +1,12 @@
 import { Type } from "@nestjs/common";
 import {
   fullJsonApiResponseSchema,
+  getRelations,
   getResourceOptions,
   getSchemasFromResource,
   InferSchemas,
   jsonApiPatchInputSchema,
+  jsonApiPatchRelationInputSchema,
   jsonApiPostInputSchema,
 } from "../schema";
 import { JsonBaseController } from "../controller/base-controller";
@@ -20,7 +22,12 @@ import {
   ApiResponse,
   getSchemaPath,
 } from "@nestjs/swagger";
-import { JSONAPI_CONTENT_TYPE, PARAMS_RESOURCE_ID } from "../constants";
+import {
+  JSONAPI_CONTENT_TYPE,
+  PARAMS_RELATION_ID,
+  PARAMS_RELATION_NAME,
+  PARAMS_RESOURCE_ID,
+} from "../constants";
 import {
   registerFilterQueryParamsSwaggerSchema,
   registerIncludesQueryParamsSwaggerSchema,
@@ -28,14 +35,15 @@ import {
   registerSortQueryParamsSwaggerSchema,
   registerSparseFieldsSwaggerSchema,
 } from "./common";
+import { jsonApiResponseGetRelationshipDataZodSchema } from "../schema/zod/response-get-relationship-schema/response-get-relationship-data-schema";
 
 export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
-  protected readonly viewSchema: Type<InferSchemas<Resource>["ViewSchema"]>;
-  protected readonly createSchema: Type<InferSchemas<Resource>["CreateSchema"]>;
-  protected readonly updateSchema: Type<InferSchemas<Resource>["UpdateSchema"]>;
-  protected readonly resourceOptions: ResourceOptions;
-  protected readonly resource: Type<Resource>;
-  protected readonly resourceName: string;
+  readonly viewSchema: Type<InferSchemas<Resource>["ViewSchema"]>;
+  readonly createSchema: Type<InferSchemas<Resource>["CreateSchema"]>;
+  readonly updateSchema: Type<InferSchemas<Resource>["UpdateSchema"]>;
+  readonly resourceOptions: ResourceOptions;
+  readonly resource: Type<Resource>;
+  readonly resourceName: string;
 
   constructor(resource: Type<Resource>) {
     this.resource = resource;
@@ -136,6 +144,13 @@ export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
       createZodDto(this.patchOneResponseZodSchema()),
     );
   }
+
+  deleteOneResponseDto() {
+    return namedClass(
+      `${this.resourceName}_deleteOne_response`,
+      createZodDto(this.patchOneResponseZodSchema()),
+    );
+  }
   patchOneResponseZodSchema() {
     return fullJsonApiResponseSchema(this.viewSchema, {
       hasIncludes: false,
@@ -144,6 +159,57 @@ export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
       resourceMetaSchema: this.getMetaZodScheme("patchOne", "resource"),
       documentMetaSchema: this.getMetaZodScheme("patchOne", "document"),
     });
+  }
+  deleteOneResponseZodSchema() {
+    return fullJsonApiResponseSchema(this.viewSchema, {
+      hasIncludes: false,
+      withPagination: false,
+      dataArray: false,
+      resourceMetaSchema: this.getMetaZodScheme("deleteOne", "resource"),
+      documentMetaSchema: this.getMetaZodScheme("deleteOne", "document"),
+    });
+  }
+
+  patchRelationshipResponseZodSchema(relName: string) {
+    return jsonApiPatchRelationInputSchema(this.viewSchema, relName).openapi({
+      title: relName,
+    });
+  }
+
+  patchRelationshipResponseDto(relName: string) {
+    return namedClass(
+      `${this.resourceName}_patchRelationship_${relName}_response`,
+      createZodDto(this.patchRelationshipResponseZodSchema(relName)),
+    );
+  }
+
+  getRelationshipResponseZodSchema(relName: string) {
+    return jsonApiPatchRelationInputSchema(this.viewSchema, relName).openapi({
+      title: relName,
+    });
+  }
+
+  getRelationshipResponseDto(relName: string) {
+    return namedClass(
+      `${this.resourceName}_getRelationship_${relName}_response`,
+      createZodDto(this.getRelationshipResponseZodSchema(relName)),
+    );
+  }
+
+  getRelationshipDataResponseZodSchema(relName: string) {
+    return jsonApiResponseGetRelationshipDataZodSchema(
+      this.viewSchema,
+      relName as any,
+    ).openapi({
+      title: relName,
+    });
+  }
+
+  getRelationshipDataResponseDto(relName: string) {
+    return namedClass(
+      `${this.resourceName}_getRelationshipData_${relName}_response`,
+      createZodDto(this.getRelationshipDataResponseZodSchema(relName as any)),
+    );
   }
 }
 export class JsonApiSwaggerSchemasRegister<
@@ -215,7 +281,7 @@ export class JsonApiSwaggerSchemasRegister<
       descriptor,
     );
     ApiResponse({
-      status: 201,
+      status: 200,
       content: {
         [JSONAPI_CONTENT_TYPE]: {
           schema: {
@@ -268,7 +334,7 @@ export class JsonApiSwaggerSchemasRegister<
       descriptor,
     );
     ApiResponse({
-      status: 201,
+      status: 200,
       content: {
         [JSONAPI_CONTENT_TYPE]: {
           schema: {
@@ -279,10 +345,146 @@ export class JsonApiSwaggerSchemasRegister<
     })(this.resource, "patchOne", descriptor);
   }
 
+  private registerDeleteOneSwagger() {
+    const descriptor = this.getMethodDescriptor("deleteOne");
+    const ResponseDto = this.dtoBuilder.deleteOneResponseDto();
+    this.registerDto(ResponseDto);
+
+    ApiParam({ name: PARAMS_RESOURCE_ID, type: "string" })(
+      this.resource,
+      "deleteOne",
+      descriptor,
+    );
+    ApiResponse({
+      status: 200,
+      content: {
+        [JSONAPI_CONTENT_TYPE]: {
+          schema: {
+            $ref: getSchemaPath(ResponseDto),
+          },
+        },
+      },
+    })(this.resource, "deleteOne", descriptor);
+  }
+
+  private registerGetRelationshipSwagger() {
+    const descriptor = this.getMethodDescriptor("getRelationship");
+    const relationResponseDtos: Type<any>[] = [];
+    const relationships = getRelations(this.dtoBuilder.viewSchema);
+
+    relationships.forEach((rel) => {
+      const relDto = this.dtoBuilder.getRelationshipResponseDto(
+        rel.name as string,
+      );
+      this.registerDto(relDto);
+      relationResponseDtos.push(relDto);
+    });
+
+    ApiParam({ name: PARAMS_RESOURCE_ID, type: "string" })(
+      this.resource,
+      "getRelationship",
+      descriptor,
+    );
+    ApiParam({
+      name: PARAMS_RELATION_NAME,
+      type: "string",
+      enum: relationships.map((rel) => rel.name),
+    })(this.resource, "getRelationship", descriptor);
+    ApiResponse({
+      status: 200,
+      content: {
+        [JSONAPI_CONTENT_TYPE]: {
+          schema: {
+            oneOf: relationResponseDtos.map((dto) => ({
+              $ref: getSchemaPath(dto),
+            })),
+          },
+        },
+      },
+    })(this.resource, "getRelationship", descriptor);
+  }
+  private registerGetRelationshipDataSwagger() {
+    const descriptor = this.getMethodDescriptor("getRelationshipData");
+    const relationResponseDtos: Type<any>[] = [];
+    const relationships = getRelations(this.dtoBuilder.viewSchema);
+
+    relationships.forEach((rel) => {
+      const relDto = this.dtoBuilder.getRelationshipDataResponseDto(
+        rel.name as string,
+      );
+      this.registerDto(relDto);
+      relationResponseDtos.push(relDto);
+    });
+
+    ApiParam({ name: PARAMS_RESOURCE_ID, type: "string" })(
+      this.resource,
+      "getRelationshipData",
+      descriptor,
+    );
+    ApiParam({
+      name: PARAMS_RELATION_NAME,
+      type: "string",
+      enum: relationships.map((rel) => rel.name),
+    })(this.resource, "getRelationshipData", descriptor);
+    ApiResponse({
+      status: 200,
+      content: {
+        [JSONAPI_CONTENT_TYPE]: {
+          schema: {
+            oneOf: relationResponseDtos.map((dto) => ({
+              $ref: getSchemaPath(dto),
+            })),
+          },
+        },
+      },
+    })(this.resource, "getRelationshipData", descriptor);
+  }
+
+  private registerPatchRelationshipSwagger() {
+    const descriptor = this.getMethodDescriptor("patchRelationship");
+    const relationResponseDtos: Type<any>[] = [];
+    const relationships = getRelations(this.dtoBuilder.updateSchema);
+
+    relationships.forEach((rel) => {
+      const relDto = this.dtoBuilder.patchRelationshipResponseDto(
+        rel.name as string,
+      );
+      this.registerDto(relDto);
+      relationResponseDtos.push(relDto);
+    });
+
+    ApiParam({ name: PARAMS_RESOURCE_ID, type: "string" })(
+      this.resource,
+      "patchRelationship",
+      descriptor,
+    );
+    ApiParam({
+      name: PARAMS_RELATION_NAME,
+      type: "string",
+      enum: relationships.map((rel) => rel.name),
+    })(this.resource, "patchRelationship", descriptor);
+    ApiResponse({
+      status: 200,
+      content: {
+        [JSONAPI_CONTENT_TYPE]: {
+          schema: {
+            oneOf: relationResponseDtos.map((dto) => ({
+              $ref: getSchemaPath(dto),
+            })),
+          },
+        },
+      },
+    })(this.resource, "patchRelationship", descriptor);
+  }
+
   registerSchemas() {
     this.registerGetAllSwagger();
     this.registerGetOneSwagger();
+    this.registerDeleteOneSwagger();
     this.registerPostOneSwagger();
     this.registerPatchOneSwagger();
+    this.registerGetRelationshipSwagger();
+    this.registerGetRelationshipDataSwagger();
+    this.registerPatchRelationshipSwagger();
   }
 }

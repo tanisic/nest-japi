@@ -5,7 +5,6 @@ import {
   BaseSchema,
   getAttributes,
   getRelations,
-  getResourceOptions,
   getSchemasFromResource,
   getType,
 } from "../schema";
