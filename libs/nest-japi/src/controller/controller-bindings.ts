@@ -4,7 +4,6 @@ import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
-import { getAll, postOne } from "../swagger";
 import { getOne } from "../swagger/methods/get-one";
 import { patchOne } from "../swagger/methods/patch-one";
 import { inputPatchBodyMixin } from "../mixins/input-patch-body.mixin";
@@ -40,7 +39,6 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "schema",
     implementation: JsonBaseController.prototype.getOne,
-    swaggerImplementation: getOne,
     pipes: [QueryOnePipe],
     parameters: [
       {
@@ -74,7 +72,6 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "createSchema",
     implementation: JsonBaseController.prototype.postOne,
-    swaggerImplementation: postOne,
     pipes: [],
     parameters: [
       {
@@ -89,7 +86,6 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchOne,
-    swaggerImplementation: patchOne,
     pipes: [],
     parameters: [
       {

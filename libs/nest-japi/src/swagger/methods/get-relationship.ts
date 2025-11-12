@@ -1,5 +1,4 @@
 import {
-  ApiExtraModels,
   ApiParam,
   ApiProduces,
   ApiResponse,
@@ -14,7 +13,6 @@ import {
 } from "../../constants";
 import { createZodDto } from "@anatine/zod-nestjs";
 import { namedClass } from "../../helpers";
-import { generateSchema } from "@anatine/zod-openapi";
 
 export function getRelationship({
   resource,
@@ -26,21 +24,6 @@ export function getRelationship({
   const relationships = getRelations(schema);
 
   const dtos = relationships.map((rel) => {
-    if (rel.many) {
-      console.log(
-        JSON.stringify(
-          generateSchema(
-            jsonApiPatchRelationInputSchema(schema, rel.name as string).openapi(
-              {
-                title: rel.name as string,
-              },
-            ),
-            false,
-            "3.0",
-          ),
-        ),
-      );
-    }
     return namedClass(
       `${schema.name}_rel_${rel.name}`,
       createZodDto(
