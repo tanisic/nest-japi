@@ -37,6 +37,7 @@ import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 import { JsonBaseController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
 import { BaseSchema, getResourceOptions } from "../schema";
+import { JsonApiSwaggerSchemasRegister } from "../swagger/json-api-swagger-schema-builder";
 
 const allowedMethods: MethodName[] = [
   "getAll",
@@ -85,6 +86,7 @@ export class ControllerFactory {
     this.bindMethods();
     ApiExtraModels(FilterOperatorsSwagger)(this.controllerClass.prototype);
     this.applyControllerDecorator();
+    this.generateSwaggerSchemas();
     return this.controllerClass;
   }
 
@@ -165,13 +167,19 @@ export class ControllerFactory {
     );
   }
 
+  private generateSwaggerSchemas() {
+    const swaggerGenerator = new JsonApiSwaggerSchemasRegister(
+      this.controllerClass,
+    );
+    swaggerGenerator.registerSchemas();
+  }
+
   private bindRouteMethod(methodName: MethodName): void {
     const {
       name,
       path,
       method,
       pipes,
-      swaggerImplementation,
       interceptors = [],
     } = controllerBindings[methodName];
     const descriptor = Reflect.getOwnPropertyDescriptor(
@@ -183,17 +191,6 @@ export class ControllerFactory {
       throw new Error(
         `Descriptor for "${this.controllerClass.name}[${name}]" is undefined`,
       );
-    }
-
-    if (swaggerImplementation) {
-      const schemas = this.getControllerSchemas();
-      const resourceOptions = getResourceOptions(this.controllerClass) as any;
-      swaggerImplementation({
-        resource: this.controllerClass.prototype,
-        descriptor,
-        schemas,
-        resourceOptions,
-      });
     }
 
     switch (method) {

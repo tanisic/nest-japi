@@ -46,10 +46,19 @@ import { SerializerService } from "../serializer/serializer.service";
 import { JsonApiOptions } from "./json-api-options";
 import { SchemaRegistryService } from "./services/schema-registry.service";
 import { JsonApiResourceExplorerService } from "./services/resource-explorer.service";
+import type { Request, Response } from "express";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
   maxPaginationSize?: number;
+  /**
+   * Generate request id, used for error id generation.
+   * @default Generates a random UUID v4.
+   */
+  requestId?: (req: Request, res: Response) => Promise<string> | string;
+  /**
+   * Base URL for the API, used in links generation.
+   */
   baseUrl: string;
 }
 

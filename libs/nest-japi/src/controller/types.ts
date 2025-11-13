@@ -2,7 +2,6 @@ import { PipeTransform, RequestMethod } from "@nestjs/common";
 import { NestInterceptor, Type } from "@nestjs/common/interfaces";
 import { InferEntity, Schemas } from "../schema/types";
 import { BaseSchema } from "../schema/base-schema";
-import { SwaggerMethodImplementation } from "../swagger";
 import { EntityManager } from "@mikro-orm/core";
 
 export type MethodName =
@@ -38,7 +37,6 @@ export interface Binding<T extends MethodName> {
   name: T;
   schema: keyof Schemas<any, any, any>;
   implementation: any[T];
-  swaggerImplementation?: SwaggerMethodImplementation;
   pipes?: (Type<PipeTransform> | PipeTransform)[];
   interceptors?: (NestInterceptor | Function)[];
   parameters: {

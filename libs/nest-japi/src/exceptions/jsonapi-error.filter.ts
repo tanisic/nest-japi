@@ -1,5 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from "@nestjs/common";
-import { Response } from "express";
+import { Response, Request } from "express";
 import { ErrorSerializer, JapiError } from "ts-japi";
 import { X_REQUEST_ID_NAME } from "../constants";
 
@@ -9,7 +9,8 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const errorSerializer = new ErrorSerializer({});
-    const requestId = response.getHeader(X_REQUEST_ID_NAME);
+    const request = ctx.getRequest<Request>();
+    const requestId = request[X_REQUEST_ID_NAME];
     exception.id = requestId as string;
     const statusCode = parseInt(exception.status ?? "500", 10);
 

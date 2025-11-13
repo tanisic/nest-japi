@@ -4,14 +4,10 @@ import { BindingsConfig } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
-import { getAll, postOne } from "../swagger";
-import { getOne } from "../swagger/methods/get-one";
-import { patchOne } from "../swagger/methods/patch-one";
 import { inputPatchBodyMixin } from "../mixins/input-patch-body.mixin";
 import { inputPostBodyMixin } from "../mixins/input-post-body.mixin";
 import { inputRelationNameMixin } from "../mixins/input-relation-name.mixin";
 import { JsonApiInputPatchRelationInterceptor } from "../schema/interceptors/input-patch-relation.interceptor";
-import { patchRelationship } from "../swagger/methods/patch-relationship";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -20,7 +16,7 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "schema",
     implementation: JsonBaseController.prototype.getAll,
-    swaggerImplementation: getAll,
+    // swaggerImplementation: getAll,
     pipes: [QueryAllPipe],
     parameters: [
       {
@@ -39,7 +35,6 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "schema",
     implementation: JsonBaseController.prototype.getOne,
-    swaggerImplementation: getOne,
     pipes: [QueryOnePipe],
     parameters: [
       {
@@ -73,7 +68,6 @@ export const controllerBindings: BindingsConfig = {
     path: "/",
     schema: "createSchema",
     implementation: JsonBaseController.prototype.postOne,
-    swaggerImplementation: postOne,
     pipes: [],
     parameters: [
       {
@@ -88,7 +82,6 @@ export const controllerBindings: BindingsConfig = {
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchOne,
-    swaggerImplementation: patchOne,
     pipes: [],
     parameters: [
       {
@@ -148,7 +141,6 @@ export const controllerBindings: BindingsConfig = {
     method: RequestMethod.PATCH,
     schema: "updateSchema",
     implementation: JsonBaseController.prototype.patchRelationship,
-    swaggerImplementation: patchRelationship,
     interceptors: [JsonApiInputPatchRelationInterceptor],
     parameters: [
       {

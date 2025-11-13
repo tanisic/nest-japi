@@ -1,14 +1,16 @@
+import { Type } from "@nestjs/common";
+
 export const namedClass = (
   name: string,
   cls: new (...rest: unknown[]) => Record<never, unknown>,
-) =>
+): Type<any> =>
   ({
     [name]: class extends cls {
       constructor(...arg: unknown[]) {
         super(...arg);
       }
     },
-  })[name];
+  })[name]!;
 
 export function joinUrlPaths(...paths: string[]): string {
   return paths

@@ -1,10 +1,12 @@
-import { z, ZodObject, ZodRawShape, ZodTypeAny } from "zod";
+import { z, ZodObject, ZodRawShape } from "zod";
 import { getAttributes, getRelations } from "../helpers/schema-helper";
 import { Type } from "@nestjs/common";
 import { BaseSchema } from "../base-schema";
 import { zodTypeSchema } from "./type";
 import { extendZodWithOpenApi } from "@anatine/zod-openapi";
+import { patchNestjsSwagger } from "@anatine/zod-nestjs";
 extendZodWithOpenApi(z);
+patchNestjsSwagger(undefined, "3.0");
 
 export const zodDataSchema = <Schema extends BaseSchema<any>>(
   schema: Type<Schema>,
@@ -141,7 +143,7 @@ export const zodAttributesSchema = <Schema extends BaseSchema<any>>(
 };
 
 export const jsonApiVersionSchema = z.object({
-  version: z.string().default("1.0"),
+  version: z.string().default("1.1"),
 });
 
 export const paginationLinksSchema = z
