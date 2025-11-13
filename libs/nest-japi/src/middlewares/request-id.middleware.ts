@@ -1,17 +1,25 @@
-import { Injectable, NestMiddleware } from "@nestjs/common";
+import { Inject, Injectable, NestMiddleware } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
-import { v4 as uuidv4 } from "uuid";
-import { X_REQUEST_ID_NAME } from "../constants";
+import { JSONAPI_GLOBAL_OPTIONS, X_REQUEST_ID_NAME } from "../constants";
+import { type JsonApiModuleOptions } from "../modules";
+
+declare module "express" {
+  interface Request {
+    [X_REQUEST_ID_NAME]: string;
+  }
+}
 
 @Injectable()
 export class RequestIdMiddleware implements NestMiddleware {
-  use(req: Request, res: Response, next: NextFunction) {
-    const requestId = req.headers[X_REQUEST_ID_NAME] || uuidv4();
+  constructor(
+    @Inject(JSONAPI_GLOBAL_OPTIONS)
+    private resourceOptions: JsonApiModuleOptions,
+  ) {}
 
-    req.headers[X_REQUEST_ID_NAME] = requestId;
-
-    res.setHeader(X_REQUEST_ID_NAME, requestId);
-
+  async use(req: Request, res: Response, next: NextFunction) {
+    const requestId =
+      (await this.resourceOptions.requestId?.(req, res)) || crypto.randomUUID();
+    req[X_REQUEST_ID_NAME] = requestId;
     next();
   }
 }
