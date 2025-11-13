@@ -1,6 +1,7 @@
 import { Type } from "@nestjs/common";
 import {
   fullJsonApiResponseSchema,
+  getRelationByName,
   getRelations,
   getResourceOptions,
   getSchemasFromResource,
@@ -197,12 +198,27 @@ export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
   }
 
   getRelationshipDataResponseZodSchema(relName: string) {
-    return jsonApiResponseGetRelationshipDataZodSchema(
-      this.viewSchema,
-      relName as any,
-    ).openapi({
-      title: relName,
-    });
+    const rel = getRelationByName(this.viewSchema, relName);
+
+    if (!rel) {
+      throw new Error(
+        `Relation with name ${relName} not found in resource ${this.resourceName}`,
+      );
+    }
+
+    return fullJsonApiResponseSchema(rel.schema(), {
+      hasIncludes: false,
+      withPagination: false,
+      dataArray: rel.many,
+      resourceMetaSchema: this.getMetaZodScheme(
+        "getRelationshipData",
+        "resource",
+      ),
+      documentMetaSchema: this.getMetaZodScheme(
+        "getRelationshipData",
+        "document",
+      ),
+    }).openapi({ title: rel.name as string });
   }
 
   getRelationshipDataResponseDto(relName: string) {

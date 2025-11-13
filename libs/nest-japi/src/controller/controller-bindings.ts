@@ -8,7 +8,6 @@ import { inputPatchBodyMixin } from "../mixins/input-patch-body.mixin";
 import { inputPostBodyMixin } from "../mixins/input-post-body.mixin";
 import { inputRelationNameMixin } from "../mixins/input-relation-name.mixin";
 import { JsonApiInputPatchRelationInterceptor } from "../schema/interceptors/input-patch-relation.interceptor";
-import { patchRelationship } from "../swagger/methods/patch-relationship";
 
 export const controllerBindings: BindingsConfig = {
   getAll: {

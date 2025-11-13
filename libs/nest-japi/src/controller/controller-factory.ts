@@ -180,7 +180,6 @@ export class ControllerFactory {
       path,
       method,
       pipes,
-      swaggerImplementation,
       interceptors = [],
     } = controllerBindings[methodName];
     const descriptor = Reflect.getOwnPropertyDescriptor(
@@ -192,17 +191,6 @@ export class ControllerFactory {
       throw new Error(
         `Descriptor for "${this.controllerClass.name}[${name}]" is undefined`,
       );
-    }
-
-    if (swaggerImplementation) {
-      const schemas = this.getControllerSchemas();
-      const resourceOptions = getResourceOptions(this.controllerClass) as any;
-      swaggerImplementation({
-        resource: this.controllerClass.prototype,
-        descriptor,
-        schemas,
-        resourceOptions,
-      });
     }
 
     switch (method) {
