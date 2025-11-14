@@ -25,7 +25,6 @@ import {
 } from "@nestjs/swagger";
 import {
   JSONAPI_CONTENT_TYPE,
-  PARAMS_RELATION_ID,
   PARAMS_RELATION_NAME,
   PARAMS_RESOURCE_ID,
 } from "../constants";
@@ -36,7 +35,6 @@ import {
   registerSortQueryParamsSwaggerSchema,
   registerSparseFieldsSwaggerSchema,
 } from "./common";
-import { jsonApiResponseGetRelationshipDataZodSchema } from "../schema/zod/response-get-relationship-schema/response-get-relationship-data-schema";
 
 export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
   readonly viewSchema: Type<InferSchemas<Resource>["ViewSchema"]>;

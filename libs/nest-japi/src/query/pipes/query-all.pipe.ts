@@ -56,8 +56,7 @@ export class QueryAllPipe
     let filter: FilterQuery<any> | null = null;
 
     if (value.filter) {
-      const filterJson = this.parseFilter(value.filter);
-      filter = this.filterService.transform(filterJson);
+      filter = this.parseFilter(value.filter);
     }
 
     return {
@@ -70,7 +69,15 @@ export class QueryAllPipe
     };
   }
 
-  parseFilter(filter: any): FilterQuery<unknown> {
+  parseFilter(filter: string | Record<string, any>): FilterQuery<unknown> {
+    if (typeof filter === "object") {
+      return this.filterService.transformSimpleFilter(filter);
+    }
+    const parsed = this.parseComplexFilter(filter);
+    return this.filterService.transformComplexFilter(parsed);
+  }
+
+  parseComplexFilter(filter: string): FilterQuery<unknown> {
     try {
       return JSON.parse(filter);
     } catch (err) {

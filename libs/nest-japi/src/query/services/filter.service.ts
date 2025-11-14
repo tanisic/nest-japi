@@ -39,7 +39,132 @@ export class FilterService {
 
   filterKeys = [...this.singleFilterKeys, ...this.arrayFilterKeys];
 
-  transform<T>(
+  private tryParseArrayString(value: any): any[] | null {
+    if (typeof value !== "string") return null;
+
+    const trimmed = value.trim();
+
+    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return null;
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Converts simple object filters into operator-based structure,
+   * but does NOT allow operators. Supports nested relations.
+   *
+   * Example:
+   *  { age: 20, user: { name: "John" } }
+   *     → { age: { $eq: 20 }, user: { name: { $eq: "John" }}}
+   */
+  transformSimpleFilter(
+    filters: Record<string, any>,
+    currentSchema = this.schema,
+  ): Record<string, any> {
+    const out: Record<string, any> = {};
+
+    for (const [fullKey, rawValue] of Object.entries(filters)) {
+      if (fullKey.startsWith("$")) {
+        throw new JapiError({
+          status: "400",
+          source: { parameter: "filter" },
+          detail: `Operators are not allowed in simple filters: ${fullKey}`,
+        });
+      }
+
+      const segments = fullKey.split(".");
+      let schema = currentSchema;
+
+      let target = out;
+      let lastKey = segments[segments.length - 1] as string;
+
+      for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i] as string;
+
+        // @ts-expect-error
+        const relation = getRelationByName(schema, segment);
+        const attribute = getAttributeByName(schema, segment);
+
+        if (!relation && !attribute) {
+          throw new JapiError({
+            status: "400",
+            source: { parameter: "filter" },
+            detail: `${segment} is not an attribute or relation of ${schema.name}`,
+          });
+        }
+
+        const isLast = i === segments.length - 1;
+
+        if (!isLast) {
+          // must be relation for nested segments
+          if (!relation) {
+            throw new JapiError({
+              status: "400",
+              source: { parameter: "filter" },
+              detail: `${segment} must be a relation because deeper fields follow.`,
+            });
+          }
+
+          if (!target[segment]) {
+            target[segment] = {};
+          }
+
+          target = target[segment];
+          schema = relation.schema();
+        } else {
+          // last segment
+          if (relation) {
+            throw new JapiError({
+              status: "400",
+              source: { parameter: "filter" },
+              detail: `Relation '${segment}' cannot be filtered without specifying an attribute. (e.g. '${segment}.id')`,
+            });
+          }
+        }
+      }
+
+      // --- Value handling (only for attributes) ---
+
+      const parsedArray = this.tryParseArrayString(rawValue);
+      if (parsedArray !== null) {
+        target[lastKey] = { $in: parsedArray };
+        continue;
+      }
+
+      if (
+        typeof rawValue !== "object" ||
+        rawValue === null ||
+        rawValue instanceof Date
+      ) {
+        target[lastKey] = { $eq: rawValue };
+        continue;
+      }
+
+      if (Array.isArray(rawValue)) {
+        target[lastKey] = { $in: rawValue };
+        continue;
+      }
+
+      if (Object.keys(rawValue).some((k) => k.startsWith("$"))) {
+        throw new JapiError({
+          status: "400",
+          source: { parameter: "filter" },
+          detail: `Operators are not allowed in simple filters at ${fullKey}`,
+        });
+      }
+
+      target[lastKey] = this.transformSimpleFilter(rawValue, schema);
+    }
+
+    return out;
+  }
+
+  transformComplexFilter<T>(
     filters: Record<string, any>,
     currentSchema = this.schema,
   ): FilterQuery<T> {
@@ -66,7 +191,7 @@ export class FilterService {
         );
       } else if (attribute) {
         // @ts-expect-error
-        transformedFilters[attribute.dataKey] = this.transform(
+        transformedFilters[attribute.dataKey] = this.transformComplexFilter(
           value,
           currentSchema,
         );
@@ -107,7 +232,7 @@ export class FilterService {
     value: FilterQuery<unknown>,
   ): FilterQuery<unknown> {
     const relationSchema = relation.schema();
-    return this.transform(value, relationSchema);
+    return this.transformComplexFilter(value, relationSchema);
   }
 
   private handleLogicalOperator(value: any): any {
@@ -127,7 +252,7 @@ export class FilterService {
           detail: "Conditions must be objects.",
         });
       }
-      return this.transform(condition);
+      return this.transformComplexFilter(condition);
     });
   }
 }
