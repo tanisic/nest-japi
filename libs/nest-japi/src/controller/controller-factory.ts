@@ -36,7 +36,7 @@ import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
 import { JsonBaseController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
-import { BaseSchema, getResourceOptions } from "../schema";
+import { BaseSchema } from "../schema";
 import { JsonApiSwaggerSchemasRegister } from "../swagger/json-api-swagger-schema-builder";
 
 const allowedMethods: MethodName[] = [
