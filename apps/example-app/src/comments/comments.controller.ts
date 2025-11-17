@@ -4,11 +4,13 @@ import {
   CommentSchema,
   CreateCommentSchema,
 } from 'src/comments/comments.schema';
+import { ApiTags } from '@nestjs/swagger';
 
 @Resource({
   schemas: { schema: CommentSchema, createSchema: CreateCommentSchema },
   path: 'v1/comments',
 })
+@ApiTags('Comments')
 export class CommentResource extends BaseResource<
   string,
   CommentSchema,

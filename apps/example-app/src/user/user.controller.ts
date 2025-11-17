@@ -1,7 +1,7 @@
 import { PatchBody, QueryParams, Resource } from '@tanisic/nest-japi';
 import { Request } from 'express';
 import { DataDocument } from 'ts-japi';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BaseResource } from 'src/resource/BaseResource';
 import { UserSchema, CreateUserSchema, PatchUserSchema } from './user.schema';
 import { UserService } from './user.service';
@@ -14,6 +14,7 @@ import { UserService } from './user.service';
   },
   path: 'v1/users',
 })
+@ApiTags('Users')
 export class UserResource extends BaseResource<
   string,
   UserSchema,
