@@ -143,6 +143,7 @@ export class SerializerService {
       options?.fields,
     );
     const document = await serializer.serialize(data, {
+      version: "1.1",
       ...options,
       projection,
       include: options?.include ?? [],
