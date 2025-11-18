@@ -3,7 +3,7 @@ import { ControllerGenerics, ControllerMethods } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
 import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
 import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
-import { CURRENT_SCHEMAS } from "../constants";
+import { CURRENT_SCHEMAS, JSONAPI_SERVICE } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
@@ -20,8 +20,9 @@ import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
 import qs, { ParsedQs } from "qs";
 import { RelationAttribute } from "../decorators/relation.decorator";
+import { type JsonApiBaseService } from "../service";
 
-export class JsonBaseController<
+export class JsonApiBaseController<
   Id extends string | number = string | number,
   TEntityManager extends EntityManager = EntityManager,
   ViewSchema extends BaseSchema<any> = BaseSchema<any>,
@@ -42,6 +43,8 @@ export class JsonBaseController<
     CreateEntity,
     UpdateEntity
   >;
+  @Inject(JSONAPI_SERVICE)
+  protected service!: JsonApiBaseService;
 
   @Inject(SerializerService)
   protected serializerService!: SerializerService;
@@ -90,13 +93,14 @@ export class JsonBaseController<
     request: Request,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
-    const [data, count] = await this.dataLayer.getAllAndCount(query);
+    const { data, count, documentMeta, resourceMeta } =
+      await this.service.getAll(query);
     const unwrapped = serialize(data, {
       populate: query.include?.dbIncludes || ([] as any),
       forceObject: true,
     });
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped as EntityDTO<ViewEntity>,
+      unwrapped as any,
       this.viewSchema,
     );
 
@@ -109,7 +113,8 @@ export class JsonBaseController<
         paginator: pagination,
       },
       metaizers: {
-        document: new Metaizer(() => ({ count })),
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
       },
     });
   }
@@ -119,7 +124,10 @@ export class JsonBaseController<
     query: SingleQueryParams,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
-    const data = await this.dataLayer.getOne(id, query.include?.dbIncludes);
+    const { data, documentMeta, resourceMeta } = await this.service.getOne(
+      id,
+      query,
+    );
 
     if (!data) {
       throw new NotFoundException(`Object with id ${id} does not exist.`);
@@ -137,6 +145,10 @@ export class JsonBaseController<
     return this.serializerService.serialize(result, this.viewSchema, {
       include: query.include?.schemaIncludes || [],
       fields: query.fields?.schema || {},
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
     });
   }
 
@@ -154,9 +166,9 @@ export class JsonBaseController<
       );
     }
 
-    const data = await this.dataLayer.getOne(id, [
-      relation.dataKey as keyof ExtractRelations<ViewSchema>,
-    ]);
+    const { data, documentMeta, resourceMeta } =
+      // @ts-expect-error strange TS error
+      await this.service.getRelationship(id, relation);
 
     if (!data) {
       throw new NotFoundException("Root data does not exist.");
@@ -195,6 +207,10 @@ export class JsonBaseController<
     return this.serializerService.serialize(result, relationSchema, {
       onlyIdentifier: true,
       nullData: shouldDisplayNull(relation, unwrapped),
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
     });
   }
 

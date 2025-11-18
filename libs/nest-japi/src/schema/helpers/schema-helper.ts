@@ -19,7 +19,7 @@ import {
 } from "../types";
 import { EntityClass } from "@mikro-orm/core";
 import { ResourceOptions } from "../../decorators/resource.decorator";
-import { JsonBaseController } from "../../controller/base-controller";
+import { JsonApiBaseController } from "../../controller/base-controller";
 import { MethodName } from "../../controller/types";
 
 export function getRelations<Schema extends BaseSchema<any>>(
@@ -108,7 +108,7 @@ export function getResourceOptions<
   Resource extends object,
   Schemas extends InferSchemas<Resource>,
 >(
-  resource: Type<JsonBaseController>,
+  resource: Type<JsonApiBaseController>,
 ): ResourceOptions<
   MethodName[],
   Schemas["ViewSchema"],

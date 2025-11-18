@@ -18,7 +18,7 @@ import { Pagination, SparseFields } from "../query";
 import { joinUrlPaths } from "../helpers";
 import { JsonApiOptions } from "../modules/json-api-options";
 import Resource from "ts-japi/lib/models/resource.model";
-import { JsonBaseController } from "../controller/base-controller";
+import { JsonApiBaseController } from "../controller/base-controller";
 import ResourceIdentifier from "ts-japi/lib/models/resource-identifier.model";
 import { JsonApiResourceExplorerService } from "../modules/services/resource-explorer.service";
 
@@ -37,7 +37,7 @@ type SerializePostProcessProps = {
 
 @Injectable()
 export class SerializerService {
-  private resources: Type<JsonBaseController>[];
+  private resources: Type<JsonApiBaseController>[];
   private serializerMap = new Map<JsonApiTypeString, Serializer<any>>();
   private relatorsMap = new Map<RelatorKey, Relator<unknown, any>>();
 
@@ -54,7 +54,7 @@ export class SerializerService {
 
   private baseUrl: string;
 
-  protected resourceUrl(resource: Type<JsonBaseController>) {
+  protected resourceUrl(resource: Type<JsonApiBaseController>) {
     const options = getResourceOptions(resource);
     return joinUrlPaths(this.baseUrl, options.path!);
   }

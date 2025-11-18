@@ -10,7 +10,7 @@ import {
   jsonApiPatchRelationInputSchema,
   jsonApiPostInputSchema,
 } from "../schema";
-import { JsonBaseController } from "../controller/base-controller";
+import { JsonApiBaseController } from "../controller/base-controller";
 import { ResourceOptions } from "../decorators";
 import { namedClass } from "../helpers";
 import { createZodDto } from "@anatine/zod-nestjs";
@@ -36,7 +36,7 @@ import {
   registerSparseFieldsSwaggerSchema,
 } from "./common";
 
-export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
+export class JsonApiDtoBuilder<Resource extends JsonApiBaseController> {
   readonly viewSchema: Type<InferSchemas<Resource>["ViewSchema"]>;
   readonly createSchema: Type<InferSchemas<Resource>["CreateSchema"]>;
   readonly updateSchema: Type<InferSchemas<Resource>["UpdateSchema"]>;
@@ -227,7 +227,7 @@ export class JsonApiDtoBuilder<Resource extends JsonBaseController> {
   }
 }
 export class JsonApiSwaggerSchemasRegister<
-  Resource extends JsonBaseController,
+  Resource extends JsonApiBaseController,
 > {
   dtoBuilder: JsonApiDtoBuilder<Resource>;
 

@@ -11,7 +11,7 @@ import {
   getType,
 } from "../../schema";
 import { JSONAPI_RESOURCE_REGISTRY } from "../../constants";
-import { type JsonBaseController } from "../../controller/base-controller";
+import { type JsonApiBaseController } from "../../controller/base-controller";
 
 @Injectable()
 export class SchemaRegistryService implements OnApplicationBootstrap {
@@ -19,7 +19,7 @@ export class SchemaRegistryService implements OnApplicationBootstrap {
 
   constructor(
     @Inject(JSONAPI_RESOURCE_REGISTRY)
-    private readonly registry: Set<Type<JsonBaseController>>,
+    private readonly registry: Set<Type<JsonApiBaseController>>,
   ) {}
 
   onApplicationBootstrap() {

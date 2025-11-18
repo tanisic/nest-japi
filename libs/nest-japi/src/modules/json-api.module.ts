@@ -1,6 +1,7 @@
 import { Global, Inject, Logger, Module } from "@nestjs/common";
 import type {
   DynamicModule,
+  ExistingProvider,
   FactoryProvider,
   MiddlewareConsumer,
   ModuleMetadata,
@@ -17,6 +18,8 @@ import {
   JSONAPI_SCHEMA_ENTITY_CLASS,
   SCHEMA_REPOSITORY,
   JSONAPI_RESOURCE_REGISTRY,
+  JSONAPI_SERVICE_REGISTRY,
+  JSONAPI_SERVICE,
 } from "../constants";
 import { EntityManager, MikroORM } from "@mikro-orm/core";
 import { RequestIdMiddleware } from "../middlewares/request-id.middleware";
@@ -26,7 +29,7 @@ import {
   SchemaBuilderService,
   Schemas,
 } from "../schema";
-import { JsonBaseController } from "../controller/base-controller";
+import { JsonApiBaseController } from "../controller/base-controller";
 import { ModuleExplorerService } from "./services/module-explorer.service";
 import { JsonApiBodyParserMiddleware } from "../middlewares/bodyparser.middleware";
 import { ControllerFactory } from "../controller/controller-factory";
@@ -47,6 +50,7 @@ import { JsonApiOptions } from "./json-api-options";
 import { SchemaRegistryService } from "./services/schema-registry.service";
 import { JsonApiResourceExplorerService } from "./services/resource-explorer.service";
 import type { Request, Response } from "express";
+import { JsonApiBaseService } from "../service";
 
 export interface JsonApiModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
@@ -64,7 +68,8 @@ export interface JsonApiModuleOptions
 
 export interface JsonApiResourceModuleOptions
   extends Omit<ModuleMetadata, "controllers"> {
-  resource: Type<JsonBaseController>;
+  resource: Type<JsonApiBaseController>;
+  service?: Type<JsonApiBaseService>;
 }
 
 export interface JsonApiAsyncModuleOptions
@@ -138,10 +143,17 @@ export class JsonApiModule implements NestModule {
     };
 
     const resourceRegistryProvider: FactoryProvider<
-      Set<Type<JsonBaseController>>
+      Set<Type<JsonApiBaseController>>
     > = {
       provide: JSONAPI_RESOURCE_REGISTRY,
-      useFactory: () => new Set<Type<JsonBaseController>>(),
+      useFactory: () => new Set<Type<JsonApiBaseController>>(),
+    };
+
+    const serviceRegistryProvider: FactoryProvider<
+      Set<Type<JsonApiBaseService>>
+    > = {
+      provide: JSONAPI_SERVICE_REGISTRY,
+      useFactory: () => new Set<Type<JsonApiBaseService>>(),
     };
 
     const coreProviders: Provider[] = [
@@ -149,6 +161,7 @@ export class JsonApiModule implements NestModule {
       entityManagerProvider,
       schemaRepositoryProvider,
       resourceRegistryProvider,
+      serviceRegistryProvider,
       JsonApiResourceExplorerService,
       SchemaRegistryService,
     ];
@@ -160,11 +173,26 @@ export class JsonApiModule implements NestModule {
       exports: [...coreProviders, ...(config.exports ?? [])],
     };
   }
+  private static validateService(service: Type<JsonApiBaseService>): void {
+    if (!Object.prototype.isPrototypeOf.call(JsonApiBaseService, service)) {
+      throw new Error(
+        `${service.name}: Must extend ${JsonApiBaseService.name} class to be a valid resource.`,
+      );
+    }
+  }
 
   static forFeature(options: JsonApiResourceModuleOptions): DynamicModule {
-    const { resource, imports, exports, providers } = options;
+    const { resource, service, imports, exports, providers } = options;
     const controllerFactory = new ControllerFactory(resource);
     const ResourceClass = controllerFactory.createController();
+
+    if (service) {
+      JsonApiModule.validateService(service);
+    }
+
+    const ServiceClass =
+      service ||
+      namedClass(`JsonApi${ResourceClass.name}Service`, JsonApiBaseService);
 
     const schemas: Schemas<any, any, any> =
       getSchemasFromResource(ResourceClass);
@@ -217,10 +245,23 @@ export class JsonApiModule implements NestModule {
 
     const registerResourceProvider: FactoryProvider<void> = {
       provide: `REGISTER_JSONAPI_RESOURCE_${ResourceClass.name}`,
-      useFactory: (registry: Set<Type<JsonBaseController>>) => {
+      useFactory: (registry: Set<Type<JsonApiBaseController>>) => {
         registry.add(ResourceClass);
       },
       inject: [JSONAPI_RESOURCE_REGISTRY],
+    };
+
+    const registerServiceProvider: FactoryProvider<void> = {
+      provide: `REGISTER_JSONAPI_SERVICE_${ResourceClass.name}`,
+      useFactory: (registry: Set<Type<JsonApiBaseService>>) => {
+        registry.add(ServiceClass);
+      },
+      inject: [JSONAPI_SERVICE_REGISTRY],
+    };
+
+    const serviceProvider: ExistingProvider = {
+      provide: JSONAPI_SERVICE,
+      useExisting: ServiceClass,
     };
 
     const module = namedClass(
@@ -235,6 +276,7 @@ export class JsonApiModule implements NestModule {
       imports: imports || [],
       providers: [
         registerResourceProvider,
+        registerServiceProvider,
         resourceOptionsProvider,
         allOptionsProvider,
         schemasProvider,
@@ -249,6 +291,8 @@ export class JsonApiModule implements NestModule {
         PaginateService,
         DataLayerService,
         SchemaBuilderService,
+        ServiceClass,
+        serviceProvider,
         ...(providers || []),
       ],
       exports: exports || [],
