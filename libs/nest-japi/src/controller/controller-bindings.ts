@@ -1,6 +1,13 @@
-import { RequestMethod, Query, Param, Body, Req } from "@nestjs/common";
+import {
+  RequestMethod,
+  Query,
+  Param,
+  Body,
+  Req,
+  PipeTransform,
+} from "@nestjs/common";
 import { JsonBaseController } from "./base-controller";
-import { BindingsConfig } from "./types";
+import { BindingsConfig, PipeMixin } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
 import { QueryOnePipe } from "../query/pipes/query-one.pipe";
@@ -8,6 +15,12 @@ import { inputPatchBodyMixin } from "../mixins/input-patch-body.mixin";
 import { inputPostBodyMixin } from "../mixins/input-post-body.mixin";
 import { inputRelationNameMixin } from "../mixins/input-relation-name.mixin";
 import { JsonApiInputPatchRelationInterceptor } from "../schema/interceptors/input-patch-relation.interceptor";
+
+const IdParamPipeMixin: PipeMixin = ({ options }) => {
+  if (options.idParamPipe) {
+    return options.idParamPipe as PipeTransform;
+  }
+};
 
 export const controllerBindings: BindingsConfig = {
   getAll: {
@@ -40,7 +53,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RESOURCE_ID,
         decorator: Param,
-        mixins: [],
+        mixins: [IdParamPipeMixin],
       },
       {
         decorator: Query,
@@ -58,7 +71,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RESOURCE_ID,
         decorator: Param,
-        mixins: [],
+        mixins: [IdParamPipeMixin],
       },
     ],
   },
@@ -87,7 +100,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RESOURCE_ID,
         decorator: Param,
-        mixins: [],
+        mixins: [IdParamPipeMixin],
       },
       {
         decorator: Body,
@@ -106,7 +119,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RESOURCE_ID,
         decorator: Param,
-        mixins: [],
+        mixins: [IdParamPipeMixin],
       },
       {
         property: PARAMS_RELATION_NAME,
@@ -126,7 +139,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RESOURCE_ID,
         decorator: Param,
-        mixins: [],
+        mixins: [IdParamPipeMixin],
       },
       {
         property: PARAMS_RELATION_NAME,
@@ -146,7 +159,7 @@ export const controllerBindings: BindingsConfig = {
       {
         property: PARAMS_RESOURCE_ID,
         decorator: Param,
-        mixins: [],
+        mixins: [IdParamPipeMixin],
       },
       {
         property: PARAMS_RELATION_NAME,

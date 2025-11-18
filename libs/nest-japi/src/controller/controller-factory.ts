@@ -13,6 +13,7 @@ import {
   Injectable,
   UsePipes,
   UseInterceptors,
+  PipeTransform,
 } from "@nestjs/common";
 import {
   PARAMTYPES_METADATA,
@@ -230,12 +231,15 @@ export class ControllerFactory {
     );
 
     const schema = this.getSchemaFromControllerMethod(methodName);
+    const options = this.getResourceOptions();
 
     for (const paramKey in parameters) {
       const parameter = parameters[paramKey]!;
       const { property, decorator, mixins = [] } = parameter;
 
-      const resolvedPipes = mixins.map((mixin) => mixin({ schema }));
+      const resolvedPipes = mixins
+        .filter((mixin) => !!mixin)
+        .map((mixin) => mixin({ schema, options })) as PipeTransform[];
 
       if (paramsMetadata) {
         this.injectPipesIfNeeded(paramsMetadata, decorator);

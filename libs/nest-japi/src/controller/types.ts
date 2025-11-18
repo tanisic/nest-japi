@@ -3,6 +3,7 @@ import { NestInterceptor, Type } from "@nestjs/common/interfaces";
 import { InferEntity, Schemas } from "../schema/types";
 import { BaseSchema } from "../schema/base-schema";
 import { EntityManager } from "@mikro-orm/core";
+import { ResourceOptions } from "../decorators";
 
 export type MethodName =
   | "getAll"
@@ -27,9 +28,10 @@ type MapNameToTypeMethod = {
 
 export interface PipeMixinParams {
   schema: Type<BaseSchema<any>>;
+  options: ResourceOptions<any>;
 }
 
-export type PipeMixin = (params: PipeMixinParams) => PipeTransform;
+export type PipeMixin = (params: PipeMixinParams) => PipeTransform | undefined;
 
 export interface Binding<T extends MethodName> {
   path: string;

@@ -3,7 +3,7 @@ import {
   JSONAPI_RESOURCE_SCHEMAS,
 } from "../constants";
 import { InferControllerGenerics, MethodName } from "../controller/types";
-import { Injectable, Type } from "@nestjs/common";
+import { Injectable, PipeTransform, Type } from "@nestjs/common";
 import { Schemas } from "../schema/types";
 import { JsonBaseController } from "../controller/base-controller";
 import { BaseSchema } from "../schema";
@@ -23,6 +23,7 @@ export interface ResourceOptions<
   >;
   maxPaginationSize?: number;
   metaSchemas?: MetaSchemas<DisabledMethods>;
+  idParamPipe?: PipeTransform | Function;
 }
 
 export const Resource = <

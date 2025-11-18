@@ -5,6 +5,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BaseResource } from 'src/resource/BaseResource';
 import { UserSchema, CreateUserSchema, PatchUserSchema } from './user.schema';
 import { UserService } from './user.service';
+import { ParseIntPipe } from '@nestjs/common';
 
 @Resource({
   schemas: {
@@ -13,6 +14,7 @@ import { UserService } from './user.service';
     updateSchema: PatchUserSchema,
   },
   path: 'v1/users',
+  idParamPipe: ParseIntPipe,
 })
 @ApiTags('Users')
 export class UserResource extends BaseResource<
