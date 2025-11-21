@@ -24,6 +24,8 @@ export class ZodIssuesExceptionFilter implements ExceptionFilter {
       });
     });
 
-    response.status(422).json(errorSerializer.serialize(errors));
+    response
+      .status(422)
+      .json(errorSerializer.serialize(errors, { version: "1.1" }));
   }
 }

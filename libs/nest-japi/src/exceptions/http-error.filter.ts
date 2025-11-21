@@ -26,6 +26,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     response
       .status(exception.getStatus())
-      .json(errorSerializer.serialize(error));
+      .json(errorSerializer.serialize(error, { version: "1.1" }));
   }
 }

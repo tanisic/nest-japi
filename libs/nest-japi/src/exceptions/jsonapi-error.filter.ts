@@ -16,6 +16,6 @@ export class JsonApiExceptionFilter implements ExceptionFilter {
 
     response
       .status(statusCode)
-      .json(errorSerializer.serialize(exception as any));
+      .json(errorSerializer.serialize(exception as any, { version: "1.1" }));
   }
 }
