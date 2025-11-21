@@ -1,8 +1,11 @@
-import { EntityManager } from "@mikro-orm/core";
+import { EntityDTO, EntityManager } from "@mikro-orm/core";
 import {
   BaseSchema,
   ExtractRelations,
   InferEntity,
+  PatchBody,
+  PatchRelationship,
+  PostBody,
   type Schemas,
 } from "../schema";
 import { Inject, Injectable, Type } from "@nestjs/common";
@@ -78,42 +81,77 @@ export class JsonApiBaseService<
   }
   async getRelationship(
     id: Id,
-    relation: RelationAttribute<
-      ViewSchema,
-      boolean,
-      keyof ExtractRelations<ViewSchema>
-    >,
+    relation: RelationAttribute<ViewSchema, boolean, any>,
   ): Promise<{
-    data: ViewEntity[] | ViewEntity | null;
+    data: EntityDTO<any>[] | EntityDTO<any> | null;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
-    const data = (await this.dataLayer.getOne(id, [
-      relation.dataKey as keyof ExtractRelations<ViewSchema>,
-    ])) as ViewEntity | ViewEntity[] | null;
+    const relationData = await this.dataLayer.getRelationshipData(id, relation);
 
-    return { data };
+    return { data: relationData as EntityDTO<any>[] | EntityDTO<any> | null };
   }
   async getRelationshipData(
     id: Id,
-    relation: RelationAttribute<
-      ViewSchema,
-      boolean,
-      keyof ExtractRelations<ViewSchema>
-    >,
+    relation: RelationAttribute<ViewSchema, boolean, any>,
   ): Promise<{
-    data: ViewEntity[] | ViewEntity | null;
+    data: EntityDTO<any>[] | EntityDTO<any> | null;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
-    const data = (await this.dataLayer.getOne(id, [
-      relation.dataKey as keyof ExtractRelations<ViewSchema>,
-    ])) as ViewEntity | ViewEntity[] | null;
+    const relationData = await this.dataLayer.getRelationshipData(id, relation);
+
+    return { data: relationData };
+  }
+
+  async deleteOne(id: Id): Promise<{
+    data: EntityDTO<any> | null;
+    documentMeta?: Record<string, any>;
+    resourceMeta?: Record<string, any>;
+  }> {
+    const relationData = await this.dataLayer.deleteOne(id);
+
+    return { data: relationData as EntityDTO<any> | null };
+  }
+
+  async postOne(body: PostBody<CreateSchema>): Promise<{
+    data: EntityDTO<any>;
+    documentMeta?: Record<string, any>;
+    resourceMeta?: Record<string, any>;
+  }> {
+    const data = await this.dataLayer.postOne(body);
+    return { data };
+  }
+
+  async patchOne(
+    id: Id,
+    body: PatchBody<UpdateSchema>,
+  ): Promise<{
+    data: EntityDTO<any>;
+    documentMeta?: Record<string, any>;
+    resourceMeta?: Record<string, any>;
+  }> {
+    const data = await this.dataLayer.patchOne(id, body);
+    return { data };
+  }
+
+  async patchRelationship<
+    RelationName extends keyof ExtractRelations<UpdateSchema>,
+  >(
+    id: Id,
+    relation: RelationAttribute<UpdateSchema, boolean, any>,
+    body: PatchRelationship<UpdateSchema, RelationName>,
+  ): Promise<{
+    data: EntityDTO<any>;
+    documentMeta?: Record<string, any>;
+    resourceMeta?: Record<string, any>;
+  }> {
+    const data = await this.dataLayer.patchRelationship(
+      id,
+      body,
+      relation.name,
+    );
 
     return { data };
   }
-  // deleteOne: (...arg: any[]) => any;
-  // postOne: (...arg: any[]) => any;
-  // patchOne: (...arg: any[]) => any;
-  // patchRelationship: (...arg: any[]) => any;
 }

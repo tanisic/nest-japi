@@ -78,7 +78,7 @@ export type BelongsToRelationAttribute = {
 export type RelationAttribute<
   Schema extends BaseSchema<any>,
   isMany extends boolean,
-  RelationKey extends keyof ExtractRelations<Schema>,
+  RelationKey extends keyof ExtractRelations<Schema> = any,
 > = Required<RelationOptions<Schema, isMany, RelationKey>> & {
   name: RelationKey;
 };
