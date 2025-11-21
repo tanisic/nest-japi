@@ -1,16 +1,7 @@
-import { Resource } from '@tanisic/nest-japi';
 import { BaseResource } from 'src/resource/BaseResource';
 import { CreatePostSchema, PostSchema } from 'src/posts/posts.schema';
 import { ApiTags } from '@nestjs/swagger';
 
-@Resource({
-  schemas: {
-    schema: PostSchema,
-    createSchema: CreatePostSchema,
-    updateSchema: CreatePostSchema,
-  },
-  path: 'v1/posts',
-})
 @ApiTags('Posts')
 export class PostResource extends BaseResource<
   string,

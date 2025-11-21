@@ -1,7 +1,7 @@
 import { Inject, NotFoundException, Type } from "@nestjs/common";
 import { ControllerGenerics, ControllerMethods } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
-import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
+import { EntityDTO, EntityManager, serialize } from "@mikro-orm/core";
 import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
 import { CURRENT_SCHEMAS, JSONAPI_SERVICE } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";

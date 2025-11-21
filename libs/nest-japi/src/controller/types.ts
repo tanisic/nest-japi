@@ -3,7 +3,7 @@ import { NestInterceptor, Type } from "@nestjs/common/interfaces";
 import { InferEntity, Schemas } from "../schema/types";
 import { BaseSchema } from "../schema/base-schema";
 import { EntityManager } from "@mikro-orm/core";
-import { ResourceOptions } from "../decorators";
+import { ResourceOptions } from "../decorators/resource.decorator";
 
 export type MethodName =
   | "getAll"

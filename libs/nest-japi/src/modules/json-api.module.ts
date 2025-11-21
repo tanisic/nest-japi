@@ -34,7 +34,7 @@ import { ModuleExplorerService } from "./services/module-explorer.service";
 import { JsonApiBodyParserMiddleware } from "../middlewares/bodyparser.middleware";
 import { ControllerFactory } from "../controller/controller-factory";
 import { DataLayerService } from "../data-layer/data-layer.service";
-import { ResourceOptions } from "../decorators";
+import { Resource, ResourceOptions } from "../decorators/resource.decorator";
 import { namedClass } from "../helpers";
 import {
   includeServiceProvider,
@@ -67,7 +67,8 @@ export interface JsonApiModuleOptions
 }
 
 export interface JsonApiResourceModuleOptions
-  extends Omit<ModuleMetadata, "controllers"> {
+  extends Omit<ModuleMetadata, "controllers">,
+    ResourceOptions<any> {
   resource: Type<JsonApiBaseController>;
   service?: Type<JsonApiBaseService>;
 }
@@ -182,7 +183,8 @@ export class JsonApiModule implements NestModule {
   }
 
   static forFeature(options: JsonApiResourceModuleOptions): DynamicModule {
-    const { resource, service, imports, exports, providers } = options;
+    const { resource, service, imports, exports, providers, ...opts } = options;
+    Resource(opts as any)(resource);
     const controllerFactory = new ControllerFactory(resource);
     const ResourceClass = controllerFactory.createController();
 

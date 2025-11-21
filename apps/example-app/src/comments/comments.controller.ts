@@ -1,4 +1,3 @@
-import { Resource } from '@tanisic/nest-japi';
 import { BaseResource } from 'src/resource/BaseResource';
 import {
   CommentSchema,
@@ -6,10 +5,6 @@ import {
 } from 'src/comments/comments.schema';
 import { ApiTags } from '@nestjs/swagger';
 
-@Resource({
-  schemas: { schema: CommentSchema, createSchema: CreateCommentSchema },
-  path: 'v1/comments',
-})
 @ApiTags('Comments')
 export class CommentResource extends BaseResource<
   string,
