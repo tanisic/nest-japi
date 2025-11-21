@@ -6,7 +6,7 @@ import {
   Req,
   PipeTransform,
 } from "@nestjs/common";
-import { JsonBaseController } from "./base-controller";
+import { JsonApiBaseController } from "./base-controller";
 import { BindingsConfig, PipeMixin } from "./types";
 import { PARAMS_RESOURCE_ID, PARAMS_RELATION_NAME } from "../constants";
 import { QueryAllPipe } from "../query";
@@ -28,7 +28,7 @@ export const controllerBindings: BindingsConfig = {
     name: "getAll",
     path: "/",
     schema: "schema",
-    implementation: JsonBaseController.prototype.getAll,
+    implementation: JsonApiBaseController.prototype.getAll,
     // swaggerImplementation: getAll,
     pipes: [QueryAllPipe],
     parameters: [
@@ -47,7 +47,7 @@ export const controllerBindings: BindingsConfig = {
     name: "getOne",
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "schema",
-    implementation: JsonBaseController.prototype.getOne,
+    implementation: JsonApiBaseController.prototype.getOne,
     pipes: [QueryOnePipe],
     parameters: [
       {
@@ -66,7 +66,7 @@ export const controllerBindings: BindingsConfig = {
     name: "deleteOne",
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "schema",
-    implementation: JsonBaseController.prototype.deleteOne,
+    implementation: JsonApiBaseController.prototype.deleteOne,
     parameters: [
       {
         property: PARAMS_RESOURCE_ID,
@@ -80,7 +80,7 @@ export const controllerBindings: BindingsConfig = {
     name: "postOne",
     path: "/",
     schema: "createSchema",
-    implementation: JsonBaseController.prototype.postOne,
+    implementation: JsonApiBaseController.prototype.postOne,
     pipes: [],
     parameters: [
       {
@@ -94,7 +94,7 @@ export const controllerBindings: BindingsConfig = {
     name: "patchOne",
     path: `:${PARAMS_RESOURCE_ID}`,
     schema: "updateSchema",
-    implementation: JsonBaseController.prototype.patchOne,
+    implementation: JsonApiBaseController.prototype.patchOne,
     pipes: [],
     parameters: [
       {
@@ -113,7 +113,7 @@ export const controllerBindings: BindingsConfig = {
     name: "getRelationship",
     method: RequestMethod.GET,
     schema: "schema",
-    implementation: JsonBaseController.prototype.getRelationship,
+    implementation: JsonApiBaseController.prototype.getRelationship,
     pipes: [],
     parameters: [
       {
@@ -133,7 +133,7 @@ export const controllerBindings: BindingsConfig = {
     name: "getRelationshipData",
     method: RequestMethod.GET,
     schema: "schema",
-    implementation: JsonBaseController.prototype.getRelationshipData,
+    implementation: JsonApiBaseController.prototype.getRelationshipData,
     pipes: [],
     parameters: [
       {
@@ -153,7 +153,7 @@ export const controllerBindings: BindingsConfig = {
     name: "patchRelationship",
     method: RequestMethod.PATCH,
     schema: "updateSchema",
-    implementation: JsonBaseController.prototype.patchRelationship,
+    implementation: JsonApiBaseController.prototype.patchRelationship,
     interceptors: [JsonApiInputPatchRelationInterceptor],
     parameters: [
       {

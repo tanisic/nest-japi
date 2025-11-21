@@ -30,6 +30,7 @@ import {
   wrap,
 } from "@mikro-orm/core";
 import { JsonApiOptions } from "../modules/json-api-options";
+import { RelationAttribute } from "../decorators";
 
 @Injectable()
 export class DataLayerService<
@@ -101,6 +102,26 @@ export class DataLayerService<
       { id },
       { populate: include as Populate<string, any> },
     );
+  }
+
+  async getRelationshipData(
+    parentId: Id,
+    relation: RelationAttribute<ViewSchema, boolean, any>,
+    entity: ViewEntity = this.viewEntity,
+  ) {
+    const parentData = await this.em.findOne(
+      entity as EntityClass<ViewEntity>,
+      { id: parentId },
+      {
+        populate: [relation.dataKey] as Populate<string, any>,
+      },
+    );
+
+    if (!parentData) {
+      throw new NotFoundException(`Parent with id ${parentId} does not exist.`);
+    }
+
+    return parentData[relation.dataKey as keyof typeof parentData] || null;
   }
 
   async deleteOne(id: Id, entity: ViewEntity = this.viewEntity) {

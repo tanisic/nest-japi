@@ -22,6 +22,8 @@ export class MikroOrmExceptionFilter implements ExceptionFilter {
       code: exception.name,
     });
 
-    response.status(statusCode).json(errorSerializer.serialize(error));
+    response
+      .status(statusCode)
+      .json(errorSerializer.serialize(error, { version: "1.1" }));
   }
 }

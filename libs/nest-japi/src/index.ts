@@ -25,3 +25,4 @@ export * from "./query/index.js";
 export * from "./schema/index.js";
 export * from "./serializer/serializer.service.js";
 export * from "./swagger/index.js";
+export * from "./service/index.js";

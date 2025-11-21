@@ -5,7 +5,7 @@ import {
 import { InferControllerGenerics, MethodName } from "../controller/types";
 import { Injectable, PipeTransform, Type } from "@nestjs/common";
 import { Schemas } from "../schema/types";
-import { JsonBaseController } from "../controller/base-controller";
+import { JsonApiBaseController } from "../controller/base-controller";
 import { BaseSchema } from "../schema";
 import { MetaSchemas, UniqueTuple } from "./types";
 import { snakeCase } from "../helpers";
@@ -40,9 +40,9 @@ export const Resource = <
 ) => {
   return (target: Type<Resource>) => {
     Injectable()(target);
-    if (!Object.prototype.isPrototypeOf.call(JsonBaseController, target)) {
+    if (!Object.prototype.isPrototypeOf.call(JsonApiBaseController, target)) {
       throw new Error(
-        `${target.name}: Must extend ${JsonBaseController.name} class to be valid resource.`,
+        `${target.name}: Must extend ${JsonApiBaseController.name} class to be valid resource.`,
       );
     }
 

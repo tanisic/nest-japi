@@ -35,7 +35,7 @@ import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.inte
 import { HttpExceptionFilter } from "../exceptions/http-error.filter";
 import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
-import { JsonBaseController } from "./base-controller";
+import { JsonApiBaseController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
 import { BaseSchema } from "../schema";
 import { JsonApiSwaggerSchemasRegister } from "../swagger/json-api-swagger-schema-builder";
@@ -53,8 +53,8 @@ const allowedMethods: MethodName[] = [
 
 @Injectable()
 export class ControllerFactory {
-  private resource: Type<JsonBaseController>;
-  private controllerClass: Type<JsonBaseController>;
+  private resource: Type<JsonApiBaseController>;
+  private controllerClass: Type<JsonApiBaseController>;
   private options: Required<
     ResourceOptions<
       MethodName[],
@@ -64,17 +64,17 @@ export class ControllerFactory {
     >
   >;
 
-  constructor(resource: Type<JsonBaseController>) {
+  constructor(resource: Type<JsonApiBaseController>) {
     this.validateResource(resource);
     this.resource = resource;
     this.controllerClass = resource;
     this.options = this.getResourceOptions();
   }
 
-  private validateResource(resource: Type<JsonBaseController>): void {
-    if (!Object.prototype.isPrototypeOf.call(JsonBaseController, resource)) {
+  private validateResource(resource: Type<JsonApiBaseController>): void {
+    if (!Object.prototype.isPrototypeOf.call(JsonApiBaseController, resource)) {
       throw new Error(
-        `${resource.name}: Must extend ${JsonBaseController.name} class to be a valid resource.`,
+        `${resource.name}: Must extend ${JsonApiBaseController.name} class to be a valid resource.`,
       );
     }
   }

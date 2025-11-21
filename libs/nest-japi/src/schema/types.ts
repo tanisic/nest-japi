@@ -1,7 +1,7 @@
 import { Type } from "@nestjs/common";
 import { BaseSchema } from "./base-schema";
 import { EntityClass } from "@mikro-orm/core";
-import { JsonBaseController } from "../controller/base-controller";
+import { JsonApiBaseController } from "../controller/base-controller";
 
 export type SchemaTypes = "createSchema" | "updateSchema" | "schema";
 
@@ -77,7 +77,7 @@ export type InferEntity<Schema, OverrideEntity = never> =
   Schema extends BaseSchema<infer Entity> ? Entity : OverrideEntity;
 
 export type InferSchemas<T> =
-  T extends JsonBaseController<
+  T extends JsonApiBaseController<
     any,
     any,
     infer ViewSchema,

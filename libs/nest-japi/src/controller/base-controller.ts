@@ -3,7 +3,7 @@ import { ControllerGenerics, ControllerMethods } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
 import { EntityDTO, EntityManager, serialize, wrap } from "@mikro-orm/core";
 import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
-import { CURRENT_SCHEMAS } from "../constants";
+import { CURRENT_SCHEMAS, JSONAPI_SERVICE } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
@@ -20,8 +20,9 @@ import type { QueryParams, SingleQueryParams } from "../query";
 import { joinUrlPaths } from "../helpers";
 import qs, { ParsedQs } from "qs";
 import { RelationAttribute } from "../decorators/relation.decorator";
+import { type JsonApiBaseService } from "../service";
 
-export class JsonBaseController<
+export class JsonApiBaseController<
   Id extends string | number = string | number,
   TEntityManager extends EntityManager = EntityManager,
   ViewSchema extends BaseSchema<any> = BaseSchema<any>,
@@ -42,6 +43,8 @@ export class JsonBaseController<
     CreateEntity,
     UpdateEntity
   >;
+  @Inject(JSONAPI_SERVICE)
+  protected service!: JsonApiBaseService;
 
   @Inject(SerializerService)
   protected serializerService!: SerializerService;
@@ -90,13 +93,14 @@ export class JsonBaseController<
     request: Request,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
-    const [data, count] = await this.dataLayer.getAllAndCount(query);
+    const { data, count, documentMeta, resourceMeta } =
+      await this.service.getAll(query);
     const unwrapped = serialize(data, {
       populate: query.include?.dbIncludes || ([] as any),
       forceObject: true,
     });
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped as EntityDTO<ViewEntity>,
+      unwrapped as any,
       this.viewSchema,
     );
 
@@ -109,7 +113,8 @@ export class JsonBaseController<
         paginator: pagination,
       },
       metaizers: {
-        document: new Metaizer(() => ({ count })),
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
       },
     });
   }
@@ -119,7 +124,10 @@ export class JsonBaseController<
     query: SingleQueryParams,
     ..._rest: any[]
   ): Promise<Partial<DataDocument<any>>> {
-    const data = await this.dataLayer.getOne(id, query.include?.dbIncludes);
+    const { data, documentMeta, resourceMeta } = await this.service.getOne(
+      id,
+      query,
+    );
 
     if (!data) {
       throw new NotFoundException(`Object with id ${id} does not exist.`);
@@ -137,6 +145,10 @@ export class JsonBaseController<
     return this.serializerService.serialize(result, this.viewSchema, {
       include: query.include?.schemaIncludes || [],
       fields: query.fields?.schema || {},
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
     });
   }
 
@@ -154,47 +166,41 @@ export class JsonBaseController<
       );
     }
 
-    const data = await this.dataLayer.getOne(id, [
-      relation.dataKey as keyof ExtractRelations<ViewSchema>,
-    ]);
+    const {
+      data: relationData,
+      documentMeta,
+      resourceMeta,
+    } = await this.service.getRelationship(id, relation);
 
-    if (!data) {
-      throw new NotFoundException("Root data does not exist.");
-    }
-
-    const unwrapped = serialize(data, {
-      forceObject: true,
-      populate: [relation.dataKey as any],
-    }) as EntityDTO<ViewEntity>;
     const relationSchema = relation.schema();
 
+    if (!relationData) {
+      return this.serializerService.serialize(relationData, relationSchema, {
+        onlyIdentifier: true,
+        nullData: this.shouldDisplayNull(relation, relationData),
+        metaizers: {
+          document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+          resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+        },
+      });
+    }
+
+    const unwrapped = serialize(relationData, {
+      forceObject: true,
+    });
+
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped[
-        relation.dataKey as keyof EntityDTO<ViewEntity>
-      ] as EntityDTO<any>,
+      unwrapped as EntityDTO<any>,
       relationSchema,
     );
 
-    const shouldDisplayNull = (
-      relation: RelationAttribute<
-        ViewSchema,
-        boolean,
-        keyof ExtractRelations<ViewSchema>
-      >,
-      rootData: EntityDTO<object>,
-    ) => {
-      const relationData =
-        rootData[relation.dataKey as keyof EntityDTO<object>];
-      if (relation.many || Array.isArray(relationData)) return false;
-      if (!relationData || !Object.keys(relationData).length) {
-        return true;
-      }
-
-      return false;
-    };
     return this.serializerService.serialize(result, relationSchema, {
       onlyIdentifier: true,
-      nullData: shouldDisplayNull(relation, unwrapped),
+      nullData: this.shouldDisplayNull(relation, relationData),
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
     });
   }
 
@@ -211,49 +217,93 @@ export class JsonBaseController<
 
     const relSchema = relation.schema();
 
-    const data = await this.dataLayer.getOne(id, [
-      relation.dataKey as keyof ExtractRelations<ViewSchema>,
-    ]);
-    if (!data) {
-      throw new NotFoundException("Root data does not exist.");
+    const {
+      data: relationData,
+      resourceMeta,
+      documentMeta,
+    } = await this.service.getRelationshipData(id, relation);
+
+    if (!relationData) {
+      return this.serializerService.serialize(relationData, relSchema, {
+        onlyIdentifier: true,
+        nullData: this.shouldDisplayNull(relation, relationData),
+        metaizers: {
+          document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+          resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+        },
+      });
     }
 
-    const unwrapped = wrap(data).serialize({
+    const unwrapped = serialize(relationData, {
       forceObject: true,
-      populate: [relation.dataKey as any],
     });
 
     const result = this.schemaBuilder.transformFromDb(
-      unwrapped[relation.dataKey as keyof EntityDTO<object>],
+      unwrapped as EntityDTO<any>,
       relSchema,
     );
 
-    return this.serializerService.serialize(result, relSchema);
+    return this.serializerService.serialize(result, relSchema, {
+      nullData: this.shouldDisplayNull(relation, relationData),
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
+    });
   }
 
   async deleteOne(id: Id, ..._rest: any[]) {
-    const data = await this.dataLayer.deleteOne(id);
-    return this.serializerService.serialize(data, this.currentSchemas.schema);
+    const { data, documentMeta, resourceMeta } =
+      await this.service.deleteOne(id);
+    return this.serializerService.serialize(data, this.currentSchemas.schema, {
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
+    });
   }
 
   async postOne(body: PostBody<CreateSchema>) {
-    const data = await this.dataLayer.postOne(body);
+    const { data, documentMeta, resourceMeta } = await this.service.postOne(
+      body as any,
+    );
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
       this.currentSchemas.schema,
     );
-    return this.serializerService.serialize(result, this.currentSchemas.schema);
+    return this.serializerService.serialize(
+      result,
+      this.currentSchemas.schema,
+      {
+        metaizers: {
+          document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+          resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+        },
+      },
+    );
   }
 
   async patchOne(id: Id, body: PatchBody<UpdateSchema>) {
-    const data = await this.dataLayer.patchOne(id, body);
+    const { data, documentMeta, resourceMeta } = await this.service.patchOne(
+      id,
+      body as any,
+    );
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
       this.currentSchemas.schema,
     );
-    return this.serializerService.serialize(result, this.currentSchemas.schema);
+    return this.serializerService.serialize(
+      result,
+      this.currentSchemas.schema,
+      {
+        metaizers: {
+          document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+          resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+        },
+      },
+    );
   }
 
   async patchRelationship<
@@ -265,11 +315,6 @@ export class JsonBaseController<
   ) {
     const schema = (this.currentSchemas.updateSchema ||
       this.currentSchemas.schema) as Type<UpdateSchema>;
-    const data = await this.dataLayer.patchRelationship(
-      id,
-      body,
-      relationshipName,
-    );
 
     const relation = getRelationByName(schema, relationshipName);
 
@@ -281,8 +326,17 @@ export class JsonBaseController<
 
     const relationSchema = relation.schema();
 
+    const { data, resourceMeta, documentMeta } =
+      // @ts-expect-error strange TS error
+      await this.service.patchRelationship(id, relation, body);
+
     const result = this.schemaBuilder.transformFromDb(data, relationSchema);
-    return this.serializerService.serialize(result, relationSchema);
+    return this.serializerService.serialize(result, relationSchema, {
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
+      },
+    });
   }
 
   private generatePagination(
@@ -331,4 +385,15 @@ export class JsonBaseController<
         : undefined;
     });
   }
+  private shouldDisplayNull = (
+    relation: RelationAttribute<ViewSchema, boolean, any>,
+    relationData: EntityDTO<object> | EntityDTO<object>[] | null,
+  ) => {
+    if (relation.many || Array.isArray(relationData)) return false;
+    if (!relationData || !Object.keys(relationData).length) {
+      return true;
+    }
+
+    return false;
+  };
 }
