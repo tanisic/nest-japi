@@ -1,10 +1,16 @@
-import { Attribute, BaseSchema, Relation, Schema } from '@tanisic/nest-japi';
+import {
+  Attribute,
+  Schema,
+  Relation,
+  JsonApiSchema,
+  HasOne,
+} from '@tanisic/nest-japi';
 import { Address } from 'src/addresses/address.entity';
 import { UserSchema } from 'src/user/user.schema';
 import { z } from 'zod';
 
 @Schema({ jsonapiType: 'address', entity: Address })
-export class AddressSchema extends BaseSchema<Address> {
+export class AddressSchema extends JsonApiSchema<Address> {
   @Attribute({ validate: z.number() })
   id!: number;
   @Attribute({ validate: z.string().optional() })
@@ -16,7 +22,7 @@ export class AddressSchema extends BaseSchema<Address> {
   @Attribute({ validate: z.string().optional() })
   country?: string;
   @Relation({ schema: () => UserSchema })
-  user: UserSchema;
+  user: HasOne<UserSchema>;
   @Attribute({ validate: z.date().optional() })
   createdAt: Date;
   @Attribute({ validate: z.date().optional() })

@@ -2,25 +2,31 @@ import {
   JSONAPI_SCHEMA_RELATION_OPTIONS,
   JSONAPI_SCHEMA_RELATIONS,
 } from "../constants";
-import { BaseSchema } from "../schema/base-schema";
+import { JsonApiSchema } from "../schema/schema";
 import { Type } from "@nestjs/common";
 import { type SchemaObject } from "openapi3-ts/oas31";
-import { ExtractRelations, InferEntity } from "../schema";
+import {
+  ExtractRelations,
+  HasMany,
+  HasOne,
+  InferEntity,
+  InferIsMany,
+} from "../schema";
 
 export type RelationSchemaDef<
-  Schema extends BaseSchema<any>,
-  RelationKey extends keyof ExtractRelations<Schema>,
-> = () => Schema[RelationKey] extends Array<infer U>
-  ? U extends BaseSchema<any>
-    ? Type<U>
-    : never
-  : Type<Schema[RelationKey]>;
+  TSchema extends JsonApiSchema<any>,
+  RelationKey extends keyof ExtractRelations<TSchema>,
+> = () => TSchema[RelationKey] extends HasMany<infer U>
+  ? Type<U>
+  : TSchema[RelationKey] extends HasOne<infer Y>
+    ? Type<Y>
+    : never;
 
 export type RelationOptions<
-  Schema extends BaseSchema<any>,
-  isMany extends boolean,
-  RelationKey extends keyof ExtractRelations<Schema>,
-  DataKey = keyof InferEntity<Schema>,
+  TSchema extends JsonApiSchema<any>,
+  RelationKey extends keyof ExtractRelations<TSchema>,
+  IsMany extends boolean = InferIsMany<TSchema, RelationKey>,
+  DataKey extends keyof InferEntity<TSchema> = keyof InferEntity<TSchema>,
 > = {
   /**
    * Map this relation to another entity relation.
@@ -32,13 +38,7 @@ export type RelationOptions<
    *
    * Connected schema that describes relation
    */
-  schema: () => Schema[RelationKey] extends Array<infer U>
-    ? U extends BaseSchema<any>
-      ? Type<U>
-      : never
-    : Schema[RelationKey] extends BaseSchema<any>
-      ? Type<Schema[RelationKey]>
-      : never;
+  schema: RelationSchemaDef<TSchema, RelationKey>;
   /**
    * Is relation required on PATCH and POST?
    * @default false
@@ -49,7 +49,7 @@ export type RelationOptions<
    * Write your own openapi documentation about this relation.
    */
   openapi?: Partial<SchemaObject>;
-} & (isMany extends true
+} & (IsMany extends true
   ? ToManyRelationAttribute
   : BelongsToRelationAttribute);
 
@@ -76,29 +76,21 @@ export type BelongsToRelationAttribute = {
 };
 
 export type RelationAttribute<
-  Schema extends BaseSchema<any>,
-  isMany extends boolean,
-  RelationKey extends keyof ExtractRelations<Schema> = any,
-> = Required<RelationOptions<Schema, isMany, RelationKey>> & {
+  TSchema extends JsonApiSchema<any>,
+  RelationKey extends
+    keyof ExtractRelations<TSchema> = keyof ExtractRelations<TSchema>,
+  IsMany extends boolean = InferIsMany<TSchema, RelationKey>,
+  DataKey extends keyof InferEntity<TSchema> = InferEntity<TSchema>,
+> = Required<RelationOptions<TSchema, RelationKey, IsMany, DataKey>> & {
   name: RelationKey;
 };
 
 export function Relation<
-  Schema extends BaseSchema<any>,
-  RelationKey extends keyof ExtractRelations<Schema>,
->(
-  options: RelationOptions<
-    Schema,
-    Schema[RelationKey] extends Array<any> ? true : false,
-    RelationKey
-  >,
-) {
-  return (target: Schema, propertyKey: RelationKey) => {
-    const opts: RelationOptions<
-      Schema,
-      Schema[RelationKey] extends Array<any> ? true : false,
-      RelationKey
-    > = {
+  TSchema extends JsonApiSchema<any>,
+  RelationKey extends keyof ExtractRelations<TSchema>,
+>(options: RelationOptions<TSchema, RelationKey>) {
+  return (target: TSchema, propertyKey: RelationKey) => {
+    const opts: RelationOptions<TSchema, RelationKey> = {
       ...{ required: false, many: false, nullable: false, ...options },
       dataKey: propertyKey,
     };

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { BaseSchema } from "../../base-schema";
+import { JsonApiSchema } from "../../schema";
 import { NotFoundException, Type } from "@nestjs/common";
 import {
   getAttributeByName,
@@ -9,19 +9,22 @@ import {
 } from "../../helpers/schema-helper";
 import { ExtractRelations, Relationships } from "../../types";
 
-export const jsonApiPatchRelationInputSchema = <Schema extends BaseSchema<any>>(
-  parentSchema: Type<Schema>,
-  relationName: string,
+export const jsonApiPatchRelationInputSchema = <
+  TSchema extends JsonApiSchema<any>,
+  RelationName extends keyof ExtractRelations<TSchema>,
+>(
+  parentSchema: Type<TSchema>,
+  relationName: RelationName,
 ) => {
-  // @ts-expect-error
   const relation = getRelationByName(parentSchema, relationName);
+
   if (!relation) {
     throw new NotFoundException(
-      `Relation ${relationName} does not exist on ${parentSchema.name}.`,
+      `Relation ${relationName as string} does not exist on ${parentSchema.name}.`,
     );
   }
 
-  const relationSchema = relation.schema();
+  const relationSchema = relation.schema() as Type<JsonApiSchema<any>>;
   const relationType = getType(relationSchema);
   const relationIdField = getAttributeByName(relationSchema, "id");
   if (!relationIdField) {
@@ -57,6 +60,7 @@ export const jsonApiPatchRelationInputSwaggerSchema = () => {
 };
 
 export type PatchRelationship<
-  Schema extends BaseSchema<any>,
-  RelName extends keyof ExtractRelations<Schema>,
-> = Relationships<Schema>[RelName];
+  TSchema extends JsonApiSchema<any>,
+  RelName extends
+    keyof ExtractRelations<TSchema> = keyof ExtractRelations<TSchema>,
+> = Relationships<TSchema>[RelName];

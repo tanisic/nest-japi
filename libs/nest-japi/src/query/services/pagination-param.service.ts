@@ -22,7 +22,7 @@ const paginationSchema = z
 
 @Injectable()
 export class PaginateService {
-  constructor(private options: JsonApiOptions<any, any, any>) {}
+  constructor(private options: JsonApiOptions) {}
 
   transform(value: any): Pagination | null {
     if (!value) {

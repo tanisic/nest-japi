@@ -29,7 +29,7 @@ import {
   SchemaBuilderService,
   Schemas,
 } from "../schema";
-import { JsonApiBaseController } from "../controller/base-controller";
+import { JsonApiController } from "../controller/base-controller";
 import { ModuleExplorerService } from "./services/module-explorer.service";
 import { JsonApiBodyParserMiddleware } from "../middlewares/bodyparser.middleware";
 import { ControllerFactory } from "../controller/controller-factory";
@@ -69,7 +69,7 @@ export interface JsonApiModuleOptions
 export interface JsonApiResourceModuleOptions
   extends Omit<ModuleMetadata, "controllers">,
     ResourceOptions<any> {
-  resource: Type<JsonApiBaseController>;
+  resource: Type<JsonApiController>;
   service?: Type<JsonApiBaseService>;
 }
 
@@ -144,10 +144,10 @@ export class JsonApiModule implements NestModule {
     };
 
     const resourceRegistryProvider: FactoryProvider<
-      Set<Type<JsonApiBaseController>>
+      Set<Type<JsonApiController>>
     > = {
       provide: JSONAPI_RESOURCE_REGISTRY,
-      useFactory: () => new Set<Type<JsonApiBaseController>>(),
+      useFactory: () => new Set<Type<JsonApiController>>(),
     };
 
     const serviceRegistryProvider: FactoryProvider<
@@ -229,25 +229,23 @@ export class JsonApiModule implements NestModule {
       },
     };
 
-    const resourceOptionsProvider: ValueProvider<
-      ResourceOptions<any, any, any>
-    > = {
+    const resourceOptionsProvider: ValueProvider<ResourceOptions> = {
       provide: JSONAPI_RESOURCE_OPTIONS,
       useValue: Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, ResourceClass),
     };
 
-    const allOptionsProvider: FactoryProvider<JsonApiOptions<any, any, any>> = {
+    const allOptionsProvider: FactoryProvider<
+      JsonApiOptions<Schemas<any, any, any>>
+    > = {
       provide: JsonApiOptions,
       inject: [JSONAPI_GLOBAL_OPTIONS, JSONAPI_RESOURCE_OPTIONS],
-      useFactory: (
-        global: JsonApiModuleOptions,
-        resource: ResourceOptions<any, any, any>,
-      ) => new JsonApiOptions({ global, resource }),
+      useFactory: (global: JsonApiModuleOptions, resource: ResourceOptions) =>
+        new JsonApiOptions({ global, resource }),
     };
 
     const registerResourceProvider: FactoryProvider<void> = {
       provide: `REGISTER_JSONAPI_RESOURCE_${ResourceClass.name}`,
-      useFactory: (registry: Set<Type<JsonApiBaseController>>) => {
+      useFactory: (registry: Set<Type<JsonApiController>>) => {
         registry.add(ResourceClass);
       },
       inject: [JSONAPI_RESOURCE_REGISTRY],

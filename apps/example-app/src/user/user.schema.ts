@@ -1,4 +1,12 @@
-import { Attribute, BaseSchema, Relation, Schema } from '@tanisic/nest-japi';
+import {
+  Attribute,
+  Schema,
+  Relation,
+  JsonApiSchema,
+  HasMany,
+  HasOne,
+  InferEntity,
+} from '@tanisic/nest-japi';
 import { User } from 'src/user/user.entity';
 import { CommentSchema } from 'src/comments/comments.schema';
 import { PostSchema } from 'src/posts/posts.schema';
@@ -6,7 +14,7 @@ import { z } from 'zod';
 import { AddressSchema } from 'src/addresses/addresses.schema';
 
 @Schema({ jsonapiType: 'user', entity: User })
-export class UserSchema extends BaseSchema<User> {
+export class UserSchema extends JsonApiSchema<User> {
   @Attribute({ validate: z.number() })
   id: number;
   @Attribute({
@@ -18,18 +26,20 @@ export class UserSchema extends BaseSchema<User> {
   @Attribute({ validate: z.string().email() })
   email: string;
   @Relation({ schema: () => PostSchema, many: true })
-  posts: PostSchema[];
+  posts!: HasMany<PostSchema>;
   @Relation({ schema: () => CommentSchema, many: true })
-  comments: CommentSchema[];
+  comments: HasMany<CommentSchema>;
   @Relation({
     schema: () => AddressSchema,
     openapi: { description: 'Address of user' },
   })
-  address: AddressSchema;
+  address: HasOne<AddressSchema>;
 }
 
+type t = InferEntity<UserSchema>;
+
 @Schema({ jsonapiType: 'user', entity: User })
-export class PatchUserSchema extends BaseSchema<User> {
+export class PatchUserSchema extends JsonApiSchema<User> {
   @Attribute({
     validate: z.number(),
   })
@@ -41,11 +51,11 @@ export class PatchUserSchema extends BaseSchema<User> {
   @Attribute({ validate: z.string().email().optional() })
   email: string;
   @Relation({ schema: () => AddressSchema })
-  address: AddressSchema;
+  address: HasOne<AddressSchema>;
 }
 
 @Schema({ jsonapiType: 'user', entity: User })
-export class CreateUserSchema extends BaseSchema<User> {
+export class CreateUserSchema extends JsonApiSchema<User> {
   @Attribute({
     validate: z.number(),
   })
@@ -58,9 +68,9 @@ export class CreateUserSchema extends BaseSchema<User> {
   @Attribute({ validate: z.string().email() })
   email: string;
   @Relation({ schema: () => PostSchema, many: true })
-  posts: PostSchema[];
+  posts: HasMany<PostSchema>;
   @Relation({ schema: () => CommentSchema, many: true })
-  comments: CommentSchema[];
+  comments: HasMany<CommentSchema>;
   @Relation({ schema: () => AddressSchema })
-  address: AddressSchema;
+  address: HasOne<AddressSchema>;
 }

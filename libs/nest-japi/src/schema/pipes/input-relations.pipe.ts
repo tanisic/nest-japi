@@ -4,13 +4,14 @@ import {
   PipeTransform,
   Type,
 } from "@nestjs/common";
-import { BaseSchema } from "../base-schema";
+import { JsonApiSchema } from "../schema";
 import { JapiError } from "ts-japi";
 import { PipeMixinParams } from "../../controller/types";
 import { getRelationByName } from "../helpers/schema-helper";
+import { ExtractRelations } from "../types";
 
 export class JsonApiInputRelationsParamPipe implements PipeTransform {
-  schema: Type<BaseSchema<any>>;
+  schema: Type<JsonApiSchema<any>>;
   constructor(mixinParams: PipeMixinParams) {
     this.schema = mixinParams.schema;
   }
@@ -27,9 +28,8 @@ export class JsonApiInputRelationsParamPipe implements PipeTransform {
       return value;
     }
 
-    const relName = value;
+    const relName = value as keyof ExtractRelations<JsonApiSchema<any>>;
 
-    // @ts-expect-error
     const relation = getRelationByName(this.schema, relName);
 
     if (!relation) {

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { BaseSchema } from "../base-schema";
+import { Schema } from "../schema";
 import { Attribute, Relation, Schema } from "../../decorators";
 import { z } from "zod";
 import { zodDataSchema } from "./common";
 
 @Schema({ jsonapiType: "post", entity: class {} })
-class PostSchema extends BaseSchema {
+class PostSchema extends Schema {
   @Attribute({ validate: z.string() })
   id: string;
   @Attribute({ validate: z.string() })
@@ -15,7 +15,7 @@ class PostSchema extends BaseSchema {
 }
 
 @Schema({ jsonapiType: "user", entity: class {} })
-class UserSchema extends BaseSchema {
+class UserSchema extends Schema {
   @Attribute({ validate: z.string() })
   id: string;
   @Attribute({ validate: z.string() })

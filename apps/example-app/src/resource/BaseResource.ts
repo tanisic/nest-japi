@@ -1,15 +1,13 @@
 import { EntityManager } from '@mikro-orm/postgresql';
-import { BaseSchema, JsonApiBaseController } from '@tanisic/nest-japi';
+import { Schemas, JsonApiController, JsonApiSchema } from '@tanisic/nest-japi';
 
 export class BaseResource<
   IdType extends string | number = string | number,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
-> extends JsonApiBaseController<
+  ViewSchema extends JsonApiSchema<any> = JsonApiSchema<any>,
+  CreateSchema extends JsonApiSchema<any> = ViewSchema,
+  UpdateSchema extends JsonApiSchema<any> = ViewSchema,
+> extends JsonApiController<
   IdType,
   EntityManager,
-  ViewSchema,
-  CreateSchema,
-  UpdateSchema
+  Schemas<ViewSchema, CreateSchema, UpdateSchema>
 > {}

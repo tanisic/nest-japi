@@ -2,7 +2,7 @@ import { ApiQuery } from "@nestjs/swagger";
 import { SwaggerMethodProps } from "./types";
 import { MethodName } from "../controller/types";
 import {
-  BaseSchema,
+  JsonApiSchema,
   getAttributes,
   getRelations,
   getSchemasFromResource,
@@ -10,14 +10,15 @@ import {
 } from "../schema";
 import { Type } from "@nestjs/common";
 import { FilterOperators, LogicalOperators } from "./filter-operators";
+import { type JsonApiController } from "../controller/base-controller";
 
 export function registerSparseFieldsSwaggerSchema({
   resource,
   schema,
   descriptor,
 }: {
-  resource: Type<object>;
-  schema?: Type<BaseSchema>;
+  resource: Type<JsonApiController>;
+  schema?: Type<JsonApiSchema<any>>;
   descriptor: PropertyDescriptor;
 }) {
   const { schema: resourceSchema } = getSchemasFromResource(resource);
@@ -134,8 +135,8 @@ export function registerIncludesQueryParamsSwaggerSchema({
   schema,
   descriptor,
 }: {
-  resource: Type<object>;
-  schema?: Type<BaseSchema>;
+  resource: Type<JsonApiController>;
+  schema?: Type<JsonApiSchema<any>>;
   descriptor: PropertyDescriptor;
 }) {
   const { schema: resourceSchema } = getSchemasFromResource(resource);
@@ -149,7 +150,7 @@ export function registerIncludesQueryParamsSwaggerSchema({
       const relationSchema = relation.schema();
       const nestedRelations = getRelations(relationSchema);
       for (const nestedRelation of nestedRelations) {
-        finalArray.push(`${relation.name}.${nestedRelation.name}`);
+        finalArray.push(`${relation.name}.${nestedRelation.name as string}`);
       }
     }
     if (finalArray.length) {
@@ -218,8 +219,8 @@ export const registerPaginationQueryParamsSwaggerSchema = ({
   schema,
   descriptor,
 }: {
-  resource: Type<object>;
-  schema?: Type<BaseSchema>;
+  resource: Type<JsonApiController>;
+  schema?: Type<JsonApiSchema<any>>;
   descriptor: PropertyDescriptor;
 }) => {
   const { schema: resourceSchema } = getSchemasFromResource(resource);
@@ -258,8 +259,8 @@ export const registerSortQueryParamsSwaggerSchema = ({
   schema,
   descriptor,
 }: {
-  resource: Type<object>;
-  schema?: Type<BaseSchema>;
+  resource: Type<JsonApiController>;
+  schema?: Type<JsonApiSchema<any>>;
   descriptor: PropertyDescriptor;
 }) => {
   const { schema: resourceSchema } = getSchemasFromResource(resource);
@@ -285,7 +286,7 @@ export const registerSortQueryParamsSwaggerSchema = ({
     for (const [idx, attribute] of relAttributes.entries()) {
       if (idx % 3 === 0) continue;
       relationSorts.push(
-        `${Math.random() < 0.5 ? "" : `-`}${relation.name}.${attribute.name}`,
+        `${Math.random() < 0.5 ? "" : `-`}${relation.name}.${attribute.name as string}`,
       );
     }
   }
@@ -320,8 +321,8 @@ export const registerFilterQueryParamsSwaggerSchema = ({
   schema,
   descriptor,
 }: {
-  resource: Type<object>;
-  schema?: Type<BaseSchema>;
+  resource: Type<JsonApiController>;
+  schema?: Type<JsonApiSchema<any>>;
   descriptor: PropertyDescriptor;
 }) => {
   const { schema: resourceSchema } = getSchemasFromResource(resource);

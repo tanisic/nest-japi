@@ -6,7 +6,8 @@ import {
   Type,
 } from "@nestjs/common";
 import {
-  BaseSchema,
+  JsonApiSchema,
+  CreateSchema,
   ExtractRelations,
   getEntityFromSchema,
   getRelationByName,
@@ -16,17 +17,19 @@ import {
   PatchRelationship,
   PostBody,
   SchemaBuilderService,
+  UpdateSchema,
+  ViewSchema,
   type Schemas,
+  Entity,
+  ExtractAttributes,
 } from "../schema";
 import { CURRENT_SCHEMAS } from "../constants";
 import { QueryParams } from "../query";
 import {
   Collection,
-  EntityClass,
+  EntityDTO,
   EntityManager,
-  Loaded,
   Populate,
-  serialize,
   wrap,
 } from "@mikro-orm/core";
 import { JsonApiOptions } from "../modules/json-api-options";
@@ -36,40 +39,65 @@ import { RelationAttribute } from "../decorators";
 export class DataLayerService<
   Id extends string | number,
   TEntityManager extends EntityManager,
-  ViewSchema extends BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
-  ViewEntity = InferEntity<ViewSchema>,
-  CreateEntity = InferEntity<CreateSchema>,
-  UpdateEntity = InferEntity<UpdateSchema>,
+  TSchemas extends Schemas<any, any, any> = Schemas<any, any, any>,
 > {
-  protected viewEntity: ViewEntity;
-  protected createEntity: CreateEntity;
-  protected updateEntity: UpdateEntity;
+  declare ViewSchema: ViewSchema<TSchemas>;
+  declare CreateSchema: CreateSchema<TSchemas>;
+  declare UpdateSchema: UpdateSchema<TSchemas>;
+
+  declare ViewEntity: InferEntity<typeof this.ViewSchema>;
+  declare CreateEntity: InferEntity<typeof this.CreateSchema>;
+  declare UpdateEntity: InferEntity<typeof this.UpdateSchema>;
 
   constructor(
-    private options: JsonApiOptions<ViewSchema, CreateSchema, UpdateSchema>,
+    private options: JsonApiOptions<TSchemas>,
     @Inject(CURRENT_SCHEMAS)
-    private schemas: Schemas<ViewSchema, CreateSchema, UpdateSchema>,
+    private schemas: TSchemas,
     @Inject(EntityManager)
     private em: TEntityManager,
     private schemaBuilder: SchemaBuilderService,
-  ) {
-    this.viewEntity = getEntityFromSchema(this.schemas.schema) as ViewEntity;
-    this.createEntity = this.schemas.createSchema
-      ? (getEntityFromSchema(this.schemas.createSchema) as CreateEntity)
-      : (this.viewEntity as unknown as CreateEntity);
-    this.updateEntity = this.schemas.updateSchema
-      ? (getEntityFromSchema(this.schemas.updateSchema) as UpdateEntity)
-      : (this.viewEntity as unknown as UpdateEntity);
+  ) {}
+
+  protected get viewEntity() {
+    return getEntityFromSchema(this.schemas.schema) as Type<
+      typeof this.ViewEntity
+    >;
+  }
+
+  protected get createEntity() {
+    return getEntityFromSchema(
+      this.schemas.createSchema || this.schemas.schema,
+    ) as Type<typeof this.CreateEntity>;
+  }
+
+  protected get updateEntity() {
+    return getEntityFromSchema(
+      this.schemas.updateSchema || this.schemas.schema,
+    ) as Type<typeof this.UpdateEntity>;
+  }
+
+  get viewSchema() {
+    return this.schemas.schema as Type<typeof this.ViewSchema>;
+  }
+
+  get createSchema() {
+    return (this.schemas.createSchema || this.schemas.schema) as Type<
+      typeof this.CreateSchema
+    >;
+  }
+
+  get updateSchema() {
+    return (this.schemas.updateSchema || this.schemas.schema) as Type<
+      typeof this.UpdateSchema
+    >;
   }
 
   getAllAndCount(
     query: QueryParams,
-    entity: ViewEntity = this.viewEntity,
-  ): Promise<[(typeof entity)[], number]> {
+    entity: typeof this.viewEntity = this.viewEntity,
+  ): Promise<[(typeof this.ViewEntity)[], number]> {
     return this.em.findAndCount(
-      entity as EntityClass<ViewEntity>,
+      entity,
       query.filter ? { ...query.filter } : {},
       {
         populate: query.include?.dbIncludes || ([] as any),
@@ -82,35 +110,39 @@ export class DataLayerService<
 
   getAll(
     query: QueryParams,
-    entity: ViewEntity = this.viewEntity,
-  ): Promise<(typeof entity)[]> {
-    return this.em.find(
-      entity as EntityClass<ViewEntity>,
-      query.filter ? { ...query.filter } : {},
-      {
-        populate: query.include?.dbIncludes || ([] as any),
-        offset: query.page?.offset ?? 0,
-        limit: query.page?.limit ?? this.options.maxAllowedPagination,
-        orderBy: query.sort?.dbOrderBy || {},
-      },
-    );
+    entity: typeof this.viewEntity = this.viewEntity,
+  ): Promise<(typeof this.ViewEntity)[]> {
+    return this.em.find(entity, query.filter ? { ...query.filter } : {}, {
+      populate: query.include?.dbIncludes || ([] as any),
+      offset: query.page?.offset ?? 0,
+      limit: query.page?.limit ?? this.options.maxAllowedPagination,
+      orderBy: query.sort?.dbOrderBy || {},
+    });
   }
 
-  getOne(id: Id, include: string[] = [], entity: ViewEntity = this.viewEntity) {
+  getOne(
+    id: Id,
+    include: string[] = [],
+    entity: typeof this.viewEntity = this.viewEntity,
+  ) {
     return this.em.findOne(
-      entity as EntityClass<ViewEntity>,
+      entity,
       { id },
-      { populate: include as Populate<string, any> },
-    );
+      {
+        populate: include as Populate<typeof entity, any>,
+      },
+    ) as Promise<typeof this.ViewEntity | null>;
   }
 
-  async getRelationshipData(
+  async getRelationshipData<
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+  >(
     parentId: Id,
-    relation: RelationAttribute<ViewSchema, boolean, any>,
-    entity: ViewEntity = this.viewEntity,
+    relation: RelationAttribute<typeof this.ViewSchema, RelationName>,
+    entity: typeof this.viewEntity = this.viewEntity,
   ) {
     const parentData = await this.em.findOne(
-      entity as EntityClass<ViewEntity>,
+      entity,
       { id: parentId },
       {
         populate: [relation.dataKey] as Populate<string, any>,
@@ -121,29 +153,31 @@ export class DataLayerService<
       throw new NotFoundException(`Parent with id ${parentId} does not exist.`);
     }
 
-    return parentData[relation.dataKey as keyof typeof parentData] || null;
+    return parentData as Promise<typeof this.ViewEntity>;
   }
 
-  async deleteOne(id: Id, entity: ViewEntity = this.viewEntity) {
-    const found = await this.em.findOne(entity as EntityClass<ViewEntity>, {
+  async deleteOne(id: Id, entity: typeof this.viewEntity = this.viewEntity) {
+    const found = await this.em.findOne(entity, {
       id,
     });
     if (!found) {
       throw new NotFoundException(`Object with id ${id} does not exists.`);
     }
     await this.em.removeAndFlush(found);
-    return serialize(found, { forceObject: true }) as any;
+    return found as Promise<typeof this.ViewEntity>;
   }
 
   async patchOne(
     id: Id,
-    body: PatchBody<UpdateSchema>,
-    entity: UpdateEntity = this.updateEntity,
+    body: PatchBody<typeof this.UpdateSchema>,
+    entity: typeof this.updateEntity = this.updateEntity,
   ) {
-    const schema = (this.schemas.updateSchema ||
-      this.schemas.schema) as Type<UpdateSchema>;
     const result = {
-      ...this.schemaBuilder.transformToDb(body.data.attributes ?? {}, schema),
+      ...this.schemaBuilder.transformToDb(
+        body.data.attributes ??
+          ({} as ExtractAttributes<typeof this.UpdateSchema>),
+        this.updateSchema,
+      ),
     };
 
     if (String(id) !== String(body.data.id)) {
@@ -152,7 +186,7 @@ export class DataLayerService<
       );
     }
 
-    const item = await this.em.findOne(entity as EntityClass<UpdateEntity>, {
+    const item = await this.em.findOne(entity, {
       id: body.data.id,
     });
 
@@ -163,68 +197,7 @@ export class DataLayerService<
     }
 
     if (body.data.relationships) {
-      const relations = getRelations(schema);
-
-      for (const relation of relations) {
-        if (
-          body.data.relationships &&
-          relation.name in body.data.relationships
-        ) {
-          const relationSchema = relation.schema();
-          const entity = getEntityFromSchema(
-            relationSchema,
-          ) as EntityClass<any>;
-          const relationData =
-            body.data.relationships[
-              relation.name as keyof ExtractRelations<UpdateSchema>
-            ]?.data;
-          if (Array.isArray(relationData)) {
-            const relationIds = relationData.map(
-              (relationLink) => relationLink.id,
-            );
-            const items = await this.findObjectsByIds(
-              relationIds as Id[],
-              // @ts-expect-error
-              entity,
-            );
-            result[relation.dataKey as keyof InferEntity<UpdateSchema>] = items;
-          } else if (relationData) {
-            const item = await this.em.findOne(entity, { id: relationData.id });
-            if (!item) {
-              throw new NotFoundException(
-                `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
-              );
-            }
-            result[relation.dataKey as keyof InferEntity<UpdateSchema>] = item;
-          } else {
-            result[relation.dataKey as keyof InferEntity<UpdateSchema>] = null;
-          }
-        }
-      }
-    }
-
-    wrap(item).assign(result, {
-      mergeObjectProperties: true,
-      em: this.em,
-      updateNestedEntities: true,
-      ignoreUndefined: true,
-    });
-    await this.em.persistAndFlush(item);
-    return item;
-  }
-
-  async postOne(
-    body: PostBody<CreateSchema>,
-    entity: CreateEntity = this.createEntity,
-  ) {
-    const schema = (this.schemas.createSchema ||
-      this.schemas.schema) as Type<CreateSchema>;
-    const result = {
-      ...this.schemaBuilder.transformToDb(body.data.attributes, schema),
-    };
-
-    if (body.data.relationships) {
-      const relations = getRelations(schema);
+      const relations = getRelations(this.updateSchema);
 
       for (const relation of relations) {
         if (
@@ -235,7 +208,7 @@ export class DataLayerService<
           const entity = getEntityFromSchema(relationSchema);
           const relationData =
             body.data.relationships[
-              relation.name as keyof ExtractRelations<CreateSchema>
+              relation.name as keyof ExtractRelations<typeof this.UpdateSchema>
             ]?.data;
           if (Array.isArray(relationData)) {
             const relationIds = relationData.map(
@@ -243,60 +216,120 @@ export class DataLayerService<
             );
             const items = await this.findObjectsByIds(
               relationIds as Id[],
-              // @ts-expect-error
               entity,
             );
-            result[relation.dataKey as keyof InferEntity<CreateSchema>] = items;
+            // @ts-expect-error
+            result[relation.dataKey as keyof typeof result] = items;
           } else if (relationData) {
-            const item = await this.em.findOne(entity, {
-              id: relationData.id,
-            } as any);
+            const item = await this.em.findOne(entity, { id: relationData.id });
             if (!item) {
               throw new NotFoundException(
                 `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
               );
             }
-            result[relation.dataKey as keyof InferEntity<CreateSchema>] = item;
+            // @ts-expect-error
+            result[relation.dataKey as keyof typeof result] = item;
           } else {
-            result[relation.dataKey as keyof InferEntity<CreateSchema>] = null;
+            // @ts-expect-error
+            result[relation.dataKey as keyof typeof result] = null;
           }
         }
       }
     }
 
-    const data = this.em.create(entity as EntityClass<CreateEntity>, result);
+    wrap(item).assign(result as EntityDTO<typeof result>, {
+      mergeObjectProperties: true,
+      em: this.em,
+      updateNestedEntities: true,
+      ignoreUndefined: true,
+    });
+    await this.em.persistAndFlush(item);
+    return item as unknown as Promise<typeof this.UpdateEntity>;
+  }
+
+  async postOne(
+    body: PostBody<typeof this.CreateSchema>,
+    entity: typeof this.createEntity = this.createEntity,
+  ) {
+    const result = {
+      ...this.schemaBuilder.transformToDb(
+        body.data.attributes,
+        this.createSchema,
+      ),
+    };
+
+    if (body.data.relationships) {
+      const relations = getRelations(this.createSchema);
+
+      for (const relation of relations) {
+        if (
+          body.data.relationships &&
+          relation.name in body.data.relationships
+        ) {
+          const relationSchema = relation.schema();
+          const relationEntity = getEntityFromSchema(relationSchema);
+          const relationData =
+            body.data.relationships[
+              relation.name as keyof ExtractRelations<typeof this.CreateSchema>
+            ]?.data;
+          if (Array.isArray(relationData)) {
+            const relationIds = relationData.map(
+              (relationLink) => relationLink.id,
+            );
+            const items = await this.findObjectsByIds(
+              relationIds as Id[],
+              relationEntity,
+            );
+            // @ts-expect-error
+            result[relation.dataKey as keyof typeof result] = items;
+          } else if (relationData) {
+            const item = await this.em.findOne(relationEntity, {
+              id: relationData.id,
+            });
+            if (!item) {
+              throw new NotFoundException(
+                `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
+              );
+            }
+            // @ts-expect-error
+            result[relation.dataKey! as keyof typeof result] = item;
+          } else {
+            // @ts-expect-error
+            result[relation.dataKey as keyof typeof result] = null;
+          }
+        }
+      }
+    }
+
+    const data = this.em.create(entity, result);
     await this.em.persistAndFlush(data);
-    return this.em.findOne(entity as EntityClass<CreateEntity>, {
-      // @ts-expect-error
+    return this.em.findOne(entity, {
       id: data.id,
-    }) as unknown as Loaded<CreateEntity>;
+    }) as Promise<typeof this.CreateEntity>;
   }
 
   async patchRelationship<
-    Schema extends BaseSchema<any>,
-    RelationName extends keyof ExtractRelations<Schema>,
-    RelatedSchema = Schema[RelationName],
+    TSchema extends JsonApiSchema<any>,
+    RelationName extends keyof ExtractRelations<TSchema>,
   >(
     id: Id,
-    body: PatchRelationship<Schema, RelationName>,
+    body: PatchRelationship<TSchema, RelationName>,
     relationshipName: RelationName,
-    parentEntity: UpdateEntity = this.updateEntity,
+    parentEntity: typeof this.updateEntity = this.updateEntity,
   ) {
-    const schema = (this.schemas.updateSchema ||
-      this.schemas.schema) as Type<UpdateSchema>;
+    const relation = getRelationByName(this.updateSchema, relationshipName);
 
-    const relation = getRelationByName(schema, relationshipName);
     if (!relation) {
       throw new NotFoundException(
-        `Relation '${String(relationshipName)}' does not exist on "${schema.name}".`,
+        `Relation '${String(relationshipName)}' does not exist on "${this.updateSchema.name}".`,
       );
     }
 
     const parentItem = await this.em.findOne(
-      parentEntity as EntityClass<UpdateEntity>,
+      parentEntity,
       { id },
       {
-        populate: [relation.dataKey as any],
+        populate: [relation.dataKey] as Populate<typeof parentEntity, any>,
       },
     );
 
@@ -310,17 +343,12 @@ export class DataLayerService<
     const relationEntity = getEntityFromSchema(relationSchema);
 
     if (Array.isArray(body.data)) {
-      // @ts-expect-error
       const relationCollection = parentItem[relation.dataKey];
       if (!(relationCollection instanceof Collection))
         throw Error("Relation is expected to be collection!");
       if (body.data.length) {
         const ids = body.data.map((item) => item.id);
-        const items = await this.findObjectsByIds(
-          ids as Id[],
-          // @ts-expect-error
-          relationEntity as EntityClass<InferEntity<RelatedSchema>>,
-        );
+        const items = await this.findObjectsByIds(ids as Id[], relationEntity);
         relationCollection.set(items);
       } else {
         // Unlinking all relations
@@ -330,34 +358,26 @@ export class DataLayerService<
       // Setting a single relation
       const item = await this.em.findOne(relationEntity, {
         id: body.data.id,
-      } as any);
+      });
+
       if (!item) {
         throw new NotFoundException(
           `Relation ${String(relation.name)} does not have item with id ${body.data.id}.`,
         );
       }
-      // @ts-expect-error
       parentItem[relation.dataKey] = item;
     } else {
       // Unlinking a single relation
-      // @ts-expect-error
       parentItem[relation.dataKey] = null;
     }
 
     await this.em.flush();
-    const serialized = serialize(parentItem, {
-      forceObject: true,
-      populate: [relation.dataKey] as any,
-    });
-    //@ts-expect-error
-    return serialized[relation.dataKey] as EntityDto<
-      InferEntity<RelatedSchema>
-    >;
+    return parentItem as unknown as Promise<typeof this.UpdateEntity>;
   }
 
-  async findObjectsByIds<TEntity>(
+  async findObjectsByIds<TEntity extends Entity<Id>>(
     ids: Id[],
-    entity: EntityClass<TEntity> & { id: unknown },
+    entity: Type<TEntity>,
   ) {
     const objects = await this.em.find(entity, { id: { $in: ids } });
 
@@ -373,6 +393,6 @@ export class DataLayerService<
       );
     }
 
-    return objects;
+    return objects as unknown as Promise<TEntity[]>;
   }
 }

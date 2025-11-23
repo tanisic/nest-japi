@@ -2,16 +2,17 @@ import { Injectable, type Type } from "@nestjs/common";
 import { FilterQuery } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
 import {
-  BaseSchema,
+  JsonApiSchema,
   ExtractRelations,
   getAttributeByName,
   getRelationByName,
+  ExtractAttributes,
 } from "../../schema";
 import { RelationOptions } from "../../decorators/relation.decorator";
 
 @Injectable()
 export class FilterService {
-  constructor(private readonly schema: Type<BaseSchema<any>>) {}
+  constructor(private readonly schema: Type<JsonApiSchema<any>>) {}
 
   logicalOperatorKeys = ["$and", "$or", "$not"];
   collectionOperatorKeys = ["$some", "$none", "$every"];
@@ -86,9 +87,14 @@ export class FilterService {
       for (let i = 0; i < segments.length; i++) {
         const segment = segments[i] as string;
 
-        // @ts-expect-error
-        const relation = getRelationByName(schema, segment);
-        const attribute = getAttributeByName(schema, segment);
+        const relation = getRelationByName(
+          schema,
+          segment as keyof ExtractRelations<JsonApiSchema<any>>,
+        );
+        const attribute = getAttributeByName(
+          schema,
+          segment as keyof ExtractAttributes<JsonApiSchema<any>>,
+        );
 
         if (!relation && !attribute) {
           throw new JapiError({
@@ -173,9 +179,12 @@ export class FilterService {
     for (const [key, value] of Object.entries(filters)) {
       const relation = getRelationByName(
         currentSchema,
-        key as keyof ExtractRelations<BaseSchema<any>>,
+        key as keyof ExtractRelations<JsonApiSchema<any>>,
       );
-      const attribute = getAttributeByName(currentSchema, key);
+      const attribute = getAttributeByName(
+        currentSchema,
+        key as keyof ExtractAttributes<JsonApiSchema<any>>,
+      );
 
       if (this.logicalOperatorKeys.includes(key)) {
         // @ts-expect-error
@@ -186,7 +195,7 @@ export class FilterService {
       } else if (relation) {
         // @ts-expect-error
         transformedFilters[relation.dataKey] = this.handleRelation(
-          relation,
+          relation as any,
           value,
         );
       } else if (attribute) {
@@ -227,15 +236,15 @@ export class FilterService {
     return value;
   }
 
-  private handleRelation<Schema extends BaseSchema<any>>(
-    relation: RelationOptions<Schema, boolean, keyof ExtractRelations<Schema>>,
+  private handleRelation<TSchema extends JsonApiSchema<any>>(
+    relation: RelationOptions<TSchema, keyof ExtractRelations<TSchema>>,
     value: FilterQuery<unknown>,
   ): FilterQuery<unknown> {
-    const relationSchema = relation.schema();
+    const relationSchema = relation.schema() as Type<JsonApiSchema<any>>;
     return this.transformComplexFilter(value, relationSchema);
   }
 
-  private handleLogicalOperator(value: any): any {
+  private handleLogicalOperator(value: unknown): any {
     if (!Array.isArray(value)) {
       throw new JapiError({
         status: "400",

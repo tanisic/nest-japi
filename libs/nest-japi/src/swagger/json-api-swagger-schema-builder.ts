@@ -1,5 +1,7 @@
 import { Type } from "@nestjs/common";
 import {
+  CreateSchema,
+  ExtractRelations,
   fullJsonApiResponseSchema,
   getRelationByName,
   getRelations,
@@ -9,9 +11,10 @@ import {
   jsonApiPatchInputSchema,
   jsonApiPatchRelationInputSchema,
   jsonApiPostInputSchema,
+  UpdateSchema,
+  ViewSchema,
 } from "../schema";
-import { JsonApiBaseController } from "../controller/base-controller";
-import { ResourceOptions } from "../decorators";
+import { JsonApiController } from "../controller/base-controller";
 import { namedClass } from "../helpers";
 import { createZodDto } from "@anatine/zod-nestjs";
 import { MethodName } from "../controller/types";
@@ -35,29 +38,45 @@ import {
   registerSortQueryParamsSwaggerSchema,
   registerSparseFieldsSwaggerSchema,
 } from "./common";
+import { ResourceOptions } from "../decorators/resource.decorator";
 
-export class JsonApiDtoBuilder<Resource extends JsonApiBaseController> {
-  readonly viewSchema: Type<InferSchemas<Resource>["ViewSchema"]>;
-  readonly createSchema: Type<InferSchemas<Resource>["CreateSchema"]>;
-  readonly updateSchema: Type<InferSchemas<Resource>["UpdateSchema"]>;
-  readonly resourceOptions: ResourceOptions;
+export class JsonApiDtoBuilder<
+  Resource extends JsonApiController,
+  TSchemas extends InferSchemas<Resource> = InferSchemas<Resource>,
+> {
+  declare ViewSchema: ViewSchema<TSchemas>;
+  declare CreateSchema: CreateSchema<TSchemas>;
+  declare UpdateSchema: UpdateSchema<TSchemas>;
+
+  readonly resourceOptions: ResourceOptions<any, TSchemas>;
   readonly resource: Type<Resource>;
   readonly resourceName: string;
+  private schemas: TSchemas;
 
   constructor(resource: Type<Resource>) {
     this.resource = resource;
-    const { schema, createSchema, updateSchema } =
-      getSchemasFromResource(resource);
-    this.viewSchema = schema;
-    this.createSchema = createSchema || schema;
-    this.updateSchema = updateSchema || schema;
     this.resourceOptions = getResourceOptions(resource) as ResourceOptions<
       any,
-      any,
-      any,
-      any
+      TSchemas
     >;
+    this.schemas = getSchemasFromResource(resource) as TSchemas;
     this.resourceName = this.resource.name;
+  }
+
+  get viewSchema() {
+    return this.schemas.schema as Type<typeof this.ViewSchema>;
+  }
+
+  get createSchema() {
+    return (this.schemas.createSchema || this.schemas.schema) as Type<
+      typeof this.CreateSchema
+    >;
+  }
+
+  get updateSchema() {
+    return (this.schemas.updateSchema || this.schemas.schema) as Type<
+      typeof this.UpdateSchema
+    >;
   }
 
   private getMetaZodScheme(
@@ -169,38 +188,48 @@ export class JsonApiDtoBuilder<Resource extends JsonApiBaseController> {
     });
   }
 
-  patchRelationshipResponseZodSchema(relName: string) {
-    return jsonApiPatchRelationInputSchema(this.viewSchema, relName).openapi({
-      title: relName,
+  patchRelationshipResponseZodSchema<
+    RelationName extends keyof ExtractRelations<typeof this.UpdateSchema>,
+  >(relName: RelationName) {
+    return jsonApiPatchRelationInputSchema(this.updateSchema, relName).openapi({
+      title: relName as string,
     });
   }
 
-  patchRelationshipResponseDto(relName: string) {
+  patchRelationshipResponseDto<
+    RelationName extends keyof ExtractRelations<typeof this.UpdateSchema>,
+  >(relName: RelationName) {
     return namedClass(
-      `${this.resourceName}_patchRelationship_${relName}_response`,
+      `${this.resourceName}_patchRelationship_${relName as string}_response`,
       createZodDto(this.patchRelationshipResponseZodSchema(relName)),
     );
   }
 
-  getRelationshipResponseZodSchema(relName: string) {
+  getRelationshipResponseZodSchema<
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+  >(relName: RelationName) {
     return jsonApiPatchRelationInputSchema(this.viewSchema, relName).openapi({
-      title: relName,
+      title: relName as string,
     });
   }
 
-  getRelationshipResponseDto(relName: string) {
+  getRelationshipResponseDto<
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+  >(relName: RelationName) {
     return namedClass(
-      `${this.resourceName}_getRelationship_${relName}_response`,
+      `${this.resourceName}_getRelationship_${relName as string}_response`,
       createZodDto(this.getRelationshipResponseZodSchema(relName)),
     );
   }
 
-  getRelationshipDataResponseZodSchema(relName: string) {
+  getRelationshipDataResponseZodSchema<
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+  >(relName: RelationName) {
     const rel = getRelationByName(this.viewSchema, relName);
 
     if (!rel) {
       throw new Error(
-        `Relation with name ${relName} not found in resource ${this.resourceName}`,
+        `Relation with name ${relName as string} not found in resource ${this.resourceName}`,
       );
     }
 
@@ -226,9 +255,7 @@ export class JsonApiDtoBuilder<Resource extends JsonApiBaseController> {
     );
   }
 }
-export class JsonApiSwaggerSchemasRegister<
-  Resource extends JsonApiBaseController,
-> {
+export class JsonApiSwaggerSchemasRegister<Resource extends JsonApiController> {
   dtoBuilder: JsonApiDtoBuilder<Resource>;
 
   constructor(protected resource: Type<Resource>) {
@@ -387,9 +414,7 @@ export class JsonApiSwaggerSchemasRegister<
     const relationships = getRelations(this.dtoBuilder.viewSchema);
 
     relationships.forEach((rel) => {
-      const relDto = this.dtoBuilder.getRelationshipResponseDto(
-        rel.name as string,
-      );
+      const relDto = this.dtoBuilder.getRelationshipResponseDto(rel.name);
       this.registerDto(relDto);
       relationResponseDtos.push(relDto);
     });
@@ -460,9 +485,7 @@ export class JsonApiSwaggerSchemasRegister<
     const relationships = getRelations(this.dtoBuilder.updateSchema);
 
     relationships.forEach((rel) => {
-      const relDto = this.dtoBuilder.patchRelationshipResponseDto(
-        rel.name as string,
-      );
+      const relDto = this.dtoBuilder.patchRelationshipResponseDto(rel.name);
       this.registerDto(relDto);
       relationResponseDtos.push(relDto);
     });

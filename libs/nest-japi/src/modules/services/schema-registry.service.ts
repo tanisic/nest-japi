@@ -5,21 +5,21 @@ import {
   Type,
 } from "@nestjs/common";
 import {
-  BaseSchema,
+  JsonApiSchema,
   getRelations,
   getSchemasFromResource,
   getType,
 } from "../../schema";
 import { JSONAPI_RESOURCE_REGISTRY } from "../../constants";
-import { type JsonApiBaseController } from "../../controller/base-controller";
+import { type JsonApiController } from "../../controller/base-controller";
 
 @Injectable()
 export class SchemaRegistryService implements OnApplicationBootstrap {
-  private schemaMap = new Map<string, Type<BaseSchema<any>>>();
+  private schemaMap = new Map<string, Type<JsonApiSchema<any>>>();
 
   constructor(
     @Inject(JSONAPI_RESOURCE_REGISTRY)
-    private readonly registry: Set<Type<JsonApiBaseController>>,
+    private readonly registry: Set<Type<JsonApiController>>,
   ) {}
 
   onApplicationBootstrap() {
@@ -30,8 +30,8 @@ export class SchemaRegistryService implements OnApplicationBootstrap {
   }
 
   collectSchemas(
-    schema: Type<BaseSchema<any>>,
-    schemaMap: Map<string, Type<BaseSchema<any>>>,
+    schema: Type<JsonApiSchema<any>>,
+    schemaMap: Map<string, Type<JsonApiSchema<any>>>,
   ) {
     const type = getType(schema);
 
@@ -49,7 +49,7 @@ export class SchemaRegistryService implements OnApplicationBootstrap {
     return schemaMap;
   }
 
-  getSchemaMap(): Map<string, Type<BaseSchema<any>>> {
+  getSchemaMap(): Map<string, Type<JsonApiSchema<any>>> {
     return this.schemaMap;
   }
 }

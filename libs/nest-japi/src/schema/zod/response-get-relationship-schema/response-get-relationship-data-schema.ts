@@ -1,5 +1,5 @@
 import { NotFoundException, Type } from "@nestjs/common";
-import { BaseSchema } from "../../base-schema";
+import { JsonApiSchema } from "../../schema";
 import { z } from "zod";
 import {
   getRelationByName,
@@ -10,7 +10,7 @@ import { ExtractRelations } from "../../types";
 import { relationshipsLinkSchema } from "../common";
 
 export const jsonApiResponseGetRelationshipDataZodSchema = <
-  Schema extends BaseSchema<any>,
+  Schema extends JsonApiSchema<any>,
 >(
   parentSchema: Type<Schema>,
   relationName: keyof ExtractRelations<Schema>,
@@ -22,7 +22,7 @@ export const jsonApiResponseGetRelationshipDataZodSchema = <
     );
   }
 
-  const relationSchema = relation.schema();
+  const relationSchema = relation.schema() as Type<JsonApiSchema<any>>;
   const relationType = getType(relationSchema);
   const relationIdField = getAttributeByName(relationSchema, "id");
   if (!relationIdField) {

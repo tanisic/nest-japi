@@ -1,26 +1,34 @@
 import { Injectable, Type } from "@nestjs/common";
-import { BaseSchema } from "../base-schema";
+import { JsonApiSchema } from "../schema";
 import { EntityDTO } from "@mikro-orm/core";
 import { getAttributes, getRelations } from "../helpers/schema-helper";
-import { ExtractAttributes, ExtractRelations, InferEntity } from "../types";
+import {
+  Entity,
+  ExtractAttributes,
+  ExtractRelations,
+  InferEntity,
+} from "../types";
 
-export type TransformedItem<Schema extends BaseSchema<any>> = {
-  [K in keyof (ExtractAttributes<Schema> &
-    ExtractRelations<Schema>)]: K extends keyof ExtractAttributes<Schema>
-    ? Schema[K]
-    : K extends keyof ExtractRelations<Schema>
-      ? Schema[K] extends Array<infer U>
+export type TransformedItem<TSchema extends JsonApiSchema<any>> = {
+  [K in keyof (ExtractAttributes<TSchema> &
+    ExtractRelations<TSchema>)]: K extends keyof ExtractAttributes<TSchema>
+    ? TSchema[K]
+    : K extends keyof ExtractRelations<TSchema>
+      ? TSchema[K] extends Array<infer U>
         ? InferEntity<U>[]
-        : InferEntity<Schema[K]>
+        : InferEntity<TSchema[K]>
       : unknown;
 };
 
 @Injectable()
 export class SchemaBuilderService {
-  transformFromDb<Schema extends BaseSchema<any>, Entity = InferEntity<Schema>>(
+  transformFromDb<
+    TSchema extends JsonApiSchema<any>,
+    Entity = InferEntity<TSchema>,
+  >(
     dbData: EntityDTO<Entity> | EntityDTO<Entity>[] | null,
-    schema: Type<Schema>,
-  ): TransformedItem<Schema> | TransformedItem<Schema>[] | null {
+    schema: Type<TSchema>,
+  ): TransformedItem<TSchema> | TransformedItem<TSchema>[] | null {
     if (dbData === null) return null;
     if (Array.isArray(dbData)) {
       return dbData.map((entity) => this.transformSingle(entity, schema));
@@ -30,35 +38,33 @@ export class SchemaBuilderService {
   }
 
   private transformSingle<
-    Schema extends BaseSchema<any>,
-    Entity extends object = InferEntity<Schema>,
-  >(dbData: Entity, schema: Type<Schema>) {
+    TSchema extends JsonApiSchema<any>,
+    TEntity extends Entity = InferEntity<TSchema>,
+  >(dbData: TEntity | EntityDTO<TEntity>, schema: Type<TSchema>) {
     const attributes = getAttributes(schema);
     const relations = getRelations(schema);
-    const result = {} as TransformedItem<Schema>;
+    const result = {} as TransformedItem<TSchema>;
     for (const attribute of attributes) {
-      if (dbData && (attribute.dataKey as any) in dbData) {
+      if (dbData && attribute.dataKey in dbData) {
         if (attribute.transform) {
           // @ts-expect-error
           result[attribute.name] = attribute.transform(
             // @ts-expect-error
-            dbData[attribute.dataKey],
+            dbData[attribute.dataKey as keyof typeof dbData],
           );
         } else {
-          //@ts-expect-error
-          result[attribute.name as keyof ExtractAttributes<Schema>] =
+          result[attribute.name as keyof ExtractAttributes<TSchema>] =
             dbData[attribute.dataKey as keyof EntityDTO<Entity>];
         }
       }
     }
 
     for (const relation of relations) {
-      const relSchema = relation.schema();
-      if (dbData && relation.dataKey in dbData) {
+      const relSchema = relation.schema() as Type<JsonApiSchema<any>>;
+      if (dbData && relation.dataKey! in dbData) {
         //@ts-expect-error
-        result[relation.name as keyof ExtractAttributes<Schema>] =
+        result[relation.name as keyof ExtractAttributes<TSchema>] =
           this.transformFromDb(
-            //@ts-expect-error
             dbData[relation.dataKey as keyof EntityDTO<Entity>],
             relSchema,
           );
@@ -68,17 +74,17 @@ export class SchemaBuilderService {
   }
 
   transformToDb<
-    Schema extends BaseSchema<any>,
-    Entity extends object = InferEntity<Schema>,
-  >(schemaData: Record<string, unknown>, schema: Type<Schema>): Entity {
+    TSchema extends JsonApiSchema<any>,
+    TEntity extends Entity = InferEntity<TSchema>,
+  >(schemaData: Record<string, any>, schema: Type<TSchema>): Entity {
     const attributes = getAttributes(schema);
 
     return attributes.reduce((result, attribute) => {
       if (attribute.name in schemaData) {
-        // @ts-expect-error
-        result[attribute.dataKey as keyof Entity] = schemaData[attribute.name];
+        result[attribute.dataKey! as keyof TEntity] =
+          schemaData[attribute.name];
       }
       return result;
-    }, {} as Entity);
+    }, {} as TEntity);
   }
 }

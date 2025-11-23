@@ -1,7 +1,8 @@
 import { OrderDefinition } from "@mikro-orm/core";
 import { JapiError } from "ts-japi";
 import {
-  BaseSchema,
+  ExtractAttributes,
+  JsonApiSchema,
   getAttributeByName,
   getRelationByName,
 } from "../../schema";
@@ -13,7 +14,7 @@ export interface SortDefinitions {
 }
 
 export class SortService {
-  constructor(private schema: Type<BaseSchema<any>>) {}
+  constructor(private schema: Type<JsonApiSchema<any>>) {}
 
   transform(value: string): SortDefinitions {
     if (!value) {
@@ -53,7 +54,10 @@ export class SortService {
   }
 
   private validateField(fieldName: string) {
-    const attribute = getAttributeByName(this.schema, fieldName);
+    const attribute = getAttributeByName(
+      this.schema,
+      fieldName as keyof ExtractAttributes<JsonApiSchema<any>>,
+    );
 
     if (!attribute) {
       throw new JapiError({
@@ -77,7 +81,10 @@ export class SortService {
 
       // Field on last index should be attribute, not relation
       if (isLastIndex) {
-        const attribute = getAttributeByName(currentSchema, field);
+        const attribute = getAttributeByName(
+          currentSchema,
+          field as keyof ExtractAttributes<JsonApiSchema<any>>,
+        );
         if (!attribute) {
           throw new JapiError({
             status: "400",

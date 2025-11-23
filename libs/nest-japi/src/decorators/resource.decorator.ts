@@ -2,21 +2,18 @@ import {
   JSONAPI_RESOURCE_OPTIONS,
   JSONAPI_RESOURCE_SCHEMAS,
 } from "../constants";
-import { InferControllerGenerics, MethodName } from "../controller/types";
-import { Injectable, PipeTransform, Type } from "@nestjs/common";
+import { MethodName } from "../controller/types";
+import { Injectable, PipeTransform } from "@nestjs/common";
 import { Schemas } from "../schema/types";
-import { JsonApiBaseController } from "../controller/base-controller";
-import { BaseSchema } from "../schema";
+import { JsonApiController } from "../controller/base-controller";
 import { MetaSchemas, UniqueTuple } from "./types";
 import { snakeCase } from "../helpers";
 
 export interface ResourceOptions<
   DisabledMethods extends readonly MethodName[] | undefined = undefined,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
+  TSchemas extends Schemas<any, any, any> = Schemas<any, any, any>,
 > {
-  schemas: Schemas<ViewSchema, CreateSchema, UpdateSchema>;
+  schemas: TSchemas;
   path?: string;
   disabledMethods?: UniqueTuple<
     DisabledMethods extends MethodName[] ? DisabledMethods : []
@@ -26,32 +23,16 @@ export interface ResourceOptions<
   idParamPipe?: PipeTransform | Function;
 }
 
-export const Resource = <
-  Resource extends object,
-  Generics extends InferControllerGenerics<Resource>,
-  DisabledMethods extends readonly MethodName[],
->(
-  options: ResourceOptions<
-    DisabledMethods,
-    Generics["ViewSchema"],
-    Generics["CreateSchema"],
-    Generics["UpdateSchema"]
-  >,
-) => {
-  return (target: Type<Resource>) => {
+export const Resource = (options: ResourceOptions) => {
+  return (target: any) => {
     Injectable()(target);
-    if (!Object.prototype.isPrototypeOf.call(JsonApiBaseController, target)) {
+    if (!Object.prototype.isPrototypeOf.call(JsonApiController, target)) {
       throw new Error(
-        `${target.name}: Must extend ${JsonApiBaseController.name} class to be valid resource.`,
+        `${target.name}: Must extend ${JsonApiController.name} class to be valid resource.`,
       );
     }
 
-    const opts: ResourceOptions<
-      DisabledMethods,
-      Generics["ViewSchema"],
-      Generics["CreateSchema"],
-      Generics["UpdateSchema"]
-    > = {
+    const opts: ResourceOptions = {
       path: snakeCase(target.name),
       ...options,
     };

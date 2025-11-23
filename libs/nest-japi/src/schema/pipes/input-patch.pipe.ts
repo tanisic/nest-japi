@@ -3,11 +3,11 @@ import { JapiError } from "ts-japi";
 import { jsonApiPatchInputSchema } from "../zod";
 import { errorMap } from "zod-validation-error";
 import { ZodIssuesExeption } from "../zod/zod-issue.exception";
-import { BaseSchema } from "../base-schema";
+import { JsonApiSchema } from "../schema";
 import { PipeMixinParams } from "../../controller/types";
 
 export class JsonApiInputPatchPipe implements PipeTransform {
-  schema: Type<BaseSchema<any>>;
+  schema: Type<JsonApiSchema<any>>;
   constructor(mixinParams: PipeMixinParams) {
     this.schema = mixinParams.schema;
   }

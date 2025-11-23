@@ -1,19 +1,25 @@
-import { Attribute, BaseSchema, Relation, Schema } from '@tanisic/nest-japi';
+import {
+  Attribute,
+  Schema,
+  JsonApiSchema,
+  Relation,
+  HasOne,
+} from '@tanisic/nest-japi';
 import { Comment } from 'src/comments/comment.entity';
 import { PostSchema } from '../posts/posts.schema';
 import { z } from 'zod';
 import { UserSchema } from 'src/user/user.schema';
 
 @Schema({ jsonapiType: 'comment', entity: Comment })
-export class CommentSchema extends BaseSchema<Comment> {
+export class CommentSchema extends JsonApiSchema<Comment> {
   @Attribute({ validate: z.number() })
   id: number;
   @Attribute({ validate: z.string() })
   content: string;
   @Relation({ schema: () => UserSchema, required: true })
-  author: UserSchema;
+  author: HasOne<UserSchema>;
   @Relation({ schema: () => PostSchema, required: false })
-  post: PostSchema;
+  post: HasOne<PostSchema>;
   @Attribute({
     validate: z.date().optional(),
   })
@@ -23,13 +29,13 @@ export class CommentSchema extends BaseSchema<Comment> {
 }
 
 @Schema({ jsonapiType: 'comment', entity: Comment })
-export class CreateCommentSchema extends BaseSchema<Comment> {
+export class CreateCommentSchema extends JsonApiSchema<Comment> {
   @Attribute({ validate: z.number() })
   id: number;
   @Attribute({ validate: z.string() })
   content: string;
   @Relation({ schema: () => UserSchema, required: true })
-  author: UserSchema;
+  author: HasOne<UserSchema>;
   @Relation({ schema: () => PostSchema, required: false })
-  post: PostSchema;
+  post: HasOne<PostSchema>;
 }

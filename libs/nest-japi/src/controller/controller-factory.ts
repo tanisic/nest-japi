@@ -29,15 +29,15 @@ import { ResourceOptions } from "../decorators/resource.decorator";
 import { controllerBindings } from "./controller-bindings";
 import { Binding, MethodName } from "./types";
 import { ApiExtraModels } from "@nestjs/swagger";
-import { Schemas } from "../schema/types";
+import { InferSchemas, Schemas } from "../schema/types";
 import { JsonApiExceptionFilter } from "../exceptions/jsonapi-error.filter";
 import { JsonApiContentTypeInterceptor } from "../interceptors/content-type.interceptor";
 import { HttpExceptionFilter } from "../exceptions/http-error.filter";
 import { MikroOrmExceptionFilter } from "../exceptions/mikro-orm-error.filter";
 import { ZodIssuesExceptionFilter } from "../exceptions/zod-issues.filter";
-import { JsonApiBaseController } from "./base-controller";
+import { JsonApiController } from "./base-controller";
 import { FilterOperatorsSwagger } from "../swagger/filter-operators";
-import { BaseSchema } from "../schema";
+import { JsonApiSchema } from "../schema";
 import { JsonApiSwaggerSchemasRegister } from "../swagger/json-api-swagger-schema-builder";
 
 const allowedMethods: MethodName[] = [
@@ -52,34 +52,29 @@ const allowedMethods: MethodName[] = [
 ];
 
 @Injectable()
-export class ControllerFactory {
-  private resource: Type<JsonApiBaseController>;
-  private controllerClass: Type<JsonApiBaseController>;
-  private options: Required<
-    ResourceOptions<
-      MethodName[],
-      BaseSchema<any>,
-      BaseSchema<any>,
-      BaseSchema<any>
-    >
-  >;
+export class ControllerFactory<Resource extends JsonApiController> {
+  private resource: Type<Resource>;
+  private controllerClass: Type<JsonApiController>;
+  private options: Required<ResourceOptions<MethodName[]>>;
 
-  constructor(resource: Type<JsonApiBaseController>) {
+  constructor(resource: Type<Resource>) {
     this.validateResource(resource);
     this.resource = resource;
     this.controllerClass = resource;
     this.options = this.getResourceOptions();
   }
 
-  private validateResource(resource: Type<JsonApiBaseController>): void {
-    if (!Object.prototype.isPrototypeOf.call(JsonApiBaseController, resource)) {
+  private validateResource(resource: Type<JsonApiController>): void {
+    if (!Object.prototype.isPrototypeOf.call(JsonApiController, resource)) {
       throw new Error(
-        `${resource.name}: Must extend ${JsonApiBaseController.name} class to be a valid resource.`,
+        `${resource.name}: Must extend ${JsonApiController.name} class to be a valid resource.`,
       );
     }
   }
 
-  private getResourceOptions(): Required<ResourceOptions<any, any, any>> {
+  private getResourceOptions(): Required<
+    ResourceOptions<MethodName[], InferSchemas<Resource>>
+  > {
     return Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, this.resource);
   }
 
@@ -148,14 +143,14 @@ export class ControllerFactory {
   }
 
   private getControllerSchemas(): Schemas<
-    BaseSchema<any>,
-    BaseSchema<any>,
-    BaseSchema<any>
+    JsonApiSchema<any>,
+    JsonApiSchema<any>,
+    JsonApiSchema<any>
   > {
     const schemas = Reflect.getMetadata(
       JSONAPI_RESOURCE_SCHEMAS,
       this.controllerClass,
-    ) as Schemas<BaseSchema<any>, BaseSchema<any>, BaseSchema<any>>;
+    ) as Schemas<JsonApiSchema<any>, JsonApiSchema<any>, JsonApiSchema<any>>;
     return schemas;
   }
 

@@ -9,71 +9,74 @@ import {
 } from "../../constants";
 import { SchemaAttribute } from "../../decorators/attribute.decorator";
 import { RelationAttribute } from "../../decorators/relation.decorator";
-import { BaseSchema } from "../base-schema";
+import { JsonApiSchema } from "../schema";
 import {
   ExtractAttributes,
   ExtractRelations,
   InferEntity,
   InferSchemas,
-  Schemas,
+  ViewSchema,
 } from "../types";
-import { EntityClass } from "@mikro-orm/core";
 import { ResourceOptions } from "../../decorators/resource.decorator";
-import { JsonApiBaseController } from "../../controller/base-controller";
-import { MethodName } from "../../controller/types";
+import { type JsonApiController } from "../../controller/base-controller";
 
-export function getRelations<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
-): RelationAttribute<Schema, boolean, keyof ExtractRelations<Schema>>[] {
+export function getRelations<TSchema extends JsonApiSchema<any>>(
+  schema: Type<TSchema>,
+): RelationAttribute<TSchema, keyof ExtractRelations<TSchema>, boolean>[] {
   const relations =
     Reflect.getMetadata(JSONAPI_SCHEMA_RELATIONS, schema.prototype) || [];
   return relations;
 }
 
 export function getRelationByName<
-  Schema extends BaseSchema<any>,
-  RelationName extends keyof ExtractRelations<Schema>,
->(schema: Type<Schema>, name: RelationName) {
+  TSchema extends JsonApiSchema<any>,
+  RelationName extends keyof ExtractRelations<TSchema>,
+>(schema: Type<TSchema>, name: RelationName) {
   const relations = getRelations(schema);
-  return relations.find((relation) => relation.name === name);
+  return relations.find((relation) => relation.name === name) as
+    | RelationAttribute<TSchema, RelationName>
+    | undefined;
 }
 
-export function getRelationByDataKey<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
-  name: string,
-):
-  | RelationAttribute<Schema, boolean, keyof ExtractRelations<Schema>>
-  | undefined {
+export function getRelationByDataKey<
+  TSchema extends JsonApiSchema<any>,
+  DataKey extends keyof InferEntity<TSchema>,
+>(schema: Type<TSchema>, name: DataKey) {
   const relations = getRelations(schema);
-  return relations.find((relation) => relation.name === name);
+  return relations.find((relation) => relation.dataKey === name);
 }
 
-export function getAttributes<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
-): SchemaAttribute<Schema, keyof ExtractAttributes<Schema>>[] {
+export function getAttributes<TSchema extends JsonApiSchema<any>>(
+  schema: Type<TSchema>,
+): SchemaAttribute<TSchema>[] {
   const attributes =
     Reflect.getMetadata(JSONAPI_SCHEMA_ATTRIBUTES, schema.prototype) || [];
   return attributes;
 }
 
-export function getAttributeByName<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
-  name: string,
-): SchemaAttribute<Schema, keyof ExtractAttributes<Schema>> | undefined {
+export function getAttributeByName<
+  TSchema extends JsonApiSchema<any>,
+  AttributeKey extends keyof ExtractAttributes<TSchema>,
+>(schema: Type<TSchema>, name: AttributeKey) {
   const attributes = getAttributes(schema);
-  return attributes.find((attribute) => attribute.name === name);
+  return attributes.find((attribute) => attribute.name === name) as
+    | SchemaAttribute<TSchema, AttributeKey>
+    | undefined;
 }
 
-export function getAttributeByDataKey<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
-  name: string,
-): SchemaAttribute<Schema, keyof ExtractAttributes<Schema>> | undefined {
+export function getAttributeByDataKey<
+  TSchema extends JsonApiSchema<any>,
+  DataKey extends keyof InferEntity<TSchema>,
+>(schema: Type<TSchema>, name: DataKey) {
   const attributes = getAttributes(schema);
-  return attributes.find((attribute) => attribute.dataKey === name);
+  // @ts-expect-error
+  return attributes.find((attribute) => attribute.dataKey === name) as
+    | SchemaAttribute<TSchema, keyof ExtractAttributes<TSchema>, DataKey>
+    | undefined;
 }
 
-export function getType<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
+export function getType<TSchema extends JsonApiSchema<any>>(
+  schema: Type<TSchema>,
 ): string {
   const type = Reflect.getMetadata(JSONAPI_SCHEMA_TYPE, schema);
 
@@ -84,37 +87,23 @@ export function getType<Schema extends BaseSchema<any>>(
   return type;
 }
 
-export function getEntityFromSchema<Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
-): EntityClass<InferEntity<Schema>> {
+export function getEntityFromSchema<TSchema extends JsonApiSchema<any>>(
+  schema: Type<TSchema>,
+): Type<InferEntity<TSchema>> {
   const entity = Reflect.getMetadata(JSONAPI_SCHEMA_ENTITY_CLASS, schema);
   return entity;
 }
 
 export function getSchemasFromResource<
-  Resource extends object,
-  Schemass extends InferSchemas<Resource>,
->(
-  resource: Resource,
-): Schemas<
-  Schemass["ViewSchema"],
-  Schemass["CreateSchema"],
-  Schemass["UpdateSchema"]
-> {
+  TResource extends JsonApiController,
+  TSchemas extends InferSchemas<TResource> = InferSchemas<TResource>,
+>(resource: Type<TResource>): { schema: Type<ViewSchema<TSchemas>> } {
   const schemas = Reflect.getMetadata(JSONAPI_RESOURCE_SCHEMAS, resource);
   return schemas;
 }
-export function getResourceOptions<
-  Resource extends object,
-  Schemas extends InferSchemas<Resource>,
->(
-  resource: Type<JsonApiBaseController>,
-): ResourceOptions<
-  MethodName[],
-  Schemas["ViewSchema"],
-  Schemas["CreateSchema"],
-  Schemas["UpdateSchema"]
-> {
+export function getResourceOptions(
+  resource: Type<JsonApiController>,
+): ResourceOptions {
   const schemas = Reflect.getMetadata(JSONAPI_RESOURCE_OPTIONS, resource);
   return schemas;
 }

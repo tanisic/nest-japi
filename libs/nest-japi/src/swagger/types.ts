@@ -1,10 +1,10 @@
 import { Type } from "@nestjs/common";
-import { JsonApiBaseController } from "../controller/base-controller";
+import { JsonApiController } from "../controller/base-controller";
 import { Schemas } from "../schema";
 import { ResourceOptions } from "../decorators/resource.decorator";
 
 export type SwaggerMethodProps = {
-  resource: Type<JsonApiBaseController<any, any>>;
+  resource: Type<JsonApiController>;
   descriptor: PropertyDescriptor;
   schemas: Schemas<any, any, any>;
   resourceOptions: ResourceOptions;

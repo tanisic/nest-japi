@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BaseSchema } from "../../base-schema";
+import { JsonApiSchema } from "../../schema";
 import { Attribute, Relation, Schema } from "../../../decorators";
 import { z } from "zod";
 import { jsonApiPatchInputSchema } from "./schema";
+import type { HasMany, HasOne } from "../../types";
 
 @Schema({ jsonapiType: "post", entity: class {} })
-class PostSchema extends BaseSchema {
+class PostSchema extends JsonApiSchema<any> {
   @Attribute({ validate: z.string() })
   id!: string;
   @Attribute({ validate: z.string() })
@@ -15,7 +16,7 @@ class PostSchema extends BaseSchema {
 }
 
 @Schema({ jsonapiType: "user", entity: class {} })
-class UserSchema extends BaseSchema {
+class UserSchema extends JsonApiSchema<any> {
   @Attribute({ validate: z.string() })
   id!: string;
   @Attribute({ validate: z.string().optional() })
@@ -23,14 +24,14 @@ class UserSchema extends BaseSchema {
   @Attribute({ validate: z.string().optional() })
   lastName!: string;
   @Relation({ schema: () => PostSchema, many: true, required: false })
-  posts!: PostSchema[];
+  posts!: HasMany<PostSchema>;
   @Relation({
     schema: () => UserSchema,
     many: false,
     required: false,
     nullable: true,
   })
-  boss!: UserSchema;
+  boss!: HasOne<UserSchema>;
 }
 
 describe("Input patch schema", () => {
@@ -48,7 +49,7 @@ describe("Input patch schema", () => {
   });
   it("Missing required attributes throw error", () => {
     @Schema({ jsonapiType: "user", entity: class {} })
-    class UserSchema extends BaseSchema {
+    class UserSchema extends JsonApiSchema<any> {
       @Attribute({ validate: z.string() })
       id!: string;
       @Attribute({ validate: z.string() })

@@ -1,4 +1,4 @@
-import { BaseSchema, getRelationByName } from "../../schema";
+import { JsonApiSchema, getRelationByName } from "../../schema";
 import { Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 
@@ -8,7 +8,7 @@ export interface Includes {
 }
 
 export class IncludeService {
-  constructor(private schema: Type<BaseSchema<any>>) {}
+  constructor(private schema: Type<JsonApiSchema<any>>) {}
 
   transform(value: string): Includes {
     if (!value) {

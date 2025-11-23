@@ -1,22 +1,21 @@
 import { JSONAPI_SCHEMA_ENTITY_CLASS, JSONAPI_SCHEMA_TYPE } from "../constants";
-import { EntityClass } from "@mikro-orm/core";
 import { Injectable, Type } from "@nestjs/common";
-import { BaseSchema } from "../schema/base-schema";
+import { JsonApiSchema as SchemaClass } from "../schema/schema";
 import { InferEntity } from "../schema";
 
 export interface SchemaOptions<Entity> {
-  entity: EntityClass<Entity>;
+  entity: Type<Entity>;
   jsonapiType: string;
 }
 
-export const Schema = <Schema extends BaseSchema<any>>(
-  options: SchemaOptions<InferEntity<Schema>>,
+export const Schema = <TSchema extends SchemaClass<any>>(
+  options: SchemaOptions<InferEntity<TSchema>>,
 ) => {
-  return (target: Type<Schema>) => {
+  return (target: Type<TSchema>) => {
     Injectable()(target);
-    if (!Object.prototype.isPrototypeOf.call(BaseSchema, target)) {
+    if (!Object.prototype.isPrototypeOf.call(Schema, target)) {
       throw new Error(
-        `${target.name}: Must extend ${BaseSchema.name} class to be valid schema.`,
+        `${target.name}: Must extend ${Schema.name} class to be valid schema.`,
       );
     }
 

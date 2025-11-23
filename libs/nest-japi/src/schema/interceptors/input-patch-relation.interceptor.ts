@@ -9,9 +9,10 @@ import {
 import { Request } from "express";
 import { Observable } from "rxjs";
 import { CURRENT_SCHEMAS, PARAMS_RELATION_NAME } from "../../constants";
-import type { Schemas } from "../types";
+import type { ExtractRelations, Schemas } from "../types";
 import { jsonApiPatchRelationInputSchema, ZodIssuesExeption } from "../zod";
 import { errorMap } from "zod-validation-error";
+import { JsonApiSchema } from "../schema";
 
 @Injectable()
 export class JsonApiInputPatchRelationInterceptor implements NestInterceptor {
@@ -37,7 +38,7 @@ export class JsonApiInputPatchRelationInterceptor implements NestInterceptor {
 
     const result = await jsonApiPatchRelationInputSchema(
       schema,
-      relName,
+      relName as keyof ExtractRelations<JsonApiSchema<any>>,
     ).safeParseAsync(body, {
       errorMap: errorMap,
     });

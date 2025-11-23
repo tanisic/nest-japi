@@ -4,7 +4,7 @@ import {
 } from "../constants";
 import { type SchemaObject } from "openapi3-ts/oas31";
 import { ZodTypeAny } from "zod";
-import { BaseSchema, ExtractAttributes, InferEntity } from "../schema";
+import { JsonApiSchema, InferEntity, ExtractAttributes } from "../schema";
 
 export type JSONValue =
   | string
@@ -21,10 +21,11 @@ export interface JSONObject {
 export interface JSONArray extends Array<JSONValue> {}
 
 type TransformValue<
-  Schema extends BaseSchema<any>,
-  AttributeKey extends keyof ExtractAttributes<Schema>,
-  Entity extends InferEntity<Schema>,
-  DataKey,
+  TSchema extends JsonApiSchema<any>,
+  AttributeKey extends
+    keyof ExtractAttributes<TSchema> = keyof ExtractAttributes<TSchema>,
+  Entity extends InferEntity<TSchema> = InferEntity<TSchema>,
+  DataKey = keyof Entity,
 > = DataKey extends keyof Entity
   ? (value: Entity[DataKey]) => JSONValue
   : AttributeKey extends keyof Entity
@@ -32,9 +33,10 @@ type TransformValue<
     : (value: unknown) => JSONValue;
 
 export type AttributeOptions<
-  Schema extends BaseSchema<any>,
-  AttributeKey extends keyof ExtractAttributes<Schema>,
-  DataKey extends keyof InferEntity<Schema> = AttributeKey,
+  TSchema extends JsonApiSchema<any>,
+  AttributeKey extends
+    keyof ExtractAttributes<TSchema> = keyof ExtractAttributes<TSchema>,
+  DataKey extends keyof InferEntity<TSchema> = keyof InferEntity<TSchema>,
 > = {
   /**
    * Map this property to another entity attribute.
@@ -42,9 +44,9 @@ export type AttributeOptions<
    * @default property name
    *
    * */
-  dataKey?: DataKey extends keyof InferEntity<Schema>
+  dataKey?: DataKey extends keyof InferEntity<TSchema>
     ? DataKey
-    : keyof InferEntity<Schema>;
+    : keyof InferEntity<TSchema, string>;
   /**
    * Write your openapi docs for this attribute.
    */
@@ -54,30 +56,27 @@ export type AttributeOptions<
    * Used in final serialization to response.
    * Works only on view schema, because that schema is reserved for all responses.
    */
-  transform?: TransformValue<
-    Schema,
-    AttributeKey,
-    InferEntity<Schema>,
-    DataKey
-  >;
+  transform?: TransformValue<TSchema, AttributeKey>;
   validate: ZodTypeAny;
 };
 
 export type SchemaAttribute<
-  Schema extends BaseSchema<any>,
-  AttributeKey extends keyof ExtractAttributes<Schema>,
-  DataKey extends keyof InferEntity<Schema> = AttributeKey,
-> = Required<AttributeOptions<Schema, AttributeKey, DataKey>> & {
+  TSchema extends JsonApiSchema<any>,
+  AttributeKey extends
+    keyof ExtractAttributes<TSchema> = keyof ExtractAttributes<TSchema>,
+  DataKey extends keyof InferEntity<TSchema> = keyof InferEntity<TSchema>,
+> = Required<AttributeOptions<TSchema, AttributeKey, DataKey>> & {
   name: AttributeKey;
 };
 
 export function Attribute<
-  Schema extends BaseSchema<any>,
-  AttributeKey extends keyof ExtractAttributes<Schema>,
-  DataKey extends keyof InferEntity<Schema> = AttributeKey,
->(options: AttributeOptions<Schema, AttributeKey, DataKey>) {
-  return (target: Schema, propertyKey: AttributeKey) => {
-    const opts: AttributeOptions<Schema, AttributeKey, DataKey> = {
+  TSchema extends JsonApiSchema<any>,
+  AttributeKey extends
+    keyof ExtractAttributes<TSchema> = keyof ExtractAttributes<TSchema>,
+  DataKey extends keyof InferEntity<TSchema> = keyof InferEntity<TSchema>,
+>(options: AttributeOptions<TSchema, AttributeKey, DataKey>) {
+  return (target: TSchema, propertyKey: AttributeKey) => {
+    const opts: AttributeOptions<TSchema, AttributeKey, DataKey> = {
       dataKey: propertyKey as any,
       ...options,
     };

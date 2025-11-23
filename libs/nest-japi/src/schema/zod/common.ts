@@ -1,15 +1,15 @@
 import { z, ZodObject, ZodRawShape } from "zod";
 import { getAttributes, getRelations } from "../helpers/schema-helper";
 import { Type } from "@nestjs/common";
-import { BaseSchema } from "../base-schema";
+import { JsonApiSchema } from "../schema";
 import { zodTypeSchema } from "./type";
 import { extendZodWithOpenApi } from "@anatine/zod-openapi";
 import { patchNestjsSwagger } from "@anatine/zod-nestjs";
 extendZodWithOpenApi(z);
 patchNestjsSwagger(undefined, "3.0");
 
-export const zodDataSchema = <Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
+export const zodDataSchema = <TSchema extends JsonApiSchema<any>>(
+  schema: Type<TSchema>,
 ) => {
   return z
     .object({
@@ -19,8 +19,8 @@ export const zodDataSchema = <Schema extends BaseSchema<any>>(
     .strict();
 };
 
-export const zodRelationsSchema = <Schema extends BaseSchema<any>>(
-  schema: Type<Schema>,
+export const zodRelationsSchema = <TSchema extends JsonApiSchema<any>>(
+  schema: Type<TSchema>,
 ) => {
   const relations = getRelations(schema);
 
@@ -29,7 +29,7 @@ export const zodRelationsSchema = <Schema extends BaseSchema<any>>(
   );
 
   const shape = relations.reduce((shape, relation) => {
-    const relationSchema = relation.schema();
+    const relationSchema = relation.schema() as Type<JsonApiSchema<any>>;
     const dataSchema = zodDataSchema(relationSchema);
 
     shape[relation.name] = z
@@ -71,14 +71,14 @@ export const zodRelationsSchema = <Schema extends BaseSchema<any>>(
 };
 
 export const zodRelationsSchemaWithLinksAndData = <
-  Schema extends BaseSchema<any>,
+  Schema extends JsonApiSchema<any>,
 >(
   schema: Type<Schema>,
 ) => {
   const relations = getRelations(schema);
 
   const shape = relations.reduce((shape, relation) => {
-    const relationSchema = relation.schema();
+    const relationSchema = relation.schema() as Type<JsonApiSchema<any>>;
     const dataSchema = zodDataSchema(relationSchema);
 
     shape[relation.name] = z
@@ -105,7 +105,7 @@ export const zodRelationsSchemaWithLinksAndData = <
   return z.object(shape).strict().optional();
 };
 
-export const zodAttributesSchema = <Schema extends BaseSchema<any>>(
+export const zodAttributesSchema = <Schema extends JsonApiSchema<any>>(
   schema: Type<Schema>,
 ) => {
   const attributes = getAttributes(schema);
@@ -165,7 +165,7 @@ export const relationshipsLinkSchema = z
   .object({ self: z.string(), related: z.string() })
   .optional();
 
-export const fullJsonApiResponseSchema = <Schema extends BaseSchema<any>>(
+export const fullJsonApiResponseSchema = <Schema extends JsonApiSchema<any>>(
   schema: Type<Schema>,
   {
     withPagination = false,

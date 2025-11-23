@@ -1,19 +1,26 @@
 import { Inject, NotFoundException, Type } from "@nestjs/common";
-import { ControllerGenerics, ControllerMethods } from "./types";
+import { ControllerMethods } from "./types";
 import { SerializerService } from "../serializer/serializer.service";
 import { EntityDTO, EntityManager, serialize } from "@mikro-orm/core";
-import type { ExtractRelations, InferEntity, Schemas } from "../schema/types";
+import type {
+  CreateSchema,
+  ExtractRelations,
+  InferEntity,
+  Schemas,
+  UpdateSchema,
+  ViewSchema,
+} from "../schema/types";
 import { CURRENT_SCHEMAS, JSONAPI_SERVICE } from "../constants";
 import { SchemaBuilderService } from "../schema/services/schema-builder.service";
 import { JsonApiOptions } from "../modules/json-api-options";
 import { DataDocument, Metaizer, Paginator } from "ts-japi";
 import { DataLayerService } from "../data-layer/data-layer.service";
 import {
-  type BaseSchema,
   getRelationByName,
   PatchBody,
   PatchRelationship,
   PostBody,
+  JsonApiSchema,
 } from "../schema";
 import { Request } from "express";
 import type { QueryParams, SingleQueryParams } from "../query";
@@ -22,70 +29,57 @@ import qs, { ParsedQs } from "qs";
 import { RelationAttribute } from "../decorators/relation.decorator";
 import { type JsonApiBaseService } from "../service";
 
-export class JsonApiBaseController<
+export class JsonApiController<
   Id extends string | number = string | number,
   TEntityManager extends EntityManager = EntityManager,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
-  ViewEntity = InferEntity<ViewSchema>,
-  CreateEntity = InferEntity<CreateSchema>,
-  UpdateEntity = InferEntity<UpdateSchema>,
+  TSchemas extends Schemas<any, any, any> = Schemas<any, any, any>,
 > implements ControllerMethods
 {
-  declare public __generics: ControllerGenerics<
-    Id,
-    TEntityManager,
-    ViewSchema,
-    CreateSchema,
-    UpdateSchema,
-    ViewEntity,
-    CreateEntity,
-    UpdateEntity
-  >;
+  declare ViewSchema: ViewSchema<TSchemas>;
+  declare CreateSchema: CreateSchema<TSchemas>;
+  declare UpdateSchema: UpdateSchema<TSchemas>;
+
+  declare ViewEntity: InferEntity<typeof this.ViewSchema>;
+  declare CreateEntity: InferEntity<typeof this.CreateSchema>;
+  declare UpdateEntity: InferEntity<typeof this.UpdateSchema>;
+
   @Inject(JSONAPI_SERVICE)
-  protected service!: JsonApiBaseService;
+  protected service!: JsonApiBaseService<Id, EntityManager, TSchemas>;
 
   @Inject(SerializerService)
-  protected serializerService!: SerializerService;
+  protected serializerService!: SerializerService<TSchemas>;
 
   @Inject(EntityManager)
   protected em!: TEntityManager;
 
   @Inject(CURRENT_SCHEMAS)
-  protected currentSchemas!: Schemas<ViewSchema, CreateSchema, UpdateSchema>;
+  protected currentSchemas!: TSchemas;
 
   @Inject(SchemaBuilderService)
   protected schemaBuilder!: SchemaBuilderService;
 
   @Inject(JsonApiOptions)
-  protected options!: JsonApiOptions<ViewSchema, CreateSchema, UpdateSchema>;
+  protected options!: JsonApiOptions<TSchemas>;
 
   @Inject(DataLayerService)
-  protected dataLayer!: DataLayerService<
-    Id,
-    TEntityManager,
-    ViewSchema,
-    CreateSchema,
-    UpdateSchema
-  >;
+  protected dataLayer!: DataLayerService<Id, TEntityManager, TSchemas>;
 
   get baseUrl() {
     return this.options.global.baseUrl;
   }
 
   get viewSchema() {
-    return this.currentSchemas.schema;
+    return this.currentSchemas.schema as Type<typeof this.ViewSchema>;
   }
 
   get createSchema() {
     return (this.currentSchemas.createSchema ||
-      this.currentSchemas.schema) as Type<CreateSchema>;
+      this.currentSchemas.schema) as Type<typeof this.CreateSchema>;
   }
 
   get updateSchema() {
     return (this.currentSchemas.updateSchema ||
-      this.currentSchemas.schema) as Type<UpdateSchema>;
+      this.currentSchemas.schema) as Type<typeof this.UpdateSchema>;
   }
 
   async getAll(
@@ -153,16 +147,13 @@ export class JsonApiBaseController<
   }
 
   async getRelationship<
-    RelationName extends keyof ExtractRelations<ViewSchema>,
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
   >(id: Id, relationName: RelationName, ...rest: any[]) {
-    const schema = this.currentSchemas.schema;
-    const relation = getRelationByName(
-      this.currentSchemas.schema as Type<ViewSchema>,
-      relationName,
-    );
+    const relation = getRelationByName(this.viewSchema, relationName);
+
     if (!relation) {
       throw new NotFoundException(
-        `Relationship ${String(relationName)} does not exist on schema "${schema.name}".`,
+        `Relationship ${String(relationName)} does not exist on schema "${this.viewSchema.name}".`,
       );
     }
 
@@ -177,7 +168,7 @@ export class JsonApiBaseController<
     if (!relationData) {
       return this.serializerService.serialize(relationData, relationSchema, {
         onlyIdentifier: true,
-        nullData: this.shouldDisplayNull(relation, relationData),
+        nullData: this.shouldDisplayNull(relation, relationData as any),
         metaizers: {
           document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
           resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
@@ -205,13 +196,12 @@ export class JsonApiBaseController<
   }
 
   async getRelationshipData<
-    RelationName extends keyof ExtractRelations<ViewSchema>,
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
   >(id: Id, relationName: RelationName) {
-    const schema = this.currentSchemas.schema;
-    const relation = getRelationByName(schema, relationName);
+    const relation = getRelationByName(this.viewSchema, relationName);
     if (!relation) {
       throw new NotFoundException(
-        `Relationship ${String(relationName)} does not exist on schema "${schema.name}".`,
+        `Relationship ${String(relationName)} does not exist on schema "${this.viewSchema.name}".`,
       );
     }
 
@@ -263,75 +253,67 @@ export class JsonApiBaseController<
     });
   }
 
-  async postOne(body: PostBody<CreateSchema>) {
+  async postOne(body: PostBody<typeof this.CreateSchema>) {
     const { data, documentMeta, resourceMeta } = await this.service.postOne(
       body as any,
     );
-    const serialized = serialize(data, { forceObject: true });
+    const serialized = serialize(data as any, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
-      this.currentSchemas.schema,
+      this.viewSchema,
     );
-    return this.serializerService.serialize(
-      result,
-      this.currentSchemas.schema,
-      {
-        metaizers: {
-          document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
-          resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
-        },
+    return this.serializerService.serialize(result, this.viewSchema, {
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
       },
-    );
+    });
   }
 
-  async patchOne(id: Id, body: PatchBody<UpdateSchema>) {
+  async patchOne(id: Id, body: PatchBody<typeof this.UpdateSchema>) {
     const { data, documentMeta, resourceMeta } = await this.service.patchOne(
       id,
-      body as any,
+      body,
     );
     const serialized = serialize(data, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
-      this.currentSchemas.schema,
+      this.viewSchema,
     );
-    return this.serializerService.serialize(
-      result,
-      this.currentSchemas.schema,
-      {
-        metaizers: {
-          document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
-          resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
-        },
+    return this.serializerService.serialize(result, this.viewSchema, {
+      metaizers: {
+        document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
+        resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
       },
-    );
+    });
   }
 
   async patchRelationship<
-    RelationName extends keyof ExtractRelations<UpdateSchema>,
+    RelationName extends keyof ExtractRelations<typeof this.UpdateSchema>,
   >(
     id: Id,
     relationshipName: RelationName,
-    body: PatchRelationship<UpdateSchema, RelationName>,
+    body: PatchRelationship<typeof this.UpdateSchema, RelationName>,
   ) {
-    const schema = (this.currentSchemas.updateSchema ||
-      this.currentSchemas.schema) as Type<UpdateSchema>;
-
-    const relation = getRelationByName(schema, relationshipName);
+    const relation = getRelationByName(this.updateSchema, relationshipName);
 
     if (!relation) {
       throw new NotFoundException(
-        `Relationship ${String(relationshipName)} does not exist on ${schema.name} schema.`,
+        `Relationship ${String(relationshipName)} does not exist on ${this.updateSchema.name} schema.`,
       );
     }
 
     const relationSchema = relation.schema();
 
     const { data, resourceMeta, documentMeta } =
-      // @ts-expect-error strange TS error
       await this.service.patchRelationship(id, relation, body);
 
-    const result = this.schemaBuilder.transformFromDb(data, relationSchema);
+    const result = this.schemaBuilder.transformFromDb(
+      data as any,
+      relationSchema,
+    );
     return this.serializerService.serialize(result, relationSchema, {
+      onlyIdentifier: true,
       metaizers: {
         document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
         resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
@@ -385,8 +367,12 @@ export class JsonApiBaseController<
         : undefined;
     });
   }
-  private shouldDisplayNull = (
-    relation: RelationAttribute<ViewSchema, boolean, any>,
+  private shouldDisplayNull = <
+    TSchema extends JsonApiSchema<any>,
+    RelationName extends
+      keyof ExtractRelations<TSchema> = keyof ExtractRelations<TSchema>,
+  >(
+    relation: RelationAttribute<TSchema, RelationName>,
     relationData: EntityDTO<object> | EntityDTO<object>[] | null,
   ) => {
     if (relation.many || Array.isArray(relationData)) return false;

@@ -1,4 +1,8 @@
-import { BaseSchema, getAttributeByName } from "../../schema";
+import {
+  ExtractAttributes,
+  JsonApiSchema,
+  getAttributeByName,
+} from "../../schema";
 import { Type } from "@nestjs/common";
 import { JapiError } from "ts-japi";
 
@@ -8,7 +12,7 @@ export interface SparseFields {
 }
 
 export class SparseFieldsService {
-  constructor(private globalSchemaMap: Map<string, Type<BaseSchema<any>>>) {}
+  constructor(private globalSchemaMap: Map<string, Type<JsonApiSchema<any>>>) {}
 
   transform(value: Record<string, string>): SparseFields {
     if (!value) {
@@ -40,7 +44,10 @@ export class SparseFieldsService {
     }
 
     for (const field of fields) {
-      const attribute = getAttributeByName(schema, field);
+      const attribute = getAttributeByName(
+        schema,
+        field as keyof ExtractAttributes<JsonApiSchema<any>>,
+      );
       if (!attribute) {
         throw new JapiError({
           status: "400",

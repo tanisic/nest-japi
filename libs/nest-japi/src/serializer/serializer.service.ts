@@ -1,5 +1,5 @@
 import { Injectable, Type } from "@nestjs/common";
-import { BaseSchema } from "../schema/base-schema";
+import { JsonApiSchema } from "../schema/schema";
 import {
   DataDocument,
   Linker,
@@ -18,9 +18,10 @@ import { Pagination, SparseFields } from "../query";
 import { joinUrlPaths } from "../helpers";
 import { JsonApiOptions } from "../modules/json-api-options";
 import Resource from "ts-japi/lib/models/resource.model";
-import { JsonApiBaseController } from "../controller/base-controller";
+import { JsonApiController } from "../controller/base-controller";
 import ResourceIdentifier from "ts-japi/lib/models/resource-identifier.model";
 import { JsonApiResourceExplorerService } from "../modules/services/resource-explorer.service";
+import { InferEntity, Schemas, ViewSchema } from "../schema";
 
 export interface SerializeCustomOptions {
   include?: string[];
@@ -36,13 +37,13 @@ type SerializePostProcessProps = {
 };
 
 @Injectable()
-export class SerializerService {
-  private resources: Type<JsonApiBaseController>[];
+export class SerializerService<TSchemas extends Schemas<any, any, any>> {
+  private resources: Type<JsonApiController>[];
   private serializerMap = new Map<JsonApiTypeString, Serializer<any>>();
   private relatorsMap = new Map<RelatorKey, Relator<unknown, any>>();
 
   constructor(
-    private globalOptions: JsonApiOptions<any, any, any>,
+    private globalOptions: JsonApiOptions<TSchemas>,
     private resourceExplorerService: JsonApiResourceExplorerService,
   ) {
     this.baseUrl = this.globalOptions.global.baseUrl;
@@ -54,7 +55,7 @@ export class SerializerService {
 
   private baseUrl: string;
 
-  protected resourceUrl(resource: Type<JsonApiBaseController>) {
+  protected resourceUrl(resource: Type<JsonApiController>) {
     const options = getResourceOptions(resource);
     return joinUrlPaths(this.baseUrl, options.path!);
   }
@@ -106,7 +107,6 @@ export class SerializerService {
             `/${parentData.id}/${String(relationName)}`,
           );
         });
-        // @ts-expect-error
         const relator = new Relator(
           (data: any) => data[relationName],
           relationSerializer,
@@ -128,9 +128,15 @@ export class SerializerService {
     }
   }
 
-  async serialize<Schema extends BaseSchema<any>>(
-    data: Record<string, unknown> | Record<string, unknown>[] | null,
-    schema: Type<Schema>,
+  async serialize<TSchema extends JsonApiSchema<any> = ViewSchema<TSchemas>>(
+    data:
+      | InferEntity<TSchema>
+      | InferEntity<TSchema>[keyof TSchema]
+      | InferEntity<TSchema>[]
+      | Record<string, unknown>
+      | Record<string, unknown>[]
+      | null,
+    schema: Type<TSchema>,
     options?: SerializeCustomOptions & Partial<SerializerOptions<any>>,
   ) {
     const type = getType(schema);
@@ -238,7 +244,7 @@ export class SerializerService {
   }
 
   private getVisibleAttributesOrSparse(
-    schema: Type<BaseSchema<any>>,
+    schema: Type<JsonApiSchema<any>>,
     sparseFields?: Record<string, string[]>,
   ): Record<string, 1> {
     const result: Record<string, 1> = {};

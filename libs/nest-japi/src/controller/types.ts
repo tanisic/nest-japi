@@ -1,8 +1,7 @@
 import { PipeTransform, RequestMethod } from "@nestjs/common";
 import { NestInterceptor, Type } from "@nestjs/common/interfaces";
-import { InferEntity, Schemas } from "../schema/types";
-import { BaseSchema } from "../schema/base-schema";
-import { EntityManager } from "@mikro-orm/core";
+import { Schemas } from "../schema/types";
+import { JsonApiSchema } from "../schema/schema";
 import { ResourceOptions } from "../decorators/resource.decorator";
 
 export type MethodName =
@@ -27,7 +26,7 @@ type MapNameToTypeMethod = {
 };
 
 export interface PipeMixinParams {
-  schema: Type<BaseSchema<any>>;
+  schema: Type<JsonApiSchema<any>>;
   options: ResourceOptions<any>;
 }
 
@@ -56,29 +55,3 @@ export type BindingsConfig = {
 };
 
 export type ControllerMethods = { [k in MethodName]: (...arg: any[]) => any };
-
-export type ControllerGenerics<
-  Id extends string | number = string | number,
-  TEntityManager extends EntityManager = EntityManager,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
-  ViewEntity = InferEntity<ViewSchema>,
-  CreateEntity = InferEntity<CreateSchema>,
-  UpdateEntity = InferEntity<UpdateSchema>,
-> = {
-  Id: Id;
-  TEntityManager: TEntityManager;
-  ViewSchema: ViewSchema;
-  CreateSchema: CreateSchema;
-  UpdateSchema: UpdateSchema;
-  ViewEntity: ViewEntity;
-  CreateEntity: CreateEntity;
-  UpdateEntity: UpdateEntity;
-};
-
-export type InferControllerGenerics<T> = T extends {
-  __generics: ControllerGenerics;
-}
-  ? T["__generics"]
-  : never;

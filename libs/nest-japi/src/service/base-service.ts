@@ -1,11 +1,13 @@
 import { EntityDTO, EntityManager } from "@mikro-orm/core";
 import {
-  BaseSchema,
+  CreateSchema,
   ExtractRelations,
   InferEntity,
   PatchBody,
   PatchRelationship,
   PostBody,
+  UpdateSchema,
+  ViewSchema,
   type Schemas,
 } from "../schema";
 import { Inject, Injectable, Type } from "@nestjs/common";
@@ -19,43 +21,40 @@ import { RelationAttribute } from "../decorators";
 export class JsonApiBaseService<
   Id extends string | number = string | number,
   TEntityManager extends EntityManager = EntityManager,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
-  ViewEntity = InferEntity<ViewSchema>,
-  CreateEntity = InferEntity<CreateSchema>,
-  UpdateEntity = InferEntity<UpdateSchema>,
+  TSchemas extends Schemas<any, any, any> = Schemas<any, any, any>,
 > {
+  declare ViewSchema: ViewSchema<TSchemas>;
+  declare CreateSchema: CreateSchema<TSchemas>;
+  declare UpdateSchema: UpdateSchema<TSchemas>;
+
+  declare ViewEntity: InferEntity<typeof this.ViewSchema>;
+  declare CreateEntity: InferEntity<typeof this.CreateSchema>;
+  declare UpdateEntity: InferEntity<typeof this.UpdateSchema>;
+
   @Inject(JsonApiOptions)
-  protected options!: JsonApiOptions<ViewSchema, CreateSchema, UpdateSchema>;
+  protected options!: JsonApiOptions<TSchemas>;
 
   @Inject(DataLayerService)
-  protected dataLayer!: DataLayerService<
-    Id,
-    TEntityManager,
-    ViewSchema,
-    CreateSchema,
-    UpdateSchema
-  >;
+  protected dataLayer!: DataLayerService<Id, TEntityManager, TSchemas>;
   @Inject(CURRENT_SCHEMAS)
-  protected currentSchemas!: Schemas<ViewSchema, CreateSchema, UpdateSchema>;
+  protected currentSchemas!: TSchemas;
 
   get viewSchema() {
-    return this.currentSchemas.schema;
+    return this.currentSchemas.schema as Type<typeof this.ViewSchema>;
   }
 
   get createSchema() {
     return (this.currentSchemas.createSchema ||
-      this.currentSchemas.schema) as Type<CreateSchema>;
+      this.currentSchemas.schema) as Type<typeof this.CreateSchema>;
   }
 
   get updateSchema() {
     return (this.currentSchemas.updateSchema ||
-      this.currentSchemas.schema) as Type<UpdateSchema>;
+      this.currentSchemas.schema) as Type<typeof this.UpdateSchema>;
   }
 
   async getAll(queryParams: QueryParams): Promise<{
-    data: ViewEntity[];
+    data: InferEntity<ViewSchema<TSchemas>>[];
     count: number;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
@@ -68,32 +67,39 @@ export class JsonApiBaseService<
     id: Id,
     queryParams: SingleQueryParams,
   ): Promise<{
-    data: ViewEntity | null | undefined;
+    data: InferEntity<ViewSchema<TSchemas>> | null | undefined;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
     const data = (await this.dataLayer.getOne(
       id,
       queryParams.include?.dbIncludes,
-    )) as ViewEntity | null;
+    )) as InferEntity<ViewSchema<TSchemas>> | null;
 
     return { data };
   }
-  async getRelationship(
+  async getRelationship<
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+  >(
     id: Id,
-    relation: RelationAttribute<ViewSchema, boolean, any>,
+    relation: RelationAttribute<typeof this.ViewSchema, RelationName>,
   ): Promise<{
-    data: EntityDTO<any>[] | EntityDTO<any> | null;
+    data:
+      | InferEntity<ViewSchema<TSchemas>>[]
+      | InferEntity<ViewSchema<TSchemas>>
+      | null;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
     const relationData = await this.dataLayer.getRelationshipData(id, relation);
 
-    return { data: relationData as EntityDTO<any>[] | EntityDTO<any> | null };
+    return { data: relationData };
   }
-  async getRelationshipData(
+  async getRelationshipData<
+    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+  >(
     id: Id,
-    relation: RelationAttribute<ViewSchema, boolean, any>,
+    relation: RelationAttribute<typeof this.ViewSchema, RelationName>,
   ): Promise<{
     data: EntityDTO<any>[] | EntityDTO<any> | null;
     documentMeta?: Record<string, any>;
@@ -105,17 +111,17 @@ export class JsonApiBaseService<
   }
 
   async deleteOne(id: Id): Promise<{
-    data: EntityDTO<any> | null;
+    data: InferEntity<ViewSchema<TSchemas>>;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
-    const relationData = await this.dataLayer.deleteOne(id);
+    const data = await this.dataLayer.deleteOne(id);
 
-    return { data: relationData as EntityDTO<any> | null };
+    return { data };
   }
 
-  async postOne(body: PostBody<CreateSchema>): Promise<{
-    data: EntityDTO<any>;
+  async postOne(body: PostBody<CreateSchema<TSchemas>>): Promise<{
+    data: InferEntity<CreateSchema<TSchemas>>;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
@@ -125,7 +131,7 @@ export class JsonApiBaseService<
 
   async patchOne(
     id: Id,
-    body: PatchBody<UpdateSchema>,
+    body: PatchBody<UpdateSchema<TSchemas>>,
   ): Promise<{
     data: EntityDTO<any>;
     documentMeta?: Record<string, any>;
@@ -136,13 +142,13 @@ export class JsonApiBaseService<
   }
 
   async patchRelationship<
-    RelationName extends keyof ExtractRelations<UpdateSchema>,
+    RelationName extends keyof ExtractRelations<UpdateSchema<TSchemas>>,
   >(
     id: Id,
-    relation: RelationAttribute<UpdateSchema, boolean, any>,
-    body: PatchRelationship<UpdateSchema, RelationName>,
+    relation: RelationAttribute<UpdateSchema<TSchemas>, RelationName>,
+    body: PatchRelationship<UpdateSchema<TSchemas>, RelationName>,
   ): Promise<{
-    data: EntityDTO<any>;
+    data: InferEntity<UpdateSchema<TSchemas>>;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {

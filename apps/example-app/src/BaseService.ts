@@ -1,15 +1,17 @@
 import { EntityManager } from '@mikro-orm/postgresql';
-import { BaseSchema, JsonApiBaseService } from '@tanisic/nest-japi';
+import {
+  type Schemas,
+  JsonApiBaseService,
+  JsonApiSchema,
+} from '@tanisic/nest-japi';
 
 export class BaseService<
   IdType extends string | number = string | number,
-  ViewSchema extends BaseSchema<any> = BaseSchema<any>,
-  CreateSchema extends BaseSchema<any> = ViewSchema,
-  UpdateSchema extends BaseSchema<any> = ViewSchema,
+  ViewSchema extends JsonApiSchema<any> = JsonApiSchema<any>,
+  CreateSchema extends JsonApiSchema<any> = ViewSchema,
+  UpdateSchema extends JsonApiSchema<any> = ViewSchema,
 > extends JsonApiBaseService<
   IdType,
   EntityManager,
-  ViewSchema,
-  CreateSchema,
-  UpdateSchema
+  Schemas<ViewSchema, CreateSchema, UpdateSchema>
 > {}
