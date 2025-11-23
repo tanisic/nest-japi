@@ -24,7 +24,10 @@ export type CreateSchema<TSchemas extends Schemas<any, any, any>> =
 export type UpdateSchema<TSchemas extends Schemas<any, any, any>> =
   TSchemas extends Schemas<any, any, infer V> ? V : never;
 
-export type Entity<IdType extends string | number = any> = object & {
+export type Entity<IdType extends string | number = any> = Record<
+  string,
+  any
+> & {
   id: IdType;
 };
 

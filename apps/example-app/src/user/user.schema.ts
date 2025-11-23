@@ -5,7 +5,6 @@ import {
   JsonApiSchema,
   HasMany,
   HasOne,
-  InferEntity,
 } from '@tanisic/nest-japi';
 import { User } from 'src/user/user.entity';
 import { CommentSchema } from 'src/comments/comments.schema';
@@ -35,8 +34,6 @@ export class UserSchema extends JsonApiSchema<User> {
   })
   address: HasOne<AddressSchema>;
 }
-
-type t = InferEntity<UserSchema>;
 
 @Schema({ jsonapiType: 'user', entity: User })
 export class PatchUserSchema extends JsonApiSchema<User> {
