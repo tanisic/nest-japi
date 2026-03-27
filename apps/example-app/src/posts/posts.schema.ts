@@ -50,7 +50,7 @@ export class CreatePostSchema extends JsonApiSchema<Post> {
 
   @Relation({
     schema: () => UserSchema,
-    required: true,
+    required: false,
     nullable: false,
     many: false,
   })

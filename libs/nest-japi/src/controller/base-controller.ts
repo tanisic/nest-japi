@@ -6,6 +6,7 @@ import type {
   CreateSchema,
   ExtractRelations,
   InferEntity,
+  RelationKeys,
   Schemas,
   UpdateSchema,
   ViewSchema,
@@ -146,9 +147,11 @@ export class JsonApiController<
     });
   }
 
-  async getRelationship<
-    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
-  >(id: Id, relationName: RelationName, ...rest: any[]) {
+  async getRelationship(
+    id: Id,
+    relationName: RelationKeys<typeof this.ViewSchema>,
+    ...rest: any[]
+  ) {
     const relation = getRelationByName(this.viewSchema, relationName);
 
     if (!relation) {
@@ -195,9 +198,10 @@ export class JsonApiController<
     });
   }
 
-  async getRelationshipData<
-    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
-  >(id: Id, relationName: RelationName) {
+  async getRelationshipData(
+    id: Id,
+    relationName: RelationKeys<typeof this.ViewSchema>,
+  ) {
     const relation = getRelationByName(this.viewSchema, relationName);
     if (!relation) {
       throw new NotFoundException(
@@ -216,7 +220,7 @@ export class JsonApiController<
     if (!relationData) {
       return this.serializerService.serialize(relationData, relSchema, {
         onlyIdentifier: true,
-        nullData: this.shouldDisplayNull(relation, relationData),
+        nullData: this.shouldDisplayNull(relation, relationData as object),
         metaizers: {
           document: documentMeta ? new Metaizer(() => documentMeta) : undefined,
           resource: resourceMeta ? new Metaizer(() => resourceMeta) : undefined,
@@ -275,7 +279,7 @@ export class JsonApiController<
       id,
       body,
     );
-    const serialized = serialize(data, { forceObject: true });
+    const serialized = serialize(data as object, { forceObject: true });
     const result = this.schemaBuilder.transformFromDb(
       serialized,
       this.viewSchema,
@@ -288,12 +292,10 @@ export class JsonApiController<
     });
   }
 
-  async patchRelationship<
-    RelationName extends keyof ExtractRelations<typeof this.UpdateSchema>,
-  >(
+  async patchRelationship(
     id: Id,
-    relationshipName: RelationName,
-    body: PatchRelationship<typeof this.UpdateSchema, RelationName>,
+    relationshipName: RelationKeys<typeof this.UpdateSchema>,
+    body: PatchRelationship<typeof this.UpdateSchema>,
   ) {
     const relation = getRelationByName(this.updateSchema, relationshipName);
 

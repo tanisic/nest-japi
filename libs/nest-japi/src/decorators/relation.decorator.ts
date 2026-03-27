@@ -80,7 +80,7 @@ export type RelationAttribute<
   RelationKey extends
     keyof ExtractRelations<TSchema> = keyof ExtractRelations<TSchema>,
   IsMany extends boolean = InferIsMany<TSchema, RelationKey>,
-  DataKey extends keyof InferEntity<TSchema> = InferEntity<TSchema>,
+  DataKey extends keyof InferEntity<TSchema> = keyof InferEntity<TSchema>,
 > = Required<RelationOptions<TSchema, RelationKey, IsMany, DataKey>> & {
   name: RelationKey;
 };

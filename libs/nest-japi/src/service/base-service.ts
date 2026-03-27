@@ -6,6 +6,7 @@ import {
   PatchBody,
   PatchRelationship,
   PostBody,
+  RelationKeys,
   UpdateSchema,
   ViewSchema,
   type Schemas,
@@ -79,7 +80,9 @@ export class JsonApiBaseService<
     return { data };
   }
   async getRelationship<
-    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+    RelationName extends RelationKeys<typeof this.ViewSchema> = RelationKeys<
+      typeof this.ViewSchema
+    >,
   >(
     id: Id,
     relation: RelationAttribute<typeof this.ViewSchema, RelationName>,
@@ -96,12 +99,14 @@ export class JsonApiBaseService<
     return { data: relationData };
   }
   async getRelationshipData<
-    RelationName extends keyof ExtractRelations<typeof this.ViewSchema>,
+    RelationName extends RelationKeys<typeof this.ViewSchema> = RelationKeys<
+      typeof this.ViewSchema
+    >,
   >(
     id: Id,
     relation: RelationAttribute<typeof this.ViewSchema, RelationName>,
   ): Promise<{
-    data: EntityDTO<any>[] | EntityDTO<any> | null;
+    data: InferEntity<ViewSchema<TSchemas>> | null;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {
@@ -133,7 +138,7 @@ export class JsonApiBaseService<
     id: Id,
     body: PatchBody<UpdateSchema<TSchemas>>,
   ): Promise<{
-    data: EntityDTO<any>;
+    data: InferEntity<UpdateSchema<TSchemas>>;
     documentMeta?: Record<string, any>;
     resourceMeta?: Record<string, any>;
   }> {

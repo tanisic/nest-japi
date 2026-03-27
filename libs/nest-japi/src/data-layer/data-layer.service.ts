@@ -218,7 +218,6 @@ export class DataLayerService<
               relationIds as Id[],
               entity,
             );
-            // @ts-expect-error
             result[relation.dataKey as keyof typeof result] = items;
           } else if (relationData) {
             const item = await this.em.findOne(entity, { id: relationData.id });
@@ -227,10 +226,8 @@ export class DataLayerService<
                 `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
               );
             }
-            // @ts-expect-error
             result[relation.dataKey as keyof typeof result] = item;
           } else {
-            // @ts-expect-error
             result[relation.dataKey as keyof typeof result] = null;
           }
         }
@@ -280,7 +277,6 @@ export class DataLayerService<
               relationIds as Id[],
               relationEntity,
             );
-            // @ts-expect-error
             result[relation.dataKey as keyof typeof result] = items;
           } else if (relationData) {
             const item = await this.em.findOne(relationEntity, {
@@ -291,10 +287,8 @@ export class DataLayerService<
                 `Relation ${String(relation.name)} does not have item with id ${relationData.id}.`,
               );
             }
-            // @ts-expect-error
             result[relation.dataKey! as keyof typeof result] = item;
           } else {
-            // @ts-expect-error
             result[relation.dataKey as keyof typeof result] = null;
           }
         }

@@ -73,6 +73,10 @@ export type ExtractRelations<TSchema extends JsonApiSchema<any>> = {
     : never]: TSchema[K];
 };
 
+export type RelationKeys<TSchema extends JsonApiSchema<any>> = {
+  [K in keyof ExtractRelations<TSchema>]: K;
+}[keyof ExtractRelations<TSchema>];
+
 export type ExtractAttributes<TSchema extends JsonApiSchema<any>> = {
   [K in keyof TSchema as IsRelation<TSchema[K]> extends true
     ? never
